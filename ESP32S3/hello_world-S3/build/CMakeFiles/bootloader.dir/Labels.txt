@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/CMakeFiles/bootloader
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/CMakeFiles/bootloader.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/CMakeFiles/bootloader-complete.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32S3/hello_world-S3/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
