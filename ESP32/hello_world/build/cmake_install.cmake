@@ -1,4 +1,4 @@
-# Install script for directory: E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world
+# Install script for directory: E:/WORK/Core-Caven-ESP32/ESP32/hello_world
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/esp-idf/cmake_install.cmake")
+  include("E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/esp-idf/cmake_install.cmake")
 
 endif()
 
@@ -51,5 +51,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

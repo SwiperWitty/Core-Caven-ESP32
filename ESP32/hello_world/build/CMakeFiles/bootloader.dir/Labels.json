@@ -2,34 +2,34 @@
 	"sources" : 
 	[
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/CMakeFiles/bootloader"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/CMakeFiles/bootloader"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/CMakeFiles/bootloader.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/CMakeFiles/bootloader.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/CMakeFiles/bootloader-complete.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/CMakeFiles/bootloader-complete.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
 		},
 		{
-			"file" : "E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
+			"file" : "E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
 		}
 	],
 	"target" : 

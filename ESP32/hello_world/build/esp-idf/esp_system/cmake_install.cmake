@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/esp-idf/esp_system/port/cmake_install.cmake")
+  include("E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/esp-idf/esp_system/port/cmake_install.cmake")
 
 endif()
 

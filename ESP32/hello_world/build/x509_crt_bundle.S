@@ -1,4 +1,4 @@
-/* * Data converted from E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from E:/WORK/Core-Caven-ESP32/ESP32/hello_world/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

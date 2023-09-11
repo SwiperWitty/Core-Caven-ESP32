@@ -1,4 +1,4 @@
-# Install script for directory: E:/Sea_of_Stars/Software/Core-Caven-ESP32/ESP32/hello_world/main
+# Install script for directory: E:/WORK/Core-Caven-ESP32/ESP32/hello_world/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

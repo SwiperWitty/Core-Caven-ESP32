@@ -49,7 +49,7 @@ void app_main(void)
 
 void Main_init (void)
 {
-    int temp = 0;
+    // int temp = 0;
     printf("Hello world!\n");
     ESP_LOGI(TAG, "hi I !\n");
     ESP_LOGW(TAG, "hi warning !\n");
