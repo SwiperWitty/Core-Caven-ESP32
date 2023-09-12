@@ -110,7 +110,7 @@ ____
 
 #### 说明附页
 
-[1]CH343掉大坑（2023.9.10）。
+##### [1]CH343掉大坑（2023.9.10）
 
 问题说明：ch343在连接**电脑串口软件**时，RTS（芯片复位脚RST）会给一个复位脉冲1->0->1，DTR（启动位置脚BOOT0/IO0）会变成0，如果是MCU那就没错（MCU的BOOT0 = 0是flash启动），但是ESP32就歇逼了（ESP32的IO = 0是烧入模式），那就出大问题。
 
@@ -140,6 +140,41 @@ but，他这个串口软件不支持数据颜色啊，esp32消息那么多，没
 
 
 
-[2]工具下载看这里
 
-![toolset](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309121139314.png)
+
+
+
+
+
+
+
+#### 菜鸡看这里
+
+##### [1]改工程名称
+
+![image-20230912212449769](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309122124809.png)
+
+
+
+如果你想给这个工程添加其他 `*.c`和`*.h`文件我建议你放在工程路径`main\driver\src`(放.c)`main\driver\inc`(放.h) 下。放了之后，请把这些文件添加到`main\CMakeLists.txt`里，参加编译，不然就是白写。
+
+![image-20230912213304558](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309122133600.png)
+
+
+
+
+
+##### [2]使用下载工具
+
+如图配置
+
+![toolset](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309122136233.png)
+
+
+
+
+
+_____
+
+它是有底线的
+

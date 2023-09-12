@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "rtc_time.h": "c",
+        "main.h": "c",
+        "items.h": "c"
+    }
+}
