@@ -7,6 +7,10 @@
 *.obj
 *.elf
 
+# build
+ESP32/hello_world/build/*
+!ESP32/hello_world/build/
+
 # Linker output
 *.ilk
 *.map
