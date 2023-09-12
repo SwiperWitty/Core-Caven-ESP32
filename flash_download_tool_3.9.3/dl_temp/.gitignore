@@ -1,9 +1,0 @@
-# Prerequisites
-*.d
-
-# Object files
-*.bin_rep
-*.bin
-*.obj
-*.elf
-
