@@ -9,6 +9,7 @@
 
 # build
 **/build/*
+!**/build
 **/dl_temp/*
 
 # Linker output
