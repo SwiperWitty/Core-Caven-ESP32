@@ -8,8 +8,7 @@
 *.elf
 
 # build
-ESP32/hello_world/build/*
-!ESP32/hello_world/build/
+#build/*
 
 # Linker output
 *.ilk
@@ -22,9 +21,9 @@ ESP32/hello_world/build/*
 
 # Libraries
 *.lib
-*.a
 *.la
 *.lo
+*.a
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -38,7 +37,6 @@ ESP32/hello_world/build/*
 *.app
 *.i*86
 *.x86_64
-*.hex
 
 # Debug files
 *.dSYM/
