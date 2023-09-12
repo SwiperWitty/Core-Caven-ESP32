@@ -3,6 +3,10 @@ ESP32 &amp; ESP32S3 &amp; more
 
 
 
+____
+
+
+
 ### Usage
 
 这里不会讲如何使用git
@@ -32,6 +36,10 @@ cd .. 				#回到工程，开始使用吧
 
 
 
+____
+
+
+
 ### CMD
 
 ~~~shell
@@ -51,12 +59,20 @@ idf.py menuconfig 		#配置菜单
 
 
 
+____
+
+
+
 ### Menu
 
 ~~~txt
 txt
 
 ~~~
+
+
+
+____
 
 
 
@@ -73,6 +89,10 @@ txt
 
 如果遇到其他问题：
 [点击这里](https://www.baidu.com/) 
+
+
+
+____
 
 
 
@@ -117,3 +137,9 @@ but，他这个串口软件不支持数据颜色啊，esp32消息那么多，没
 这样，这个坑就填上了，串口软件无法流控了。依旧可以自动下载。
 
 ![image-20230911142027388](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309111420471.png)
+
+
+
+[2]工具下载看这里
+
+![toolset](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309121139314.png)
