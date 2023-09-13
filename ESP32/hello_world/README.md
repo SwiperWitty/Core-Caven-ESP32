@@ -1,5 +1,43 @@
 # Hello World Example
 
+首先，这个文件源于乐鑫IDF 4.4.5 `Espressif\frameworks\esp-idf-v4.4.5\examples\get-started\hello_world` 
+
+
+
+其次，我简单汪两句（给小白）：
+
+拿到这个文件用vscode打开你会发现此文件头文件一片红，那是因为你没让vscode知道你参考库的位置。
+
+![image-20230913112604984](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309131128696.png)
+
+how to do it ？
+
+
+
+vscode打开工程文件夹，使用按住`ctrl` `shift` 再按 `p` ，你就会触发如图所示，接下来在这个出现的框里输入`ESP-IDF:Add vscod`，选择如图所示即可。
+
+![image-20230913112025350](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309131120428.png)
+
+
+
+此工程文件夹下的`.vscode`就会跟新，如图。
+
+![image-20230913112349704](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309131128627.png)
+
+
+
+这样你的头文件就不会报红了。
+
+![image-20230913112752519](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309131127561.png)
+
+
+
+如果还有问题，[请点击我](https://www.baidu.com/) 谢谢！
+
+_____
+
+
+
 Starts a FreeRTOS task to print "Hello World".
 
 (See the README.md file in the upper level 'examples' directory for more information about examples.)

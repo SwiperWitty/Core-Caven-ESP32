@@ -5,11 +5,7 @@
 #include <stdbool.h>
 
 
-#define ESP32_Cavend        314
-#define Cavend_versions     "E1.0.0.01"
 
-/*      ---     */
-#define Board_Name      ESP32_Cavend
 
 
 
