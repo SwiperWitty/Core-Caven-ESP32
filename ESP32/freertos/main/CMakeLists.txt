@@ -9,8 +9,10 @@
 set(srcs    
     "User_app/main.c"           # [app_main] 程序入口所在
 
+    # "driver/src/default.c"
+    "driver/src/information.c"
     "driver/src/rtc_time.c"
-    "driver/src/default.c"
+    "driver/src/Custom_gpio.c"
 )
 
 # [*.c]文件合集 + [*.h]头文件

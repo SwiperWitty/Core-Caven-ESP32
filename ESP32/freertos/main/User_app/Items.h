@@ -29,6 +29,7 @@
 
                         /*  基本外设就能实现的功能    */
 // nc
+#define Exist_GPIO 
 
                         /*  只需要加上逻辑才能的功能    */
 // #define Exist_LCD

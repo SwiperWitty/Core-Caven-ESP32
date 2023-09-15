@@ -1,6 +1,16 @@
 {
     "idf.adapterTargetName": "esp32",
     "files.associations": {
-        "main.h": "c"
-    }
+        "main.h": "c",
+        "bitset": "c",
+        "set": "c",
+        "gpio.h": "c",
+        "items.h": "c",
+        "rtc_time.h": "c",
+        "information.h": "c",
+        "random": "c",
+        "*.tcc": "c"
+    },
+    "idf.portWin": "COM20",
+    "idf.flashType": "UART"
 }

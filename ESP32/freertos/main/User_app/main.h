@@ -13,6 +13,8 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 
+#include"information.h"
+
 #if (Board_Name == ESP32_Cavend)
     #include"Items.h"
 #elif (Board_Name == EY1001)
@@ -22,6 +24,9 @@
 
 #ifdef Exist_RTC_Clock
     #include"rtc_time.h"
+#endif 
+#ifdef Exist_GPIO
+    #include"Custom_gpio.h"
 #endif 
 
 
