@@ -174,63 +174,7 @@ void app_main(void)
 
 }
 
-char image[36][36];     //y x 
 
-#define ROUND_OFF(X)    (int)((X) + 0.5)
-
-char coordinate_handle(int x0,int y0,int x1,int y1)
-{
-    float diff_x = (x1 - x0),diff_y = (y1 - y0);
-    float k = diff_y / diff_x;
-    float b = y0 - k * x0;
-    float y = 0;
-    float temp = 1.20;
-    int target = 0;
-    printf("y = %f * x + (%f) \n",k,b);
-    printf("test : %f -> %d ; %f -> %d  \n",temp,(int)(temp),temp+0.5,(int)(temp+0.5));
-    printf("test ROUND_OFF : %f -> %d ; %f -> %d  \r\n \n",temp,ROUND_OFF(temp),temp+0.5,ROUND_OFF(temp+0.5));
-    for (int i = x0; i <= x1; i++)
-    {
-        temp = i;
-        y = k * temp + b;
-        target = ROUND_OFF(y);
-        image[target][i] = 1;
-        printf("ROUND_OFF %f -> %d \n",y,target);
-    }
-
-    return target;
-}
-
-void coordinate_show (int x_len,int y_len)
-{
-    int run_y = y_len - 1;
-    printf("  y \n");
-    for (int i = run_y; i >= 0; i--)
-    {
-        printf("%2d|",i);
-        for(int j = 1;j < (x_len-1);j++)
-        {
-            if(image[i][j] == 1)
-            {
-                printf(" .");
-            }
-            else
-            {
-                printf("  ");
-            }
-        }
-        printf(" \n");
-    }
-
-    {printf("  ");}
-    for (int i = 0; i < x_len; i++)
-    {printf("¯¯");}printf(" x\n");
-
-    {printf(" ");}
-    for (int i = 0; i < x_len; i++)
-    {printf("%2d",i);}printf(" \n");
-    
-}
 
 void Main_Init (void)
 {
@@ -240,9 +184,9 @@ void Main_Init (void)
     information_init ();                /* 打印初始化信息 */
     rtc_time_init (TURE);               /* 外置RTC时钟 */
     Custom_gpio_init (TURE);            /* 简单的外设GPIO */
-    memset(image,0,sizeof(image));
-    coordinate_handle(0,0,18,18);
-    coordinate_show (26,26);
+    
+    draw_coordinate_line_handle(0,0,18,18);
+    draw_coordinate_show (26,26);
     // while(1);
     LED_Set (LED_R,TURE);
     LED_Set (LED_B,TURE);

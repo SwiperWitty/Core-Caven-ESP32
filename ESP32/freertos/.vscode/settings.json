@@ -9,7 +9,8 @@
         "rtc_time.h": "c",
         "information.h": "c",
         "random": "c",
-        "*.tcc": "c"
+        "*.tcc": "c",
+        "default.h": "c"
     },
     "idf.portWin": "COM20",
     "idf.flashType": "UART"

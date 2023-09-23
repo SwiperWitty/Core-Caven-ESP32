@@ -152,11 +152,21 @@ but，他这个串口软件不支持数据颜色啊，esp32消息那么多，没
 
 ##### [1]改工程名称
 
+其实你改`CMakeLists.txt`里面的就行了
+
 ![image-20230912212449769](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309122124809.png)
 
 
 
-如果你想给这个工程添加其他 `*.c`和`*.h`文件我建议你放在工程路径`main\driver\src`(放.c)`main\driver\inc`(放.h) 下。放了之后，请把这些文件添加到`main\CMakeLists.txt`里，参加编译，不然就是白写。
+##### [2]交叉编译配置（极度重要）
+
+(这里的`CMakeLists.txt`，跟**[1]改工程名称**提到的不是同一个`CMakeLists.txt`；交叉编译的`CMakeLists.txt`，在**main文件** )
+
+你写的所有`.c文件`，都需要加入 set(srcs )里面，不然不会参与工程编译。
+
+`.h文件`则只需要让它的文件夹名出现在 idf_component_register()里面就行了。
+
+->如果你想给这个工程添加其他 `*.c`和`*.h`文件我建议你放在工程路径`main\driver\src`(放.c)`main\driver\inc`(放.h) 下。放了之后，请把这些文件添加到`main\CMakeLists.txt`里，参加编译，不然就是白写。
 
 ![image-20230912213304558](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202309122133600.png)
 
@@ -164,7 +174,7 @@ but，他这个串口软件不支持数据颜色啊，esp32消息那么多，没
 
 
 
-##### [2]使用下载工具
+##### [3]使用下载工具
 
 如图配置
 

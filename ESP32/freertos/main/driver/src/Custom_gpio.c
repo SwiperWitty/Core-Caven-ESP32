@@ -89,7 +89,7 @@ int LED_Set (char n,int set)
 
     #endif
 
-    ESP_LOGI(TAG,"led set %d : %d  (%d) ",n,set,retval);
+    ESP_LOGI(TAG,"led (%d) set : (%d) retval (%d) ",n,set,retval);
 #endif 
     return retval;
 }
