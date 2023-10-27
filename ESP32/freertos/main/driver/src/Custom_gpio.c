@@ -94,4 +94,20 @@ int LED_Set (char n,int set)
     return retval;
 }
 
+void test_led_task(void *pvParam)
+{
+    int num = 0;
+    while (1)
+    {
+        LED_Set(LED_R, TURE);
+        LED_Set(LED_B, TURE);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        LED_Set(LED_R, 0);
+        LED_Set(LED_B, 0);
+        vTaskDelay(600 / portTICK_PERIOD_MS);
+        ESP_LOGI("test_led_task FUN", "\n ");
+    }
+    vTaskDelete(NULL);          /*  基本不用退出 */ 
+}
 
