@@ -10,7 +10,12 @@
         "information.h": "c",
         "random": "c",
         "*.tcc": "c",
-        "default.h": "c"
+        "default.h": "c",
+        "custom_gpio.h": "c",
+        "precompiling_define.h": "c",
+        "sys_typedef.h": "c",
+        "lcd.h": "c",
+        "lcdfont.h": "c"
     },
     "idf.portWin": "COM20",
     "idf.flashType": "UART"

@@ -1,8 +1,8 @@
 #ifndef _SYS_TYPEDEF__H_
 #define _SYS_TYPEDEF__H_
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "stdint.h"
+#include "stdbool.h"
 
 
 

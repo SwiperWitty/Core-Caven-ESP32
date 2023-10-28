@@ -13,6 +13,7 @@ set(srcs
     "driver/src/information.c"
     "driver/src/rtc_time.c"
     "driver/src/Custom_gpio.c"
+    "driver/src/lcd.c"
     "driver/src/draw.c"
 )
 

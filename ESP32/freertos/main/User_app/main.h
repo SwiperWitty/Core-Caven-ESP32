@@ -13,7 +13,14 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 
-#include"information.h"
+#include "esp_bt.h"
+#include "esp_gap_ble_api.h"
+#include "esp_gatts_api.h"
+#include "esp_bt_defs.h"
+#include "esp_bt_main.h"
+// #include "ble50_sec_gatts_demo.h"
+
+#include "information.h"
 
 #if (Board_Name == ESP32_Cavend)
     #include"Items.h"
@@ -28,9 +35,39 @@
 #ifdef Exist_GPIO
     #include"Custom_gpio.h"
 #endif 
+#ifdef Exist_LCD
+    #include"lcd.h"
+#endif 
 
 #include"draw.h"
 
 
+#define GATTS_TABLE_TAG "SEC_GATTS_DEMO"
+#define HEART_PROFILE_NUM                         1
+#define HEART_PROFILE_APP_IDX                     0
+#define ESP_HEART_RATE_APP_ID                     0x55
+#define HEART_RATE_SVC_INST_ID                    0
+#define EXT_ADV_HANDLE                            0
+#define NUM_EXT_ADV_SET                           1
+#define EXT_ADV_DURATION                          0
+#define EXT_ADV_MAX_EVENTS                        0
+
+#define GATTS_DEMO_CHAR_VAL_LEN_MAX               0x40
+/* Attributes State Machine */
+enum
+{
+    IDX_SVC,
+    IDX_CHAR_A,
+    IDX_CHAR_VAL_A,
+    IDX_CHAR_CFG_A,
+
+    IDX_CHAR_B,
+    IDX_CHAR_VAL_B,
+
+    IDX_CHAR_C,
+    IDX_CHAR_VAL_C,
+
+    HRS_IDX_NB,
+};
 
 #endif // !_MAIN__H_

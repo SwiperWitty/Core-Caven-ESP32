@@ -3,7 +3,7 @@
 
 /*  
     this is Precompiling_define.h  feil    
-    最底层的存在，几乎根 [Items.h]文件同级
+    最底层的存在，几乎跟 [Items.h]文件同级
 */
 
 #define ESP32_Cavend        314
