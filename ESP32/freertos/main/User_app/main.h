@@ -40,7 +40,7 @@
 #endif 
 
 #include"draw.h"
-
+#include "gxwl_lg.h"
 
 #define GATTS_TABLE_TAG "SEC_GATTS_DEMO"
 #define HEART_PROFILE_NUM                         1

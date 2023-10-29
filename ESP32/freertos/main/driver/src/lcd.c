@@ -1,10 +1,10 @@
 #include "lcd.h"
-#include "lcdfont.h" //字库
+#include "lcdfont.h" /* 字库	*/
 
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
-U16 BACK_COLOR = BLUE; // 背景色
+U16 BACK_COLOR = BLACK; /* 背景色	*/
 char LCD_HORIZONTAL = USE_HORIZONTAL;
 
 #ifdef Exist_LCD
@@ -76,8 +76,8 @@ int SPI_Start_Init(int Set)
 			.quadhd_io_num = -1,
 			.max_transfer_sz = (16 * 320 * 2 + 8)};
 		spi_device_interface_config_t devcfg = {
-			.clock_speed_hz = 2 * 1000 * 1000, // Clock out at 26 MHz
-			.mode = 2,							// SPI mode 0-3
+			.clock_speed_hz = 26 * 1000 * 1000,	// Clock out at 26 MHz
+			.mode = 3,							// SPI mode 0-3
 			.spics_io_num = PIN_LCD_CS,			// CS pin
 			.queue_size = 7,					// We want to be able to queue 7 transactions at a time
 		};

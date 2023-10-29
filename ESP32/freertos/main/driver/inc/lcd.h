@@ -5,15 +5,16 @@
 #include "Caven_Type.h"
 
 /*
-        【Mode】      ————C语言环境即可运行
-    SDK->Items->GPIO(Exist_GPIO)->BASE->
-                                         \\
-                                          -->[LCD]->MODE
-                                         //
-                    C(Lib)->Caven->API->
+    ESP32用的lcd驱动，使用硬件spi。
+    Logs:
+    -调通eps32驱动st7789v的1.3寸 240 * 240屏幕   --2023.10.29
+    还需要完成：
+    -高速刷新 
+    -自动完成D/C命令 
+    -等
 */
 
-#define LCD_HOST    HSPI_HOST
+
 
 #define PIN_LCD_MOSI 16 
 #define PIN_LCD_MISO (-1)     /* -1 是不使用	*/
@@ -24,6 +25,9 @@
 #define PIN_LCD_RST  5
 #define PIN_LCD_BCKL NULL   /* 直接接到vdd */
 
+#define LCD_HOST    HSPI_HOST
+
+/*  LCD config  */
 #define USE_HORIZONTAL 0 // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
 #define LCD_W 240        // X MAX 240
 #define LCD_H 240        // Y MAX 240

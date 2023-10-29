@@ -407,8 +407,8 @@ void Main_Init(void)
 
     draw_coordinate_line_handle(0, 0, 18, 18);
     draw_coordinate_show(26, 26);
-    LCD_Show_String(0,0,"123456", WHITE, BLACK, 16);
-
+    // LCD_Show_String(0,0,"123456", WHITE, BLACK, 16);
+    LCD_Show_Picture(0, 0, 240, 240, gImage_gxwl_lg);
 
     // esp_err_t ret;
     // // Initialize NVS.
