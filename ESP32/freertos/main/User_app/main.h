@@ -13,11 +13,11 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 
-#include "esp_bt.h"
-#include "esp_gap_ble_api.h"
-#include "esp_gatts_api.h"
-#include "esp_bt_defs.h"
-#include "esp_bt_main.h"
+// #include "esp_bt.h"
+// #include "esp_gap_ble_api.h"
+// #include "esp_gatts_api.h"
+// #include "esp_bt_defs.h"
+// #include "esp_bt_main.h"
 // #include "ble50_sec_gatts_demo.h"
 
 #include "information.h"
@@ -40,7 +40,9 @@
 #endif 
 
 #include"draw.h"
-#include "gxwl_lg.h"
+
+#define CORE_ZERO   0
+#define CORE_ONE    1
 
 #define GATTS_TABLE_TAG "SEC_GATTS_DEMO"
 #define HEART_PROFILE_NUM                         1

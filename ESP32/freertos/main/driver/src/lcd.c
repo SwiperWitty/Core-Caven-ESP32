@@ -4,6 +4,8 @@
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
+#include "gxwl_lg.h"        // 
+
 U16 BACK_COLOR = BLACK; /* 背景色	*/
 char LCD_HORIZONTAL = USE_HORIZONTAL;
 
@@ -158,6 +160,7 @@ void LCD_WR_CMD(U8 dat)
 	LCD_Writ_Bus(dat);
 	LCD_DC_H(); // 写数据	预备
 	SPI_CS_Set(1, DISABLE);
+	
 }
 
 /******************************************************************************
@@ -602,11 +605,11 @@ void LCD_Show_Chinese(U16 x, U16 y, char *s, U16 fc, U16 bc, char sizey, char mo
 
 /******************************************************************************
 	  函数说明：显示字符串
-	  入口数据：x,y显示坐标
+	  入口数据：x(0-29),y(0-14)显示坐标
 				*p 要显示的字符串
-				fc 字的颜色
-				bc 字的背景色
-				sizey 字号
+				fc 字的颜色 BLUE
+				bc 字的背景色 BLACK
+				sizey (16/24/32/)字号
 				mode:  0非叠加模式  1叠加模式
 	  返回值：  无
 ******************************************************************************/
@@ -616,13 +619,13 @@ void LCD_Show_String(U16 x, U16 y, const char *p, U16 fc, U16 bc, char sizey)
 	{
 		x *= (sizey / 2);
 		y *= (sizey);
-		if (x > LCD_W)
+		if (x >= LCD_W)
 		{
-			x = LCD_W;
+			x = (LCD_W - (sizey / 2));
 		}
-		if (y > LCD_H)
+		if (y >= LCD_H)
 		{
-			y = LCD_W;
+			y = (LCD_H - sizey);
 		}
 	}
 	else
@@ -667,7 +670,7 @@ static void LCD_Delay(int time)
 {
 	for (int i = 0; i < time; i++)
 	{
-		vTaskDelay(1 / portTICK_RATE_MS);
+		vTaskDelay(pdMS_TO_TICKS(1));
 	}
 }
 #endif
@@ -781,4 +784,37 @@ void LCD_Init(int Set)
 	LCD_Delay(100);
 	LCD_Fill(0, 0, LCD_W, LCD_H, BACK_COLOR);
 #endif
+}
+
+void refresh_lcd_task (void *pvParam)
+{
+	static int refresh_ready = 0;
+	char *array_buff;
+	array_buff = malloc(300);
+	memset(array_buff,0,100);
+	memcpy(array_buff,"this is num :    ",strlen("this is num :    "));
+
+	LCD_Init(TURE);
+	// LCD_Show_Picture(0, 0, 240, 240, gImage_gxwl_lg);
+		
+	esp_err_t esp_wdg;
+	while (1)
+	{
+		// sprintf(array_buff,"refresh:%5d ",refresh_ready++);
+		refresh_ready ++;
+		if(refresh_ready > 100)
+			refresh_ready = 0;
+		if (refresh_ready % 2)
+		{
+			array_buff[14] = '1';
+		}
+		else
+		{
+			array_buff[14] = '0';
+		}
+		
+		LCD_Show_String(0, 14, array_buff, BLUE, WHITE, 16);
+		LCD_Delay(10);
+	}
+	free(array_buff);
 }

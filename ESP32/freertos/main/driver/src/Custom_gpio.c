@@ -58,7 +58,7 @@ int Custom_gpio_init(int set)
 
 int LED_Set(char n, int set)
 {
-    int retval = 0;
+    int retval = ESP_OK;
 #ifdef Exist_GPIO
 
 #if (Board_Name == ESP32_Cavend)
@@ -95,9 +95,10 @@ int LED_Set(char n, int set)
         }
         break;
     default:
+        retval = -1;
         break;
     }
-    retval = ESP_OK;
+    
 #elif (Board_Name == EY1001)
 
 #endif
@@ -122,6 +123,7 @@ void test_led_task(void *pvParam)
         LED_Set(LED_B, 0);
         vTaskDelay(600 / portTICK_PERIOD_MS);
         ESP_LOGI("test_led_task FUN", "\n ");
+        // esp_task_wdt_reset();
     }
     vTaskDelete(NULL); /*  基本不用退出 */
 }

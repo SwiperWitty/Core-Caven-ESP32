@@ -7,6 +7,7 @@
 #include "freertos/event_groups.h"
 #include "freertos/queue.h"
 
+#include "esp_task_wdt.h" 
 #include "esp_err.h"
 #include "esp_log.h"
 #include "nvs_flash.h"

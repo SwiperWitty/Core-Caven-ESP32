@@ -4,6 +4,8 @@
 #include "Items.h"
 #include "Caven_Type.h"
 
+
+
 /*
     ESP32用的lcd驱动，使用硬件spi。
     Logs:
@@ -91,5 +93,6 @@ int LCD_Set_HORIZONTAL(char set);
 
 void LCD_Init(int SET); // LCD初始化
 
+void refresh_lcd_task (void *pvParam);
 
 #endif
