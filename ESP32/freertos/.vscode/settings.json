@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "main.h": "c",
-        "lcd.h": "c"
+        "lcd.h": "c",
+        "spi_master.h": "c"
     },
     "idf.adapterTargetName": "esp32"
 }

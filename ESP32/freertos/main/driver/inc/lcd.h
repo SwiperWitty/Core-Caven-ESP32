@@ -28,11 +28,13 @@
 #define PIN_LCD_BCKL NULL   /* 直接接到vdd */
 
 #define LCD_HOST    HSPI_HOST
+#define LCD_SPI_BUFF_MAX   300
 
 /*  LCD config  */
 #define USE_HORIZONTAL 0 // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
 #define LCD_W 240        // X MAX 240
 #define LCD_H 240        // Y MAX 240
+#define LCD_PICSIZE 115200
 
 #define LCD_CMD 0  //写命令
 #define LCD_DATA 1 //写数据
@@ -40,28 +42,39 @@
 extern U16	BACK_COLOR; //背景色
 extern char LCD_HORIZONTAL; //设置横屏或者竖屏
 
+typedef struct
+{
+    char flag;
+    char refresh;
+    char direction;
+    u8 str_place[2];      
+    u8 *string; 
+    u8 pic_place[4]; 
+    // u8 pic[LCD_PICSIZE];
+}LCD_data_Type;
+
 //画笔颜色
-#define WHITE         	 0xFFFF
-#define BLACK         	 0x0000	  
-#define BLUE           	 0x001F  
-#define BRED             0XF81F
-#define GRED 			 0XFFE0
-#define GBLUE			 0X07FF
-#define RED           	 0xF800
-#define MAGENTA       	 0xF81F
-#define GREEN         	 0x07E0
-#define CYAN          	 0x7FFF
-#define YELLOW        	 0xFFE0
-#define BROWN 			 0XBC40 //棕色
-#define BRRED 			 0XFC07 //棕红色
-#define GRAY  			 0X8430 //灰色
-#define DARKBLUE      	 0X01CF	//深蓝色
-#define LIGHTBLUE      	 0X7D7C	//浅蓝色
-#define GRAYBLUE       	 0X5458 //灰蓝色
-#define LIGHTGREEN     	 0X841F //浅绿色
-#define LGRAY 			 0XC618 //浅灰色(PANNEL),窗体背景色
-#define LGRAYBLUE        0XA651 //浅灰蓝色(中间层颜色)
-#define LBBLUE           0X2B12 //浅棕蓝色(选择条目的反色)
+#define LCD_WHITE         	 0xFFFF
+#define LCD_BLACK         	 0x0000	  
+#define LCD_BLUE           	 0x001F  
+#define LCD_BRED             0XF81F
+#define LCD_GRED 			 0XFFE0
+#define LCD_GBLUE			 0X07FF
+#define LCD_RED           	 0xF800
+#define LCD_MAGENTA       	 0xF81F
+#define LCD_GREEN         	 0x07E0
+#define LCD_CYAN          	 0x7FFF
+#define LCD_YELLOW        	 0xFFE0
+#define LCD_BROWN 			 0XBC40 //棕色
+#define LCD_BRRED 			 0XFC07 //棕红色
+#define LCD_GRAY  			 0X8430 //灰色
+#define LCD_DARKBLUE      	 0X01CF	//深蓝色
+#define LCD_LIGHTBLUE      	 0X7D7C	//浅蓝色
+#define LCD_GRAYBLUE       	 0X5458 //灰蓝色
+#define LCD_LIGHTGREEN     	 0X841F //浅绿色
+#define LCD_LGRAY 			 0XC618 //浅灰色(PANNEL),窗体背景色
+#define LCD_LGRAYBLUE        0XA651 //浅灰蓝色(中间层颜色)
+#define LCD_LBBLUE           0X2B12 //浅棕蓝色(选择条目的反色)
 
 struct LCD_
 {

@@ -103,7 +103,7 @@ int LED_Set(char n, int set)
 
 #endif
 
-    ESP_LOGI(TAG, "led (%d) set : (%d) retval (%d) ", n, set, retval);
+    // ESP_LOGI(TAG, "led (%d) set : (%d) retval (%d) ", n, set, retval);
 #endif
     return retval;
 }
@@ -111,19 +111,35 @@ int LED_Set(char n, int set)
 void test_led_task(void *pvParam)
 {
     int num = 0;
+    Custom_gpio_init(TURE); /* 简单的外设GPIO */
+    TickType_t xLast_Time = xTaskGetTickCount();
+    TickType_t absolute_Time = 200;
     while (1)
     {
-        LED_Set(LED_T, TURE);
-        LED_Set(LED_R, TURE);
-        LED_Set(LED_B, TURE);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-        LED_Set(LED_T, 0);
-        LED_Set(LED_R, 0);
-        LED_Set(LED_B, 0);
-        vTaskDelay(600 / portTICK_PERIOD_MS);
+        num++;
+        if (num % 2)
+        {
+            LED_Set(LED_T, TURE);
+            LED_Set(LED_R, TURE);
+            LED_Set(LED_B, TURE);
+        }
+        else
+        {
+            LED_Set(LED_T, 0);
+            LED_Set(LED_R, 0);
+            LED_Set(LED_B, 0);
+        }
+        
         ESP_LOGI("test_led_task FUN", "\n ");
-        // esp_task_wdt_reset();
+        if (num > 5)
+        {
+            num = 0;
+            // while(1)
+            // {
+            //     vTaskDelay(600 / portTICK_PERIOD_MS);
+            // }
+        }
+        vTaskDelay(absolute_Time);
     }
     vTaskDelete(NULL); /*  基本不用退出 */
 }

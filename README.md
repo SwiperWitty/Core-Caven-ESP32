@@ -38,22 +38,36 @@ cd .. 				#回到工程，开始使用吧
 
 ____
 
+### Linux环境
 
+~~~shell
+. $HOME/esp/esp-idf/export.sh	#给当前的终端加入环境变量（就可以使用idf） 
+ls -l /dev/ttyUSB*				#查看当前电脑存在的串口
+
+~~~
+
+
+
+____
 
 ### CMD
 
 ~~~shell
 idf.py set-target espxx #设置目标芯片
 
+idf.py menuconfig 		#配置菜单
+
 idf.py clean
 idf.py fullclean 		#清除之前的编译
 
 idf.py build 			#编译
 
+#windows
 idf.py -p comx monitor 	#打开串口监视器
 idf.py -p comx flash 	#向串口烧录固件
 idf.py -p comx flash monitor
-idf.py menuconfig 		#配置菜单
+#linux
+idf.py -p /dev/ttyUSB0 flash monitor
 
 ~~~
 

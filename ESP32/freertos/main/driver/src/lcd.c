@@ -6,9 +6,9 @@
 
 #include "gxwl_lg.h"        // 
 
-U16 BACK_COLOR = BLACK; /* 背景色	*/
+U16 BACK_COLOR = LCD_RED; /* 背景色	LCD_BLACK */
 char LCD_HORIZONTAL = USE_HORIZONTAL;
-
+spi_device_handle_t LCD_spi = {0};
 #ifdef Exist_LCD
 
 void SPI_CS_Set(char channel, int Set)
@@ -44,6 +44,27 @@ void LCD_DC_L(void)
 	gpio_set_level(PIN_LCD_DC, 0);
 }
 
+void preposition_DC_Fun(spi_transaction_t *t)
+{
+	int dc = (int)t->user;
+	if (dc)
+	{
+		LCD_DC_H();
+	}
+	else
+	{
+		LCD_DC_L();
+	}
+}
+
+static void LCD_Delay(int time)
+{
+	for (int i = 0; i < time; i++)
+	{
+		vTaskDelay(pdMS_TO_TICKS(1));
+	}
+}
+
 void LCD_GPIO_Init(int Set)
 {
 	if (Set)
@@ -62,8 +83,6 @@ void LCD_GPIO_Init(int Set)
 	}
 }
 
-spi_device_handle_t LCD_spi;
-
 int SPI_Start_Init(int Set)
 {
 	int retval = 0;
@@ -78,21 +97,56 @@ int SPI_Start_Init(int Set)
 			.quadhd_io_num = -1,
 			.max_transfer_sz = (16 * 320 * 2 + 8)};
 		spi_device_interface_config_t devcfg = {
-			.clock_speed_hz = 26 * 1000 * 1000,	// Clock out at 26 MHz
+			.clock_speed_hz = 24 * 1000 * 1000,	// Clock out at 26 MHz
 			.mode = 3,							// SPI mode 0-3
 			.spics_io_num = PIN_LCD_CS,			// CS pin
 			.queue_size = 7,					// We want to be able to queue 7 transactions at a time
+			.pre_cb = preposition_DC_Fun,		// 传输开始时的回调函数
 		};
 		// Initialize the SPI bus
 		ret = spi_bus_initialize(HSPI_HOST, &buscfg, SPI_DMA_CH_AUTO);
 		ESP_ERROR_CHECK(ret);
 		// Attach the LCD to the SPI bus
 		ret = spi_bus_add_device(HSPI_HOST, &devcfg, &LCD_spi);
+		ESP_ERROR_CHECK(ret);
 	}
 	else
 	{
 	}
 	return retval;
+}
+
+void EPS_SPI_SendData(const u8 *data, int num,int cmd)
+{
+	esp_err_t ret;
+	spi_transaction_t t;
+	int send_size = 8 * num;
+
+	if (data == NULL)
+	{
+		return;
+	}
+	
+	memset(&t, 0, sizeof(t)); // Zero out the transaction
+	if (cmd)
+	{
+		t.user = (void *) 1;
+	}
+	else
+	{
+		t.user = (void *) 0;
+	}
+	
+	t.length = send_size;							// Len is in bytes, transaction length is in bits.
+	t.tx_buffer = data;								// Data
+	ret = spi_device_polling_transmit(LCD_spi, &t); // Transmit!
+	// ret = spi_device_transmit(LCD_spi, &t);			// Transmit!
+	
+	assert(ret==ESP_OK);
+	if (ret == ESP_OK)
+	{
+		// printf("spi send run : %d \n",num);
+	}
 }
 
 void LCD_Writ_Bus(U8 data)
@@ -118,19 +172,36 @@ void LCD_Writ_String(const void *DATA, int num)
 	  入口数据：dat 写入的数据
 	  返回值：  无
 ******************************************************************************/
-void LCD_WR_DATA8(U8 dat)
+void LCD_WR_DATA8(U8 data)
 {
+	u8 spi_tx_buff = data;
+
 	SPI_CS_Set(1, ENABLE);
-	LCD_Writ_Bus(dat);
+
+	EPS_SPI_SendData(&spi_tx_buff, 1, LCD_DATA);
+
 	SPI_CS_Set(1, DISABLE);
 }
 
+/*
+*大端先发 [h l]
+*/
 void LCD_WR_DATA(U16 data)
 {
+	u8 spi_tx_buff[2];
+	spi_tx_buff[0] = (data >> 8) & 0xff;
+	spi_tx_buff[1] = data & 0xff;
+
 	SPI_CS_Set(1, ENABLE);
-	LCD_Writ_Bus(data >> 8);
-	LCD_Writ_Bus(data & 0X00FF);
+
+	EPS_SPI_SendData(spi_tx_buff, 2,LCD_DATA);
+
 	SPI_CS_Set(1, DISABLE);
+
+	// SPI_CS_Set(1, ENABLE);
+	// LCD_Writ_Bus(data >> 8);
+	// LCD_Writ_Bus(data & 0X00FF);
+	// SPI_CS_Set(1, DISABLE);
 }
 
 /******************************************************************************
@@ -138,14 +209,39 @@ void LCD_WR_DATA(U16 data)
 	  入口数据：dat 写入的数据
 	  返回值：  无
 ******************************************************************************/
-void LCD_Send_Data(U8 *Data, int num)
+void LCD_Send_Data(const U8 *data, int num)
 {
-	SPI_CS_Set(1, ENABLE);
-	for (size_t i = 0; i < num; i++)
+	int all_size = num;
+	int point_move = 0;
+	int size_data = 0;
+	u8 spi_tx_buff[LCD_SPI_BUFF_MAX];
+
+	for (int i = 0; i < all_size; i += size_data)
 	{
-		LCD_Writ_Bus(*(Data + i));
+		if((all_size - i) > LCD_SPI_BUFF_MAX)
+		{
+			size_data = LCD_SPI_BUFF_MAX;
+		}
+		else
+		{
+			size_data = all_size - i;
+		}
+		if (size_data > 0)
+		{
+			memset(spi_tx_buff,0,sizeof(spi_tx_buff));
+			memcpy(spi_tx_buff,data + point_move,size_data);
+			EPS_SPI_SendData(spi_tx_buff, size_data,LCD_DATA);
+			point_move += size_data;
+			//printf("spi send run : %d , all : %d \n",size_data,all_size);
+		}
 	}
-	SPI_CS_Set(1, DISABLE);
+
+	// SPI_CS_Set(1, ENABLE);
+	// for (size_t i = 0; i < num; i++)
+	// {
+	// 	LCD_Writ_Bus(*(data + i));
+	// }
+	// SPI_CS_Set(1, DISABLE);
 }
 
 /******************************************************************************
@@ -153,15 +249,19 @@ void LCD_Send_Data(U8 *Data, int num)
 	  入口数据：dat 写入的命令
 	  返回值：  无
 ******************************************************************************/
-void LCD_WR_CMD(U8 dat)
+void LCD_WR_CMD(U8 data)
 {
+	u8 spi_tx_buff = data;
+
 	SPI_CS_Set(1, ENABLE);
-	LCD_DC_L(); // 写命令
-	LCD_Writ_Bus(dat);
-	LCD_DC_H(); // 写数据	预备
+
+	EPS_SPI_SendData(&spi_tx_buff, 1,LCD_CMD);
+
 	SPI_CS_Set(1, DISABLE);
-	
 }
+
+#endif
+// 以上不提供到其他文件
 
 /******************************************************************************
 	  函数说明：设置起始和结束地址
@@ -212,8 +312,6 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		LCD_WR_CMD(0x2c); // 储存器写
 	}
 }
-#endif
-// 以上不提供到其他文件
 
 /******************************************************************************
 	  函数说明：在指定区域填充颜色
@@ -225,13 +323,28 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 void LCD_Fill(U16 x_sta, U16 y_sta, U16 x_end, U16 y_end, U16 color)
 {
 #ifdef Exist_LCD
-	int i = (x_end - x_sta) * (y_end - y_sta);
-	LCD_Address_Set(x_sta, y_sta, x_end - 1, y_end - 1); // 设置显示范围
-	for (; i > 0; i--)
-	{
-		LCD_WR_DATA(color);
-	}
+	u8 pic_buff[640]; 	/* 一个y 320 * 2	*/
+	u8 color_l;
+	u8 color_h;
+	u16 x_len = (x_end - x_sta);
+	u16 y_len = (y_end - y_sta);
+	int i = x_len * y_len;
 
+	color_l = 0xff & color;
+	color_h = (color >> 8) & 0xff;
+	memset(pic_buff,0,sizeof(pic_buff));
+	LCD_Address_Set(x_sta, y_sta, x_end - 1, y_end - 1); // 设置显示范围
+	
+	for (i = 0; i < y_len; i++)
+	{
+		pic_buff[2*i] = color_h;
+		pic_buff[2*i + 1] = color_l;
+	}
+	
+	for (; x_len > 0; x_len--)
+	{
+		LCD_Send_Data(pic_buff, y_len * 2);
+	}
 #endif
 }
 
@@ -652,28 +765,23 @@ void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
 #ifdef Exist_LCD
 	u16 i, j;
 	u32 k = 0;
+	int n = 0;
+	u32 temp_data;
+	u8 pic_buff[650];
 	LCD_Address_Set(x, y, (x + length - 1), (y + width - 1));
 	for (i = 0; i < length; i++)
 	{
 		for (j = 0; j < width; j++)
 		{
-			LCD_WR_DATA8(pic[k * 2]);
-			LCD_WR_DATA8(pic[k * 2 + 1]);
+			pic_buff[n++] = pic[k * 2];
+			pic_buff[n++] = pic[k * 2 + 1];
 			k++;
 		}
+		LCD_Send_Data(pic_buff,width * 2);
+		n = 0;
 	}
 #endif
 }
-
-#ifdef Exist_LCD
-static void LCD_Delay(int time)
-{
-	for (int i = 0; i < time; i++)
-	{
-		vTaskDelay(pdMS_TO_TICKS(1));
-	}
-}
-#endif
 
 void LCD_Init(int Set)
 {
@@ -789,32 +897,33 @@ void LCD_Init(int Set)
 void refresh_lcd_task (void *pvParam)
 {
 	static int refresh_ready = 0;
-	char *array_buff;
+	u8 *array_buff;
 	array_buff = malloc(300);
 	memset(array_buff,0,100);
 	memcpy(array_buff,"this is num :    ",strlen("this is num :    "));
 
+	for (int i = 0; i < 300; i++)
+	{
+		array_buff[i] = (i & 0xff);
+	}
+	
 	LCD_Init(TURE);
-	// LCD_Show_Picture(0, 0, 240, 240, gImage_gxwl_lg);
-		
-	esp_err_t esp_wdg;
+	LCD_Show_Picture(0, 0, 240, 240, gImage_gxwl_lg);
+
 	while (1)
 	{
-		// sprintf(array_buff,"refresh:%5d ",refresh_ready++);
-		refresh_ready ++;
-		if(refresh_ready > 100)
-			refresh_ready = 0;
+		refresh_ready++;
 		if (refresh_ready % 2)
 		{
-			array_buff[14] = '1';
+			LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
 		}
 		else
 		{
-			array_buff[14] = '0';
+			LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
 		}
-		
-		LCD_Show_String(0, 14, array_buff, BLUE, WHITE, 16);
-		LCD_Delay(10);
+
+		LCD_Delay(100);
+		ESP_LOGI("LCD runing "," time : %d ",refresh_ready);
 	}
 	free(array_buff);
 }
