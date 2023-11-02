@@ -58,14 +58,14 @@ void app_main(void)
     while (1)
     {
         printf("-------------------------------------------------->\n");
-#if 0
+#if 1
         vTaskList(temp_array);
         printf(" Name          state   Priority  task    num\n");
         printf("%s \n",temp_array);
 #else
-        // vTaskGetRunTimeStats(temp_array);
-        // printf("\r\n任务名       运行计数         使用率\r\n");
-        // printf("\r\n%s\r\n", temp_array);
+        vTaskGetRunTimeStats(temp_array);
+        printf("\r\n任务名       运行计数         使用率\r\n");
+        printf("\r\n%s\r\n", temp_array);
         
 #endif
         vTaskDelay(2000 / portTICK_PERIOD_MS);
