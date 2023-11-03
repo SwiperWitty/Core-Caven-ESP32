@@ -25,11 +25,9 @@
 #define PIN_LCD_RST     (42)
 #define PIN_LCD_BCKL    0 /* 直接接到vdd */
 
-#ifdef HSPI_HOST
+
 #define LCD_HOST SPI3_HOST
-#else
-#define LCD_HOST HSPI_HOST
-#endif
+
 
 #define LCD_SPI_BUFF_MAX 300
 
