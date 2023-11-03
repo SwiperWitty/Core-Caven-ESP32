@@ -19,27 +19,38 @@ int Custom_gpio_init(int set)
 #if (Board_Name == ESP32_Cavend)
     if (set)
     {
+        #if (LED_T_IO != -1)
         gpio_pad_select_gpio(LED_T_IO);
         gpio_set_direction(LED_T_IO, GPIO_MODE_OUTPUT);
+        gpio_set_level(LED_T_IO, 1);
+        #endif
 
+        #if (LED_R_IO != -1)
         gpio_pad_select_gpio(LED_R_IO);
         gpio_set_direction(LED_R_IO, GPIO_MODE_OUTPUT);
+        gpio_set_level(LED_R_IO, 1);
+        #endif
 
+        #if (LED_B_IO != -1)
         gpio_pad_select_gpio(LED_B_IO);
         gpio_set_direction(LED_B_IO, GPIO_MODE_OUTPUT);
-
-        gpio_set_level(LED_T_IO, 1);
-        gpio_set_level(LED_R_IO, 1);
         gpio_set_level(LED_B_IO, 1);
+        #endif
     }
     else
     {
+        #if (LED_T_IO != -1)
         gpio_pad_select_gpio(LED_T_IO);
         gpio_set_direction(LED_T_IO, GPIO_MODE_INPUT_OUTPUT_OD);
+        #endif
+        #if (LED_R_IO != -1)
         gpio_pad_select_gpio(LED_R_IO);
         gpio_set_direction(LED_R_IO, GPIO_MODE_INPUT_OUTPUT_OD);
+        #endif
+        #if (LED_B_IO != -1)
         gpio_pad_select_gpio(LED_B_IO);
         gpio_set_direction(LED_B_IO, GPIO_MODE_INPUT_OUTPUT_OD);
+        #endif
     }
     retval = ESP_OK;
 #elif (Board_Name == EY1001)

@@ -4,7 +4,8 @@
         "lcd.h": "c",
         "spi_master.h": "c",
         "cat_lcd_1_14.h": "c",
-        "yi_lcd_1_14.h": "c"
+        "yi_lcd_1_14.h": "c",
+        "lcd_st7789.h": "c"
     },
     "idf.adapterTargetName": "esp32s3"
 }

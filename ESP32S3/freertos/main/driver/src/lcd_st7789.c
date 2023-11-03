@@ -1,4 +1,4 @@
-#include "lcd.h"
+#include "lcd_st7789.h"
 #include "lcdfont.h" /* 字库	*/
 
 #include "driver/spi_master.h"
@@ -27,7 +27,6 @@ void SPI_CS_Set(char channel, int Set)
 }
 #endif
 
-#if (PIN_LCD_RST != 0)
 void LCD_RES_H(void) /* 这么写是为了兼容宏 */
 {
 	gpio_set_level(PIN_LCD_RST, 1);
@@ -37,7 +36,6 @@ void LCD_RES_L(void)
 {
 	gpio_set_level(PIN_LCD_RST, 0);
 }
-#endif
 
 void LCD_DC_H(void)
 {
@@ -808,17 +806,11 @@ void LCD_Init(int Set)
 	LCD_WR_DATA8(0x00);
 
 	LCD_Delay(300); // 等待电路复位完成
-#if (PIN_LCD_RST != 0)
+
 	LCD_RES_L();
 	LCD_Delay(200); //
 	LCD_RES_H();
-	LCD_Delay(200);
-#else
-		LCD_WR_CMD(0x11); // Sleep out
-		LCD_Delay(200);
-#endif
-	LCD_WR_CMD(0x36);
-	LCD_Delay(120);
+	LCD_Delay(100);
 
 	switch (LCD_HORIZONTAL)
 	{
