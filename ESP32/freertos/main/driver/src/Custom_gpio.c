@@ -130,7 +130,7 @@ void test_led_task(void *pvParam)
             LED_Set(LED_B, 0);
         }
         
-        ESP_LOGI("test_led_task FUN", "\n ");
+        // ESP_LOGI("test_led_task FUN", "\n ");
         if (num > 5)
         {
             num = 0;
@@ -139,7 +139,7 @@ void test_led_task(void *pvParam)
             //     vTaskDelay(600 / portTICK_PERIOD_MS);
             // }
         }
-        vTaskDelay(absolute_Time);
+        vTaskDelay(pdMS_TO_TICKS(absolute_Time));
     }
     vTaskDelete(NULL); /*  基本不用退出 */
 }

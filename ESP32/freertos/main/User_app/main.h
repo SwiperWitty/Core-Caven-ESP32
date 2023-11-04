@@ -36,7 +36,7 @@
     #include"Custom_gpio.h"
 #endif 
 #ifdef Exist_LCD
-    #include"lcd.h"
+    #include"lcd_st7789.h"
 #endif 
 
 #include"draw.h"
