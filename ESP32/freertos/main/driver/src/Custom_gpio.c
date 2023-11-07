@@ -22,24 +22,12 @@ int Custom_gpio_init(int set)
         gpio_pad_select_gpio(LED_T_IO);
         gpio_set_direction(LED_T_IO, GPIO_MODE_OUTPUT);
 
-        gpio_pad_select_gpio(LED_R_IO);
-        gpio_set_direction(LED_R_IO, GPIO_MODE_OUTPUT);
-
-        gpio_pad_select_gpio(LED_B_IO);
-        gpio_set_direction(LED_B_IO, GPIO_MODE_OUTPUT);
-
-        gpio_set_level(LED_T_IO, 1);
-        gpio_set_level(LED_R_IO, 1);
-        gpio_set_level(LED_B_IO, 1);
+        gpio_set_level(LED_T_IO, 0);
     }
     else
     {
         gpio_pad_select_gpio(LED_T_IO);
         gpio_set_direction(LED_T_IO, GPIO_MODE_INPUT_OUTPUT_OD);
-        gpio_pad_select_gpio(LED_R_IO);
-        gpio_set_direction(LED_R_IO, GPIO_MODE_INPUT_OUTPUT_OD);
-        gpio_pad_select_gpio(LED_B_IO);
-        gpio_set_direction(LED_B_IO, GPIO_MODE_INPUT_OUTPUT_OD);
     }
     retval = ESP_OK;
 #elif (Board_Name == EY1001)
@@ -64,36 +52,25 @@ int LED_Set(char n, int set)
 #if (Board_Name == ESP32_Cavend)
     switch (n)
     {
-    case 0:
-        if (set)
-        {
-            gpio_set_level(LED_T_IO, 0);
-        }
-        else
-        {
-            gpio_set_level(LED_T_IO, 1);
-        }
-        break;
     case 1:
         if (set)
         {
-            gpio_set_level(LED_R_IO, 0);
+            gpio_set_level(LED_T_IO, 1);        // high open 
         }
         else
         {
-            gpio_set_level(LED_R_IO, 1);
+            gpio_set_level(LED_T_IO, 0);
         }
         break;
     case 2:
         if (set)
         {
-            gpio_set_level(LED_B_IO, 0);
         }
         else
         {
-            gpio_set_level(LED_B_IO, 1);
         }
         break;
+
     default:
         retval = -1;
         break;
@@ -120,25 +97,13 @@ void test_led_task(void *pvParam)
         if (num % 2)
         {
             LED_Set(LED_T, TURE);
-            LED_Set(LED_R, TURE);
-            LED_Set(LED_B, TURE);
         }
         else
         {
             LED_Set(LED_T, 0);
-            LED_Set(LED_R, 0);
-            LED_Set(LED_B, 0);
         }
         
         // ESP_LOGI("test_led_task FUN", "\n ");
-        if (num > 5)
-        {
-            num = 0;
-            // while(1)
-            // {
-            //     vTaskDelay(600 / portTICK_PERIOD_MS);
-            // }
-        }
         vTaskDelay(pdMS_TO_TICKS(absolute_Time));
     }
     vTaskDelete(NULL); /*  基本不用退出 */

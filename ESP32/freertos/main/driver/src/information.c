@@ -34,6 +34,7 @@ int information_init (void)
 
     printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
     printf("User revision is %s \n", soft_versions);
+    printf("FreeRTOS HZ is %d \n \n", CONFIG_FREERTOS_HZ);
     return retval;
 }
 

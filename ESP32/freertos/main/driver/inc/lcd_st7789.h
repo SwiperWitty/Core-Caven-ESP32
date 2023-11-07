@@ -15,7 +15,6 @@
 */
 
 typedef enum {
-//SPI1 can be used as GPSPI only on ESP32
     LCD_type_1_14 = 0,
     LCD_type_1_30 = 1,
     LCD_type_2_40 = 2,
@@ -24,18 +23,20 @@ typedef enum {
 
 #define LCD_TYPE 1
 
-#define PIN_LCD_MOSI 16 
-#define PIN_LCD_MISO (-1)       /* -1 是不使用	*/
-#define PIN_LCD_CLK  4
-#define PIN_LCD_CS   (18)       /* 模块会直接接到vdd ,常规接p5 */
+#define PIN_LCD_MOSI    (13) 
+#define PIN_LCD_MISO    (12)        /* -1 是不使用	*/
+#define PIN_LCD_CLK     (14)
+#define PIN_LCD_CS      (-1)        /* -1 是不使用	*/
 
-#define PIN_LCD_DC   17
-#define PIN_LCD_RST  5
-#define PIN_LCD_BCKL NULL       /* 直接接到vdd */
+#define PIN_LCD_DC      (32)
+#define PIN_LCD_RST     (33)
+#define PIN_LCD_BCKL    NULL        /* 直接接到vdd */
 
-
-#define LCD_HOST SPI3_HOST
-
+#ifdef CONFIG_IDF_TARGET_ESP32
+    #define LCD_HOST    SPI2_HOST 
+#else
+    #define LCD_HOST    SPI3_HOST 
+#endif
 
 #define LCD_SPI_BUFF_MAX 300
 

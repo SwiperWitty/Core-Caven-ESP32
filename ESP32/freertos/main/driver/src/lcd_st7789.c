@@ -13,7 +13,7 @@ spi_device_handle_t LCD_spi = {0};
 
 void SPI_CS_Set(char channel, int Set)
 {
-#if (PIN_LCD_CS != 0)
+#if (PIN_LCD_CS != (-1))
 	switch (channel)
 	{
 	case 1:
@@ -23,8 +23,9 @@ void SPI_CS_Set(char channel, int Set)
 	default:
 		break;
 	}
+#endif	
 }
-#endif
+
 
 void LCD_RES_H(void) /* 这么写是为了兼容宏 */
 {
@@ -71,19 +72,19 @@ void LCD_GPIO_Init(int Set)
 {
 	if (Set)
 	{
-#if (PIN_LCD_DC != 0)
+#if (PIN_LCD_DC != (-1))
 		gpio_pad_select_gpio(PIN_LCD_DC);
 		gpio_set_direction(PIN_LCD_DC, GPIO_MODE_OUTPUT);
 		LCD_DC_H();
 #endif
 
-#if (PIN_LCD_RST != 0)
+#if (PIN_LCD_RST != (-1))
 		gpio_pad_select_gpio(PIN_LCD_RST);
 		gpio_set_direction(PIN_LCD_RST, GPIO_MODE_OUTPUT);
 		LCD_RES_L();
 #endif
 
-#if (PIN_LCD_CS != 0)
+#if (PIN_LCD_CS != (-1))
 		gpio_pad_select_gpio(PIN_LCD_CS);
 		gpio_set_direction(PIN_LCD_CS, GPIO_MODE_OUTPUT);
 		gpio_set_level(PIN_LCD_CS, 0);
