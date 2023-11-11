@@ -7,40 +7,14 @@
 
 extern LCD_data_Type ESP32_lcd_show;
 
-void test_task(void *pvParam)
-{
-    int num = 0;
-    while (1)
-    {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        num++;
-        if (num % 3)
-        {   
-            ESP_LOGI("test_task", "num (%d)", num);
-        }
-
-        if (num == 5)
-        {
-            // if (ESP32_lcd_show.flag == 0)
-            // {
-            //     ESP32_lcd_show.flag = 1;
-            //     ESP32_lcd_show.refresh = 3;
-            //     ESP32_lcd_show.flag = 0;
-            // }
-        }
-        else if (num == 10)
-        {
-            num = 0;
-        }
-    }
-}
 
 void time_prt_Callback_fun (TimerHandle_t xtime)
 {
     int time_num;
+    static int over_num = 0;
+    over_num ++;
     time_num = xTaskGetTickCount();
-    ESP_LOGI("timer prt ","run xtime");
-    ESP_LOGI("timer prt ","%d ",time_num);
+    ESP_LOGI("timer prt ","Task Tick :%d ,over_num :%d",time_num,over_num);
 }
 
 void Main_Init(void);
@@ -70,7 +44,6 @@ void app_main(void)
     free(temp_array);
 }
 
-TaskHandle_t test_taskhanlde;
 TaskHandle_t led_taskhanlde;
 TaskHandle_t lcd_taskhanlde;
 TaskHandle_t oled_taskhanlde;
@@ -79,23 +52,21 @@ TimerHandle_t pr_timerhanlde;
 
 void Build_task(void)
 {
-    test_taskhanlde = NULL;
     led_taskhanlde = NULL;
     lcd_taskhanlde = NULL;
 
-    xTaskCreatePinnedToCore(test_task, "task-[test]", 4096, NULL, 1, &test_taskhanlde, CORE_ZERO);
-    xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, 2, &led_taskhanlde, CORE_ZERO);
-    // xTaskCreatePinnedToCore(refresh_oled_task, "task-[OLED]", 4096 * 2, NULL, 0, &oled_taskhanlde, CORE_ZERO);
+    custom_uart_task_Fun();
+    xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, LED_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
+    
+    // xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, show_task_priority, &lcd_taskhanlde, CORE_ONE);
 
-    xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, 1, &lcd_taskhanlde, CORE_ONE);
-
-    pr_timerhanlde = xTimerCreate("timer-[print]",2000,pdTRUE,(void *)0,time_prt_Callback_fun);
+    pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
     if(pr_timerhanlde == NULL){
-        //error
         ESP_LOGI("Build_time","Error ");
     }else{
         xTimerStart(pr_timerhanlde,1000);
         ESP_LOGI("Build_time","secc ");
+        LED_task_run_enable (ENABLE);
     }
 }
 
@@ -105,7 +76,7 @@ void Main_Init(void)
     vTaskDelay(pdMS_TO_TICKS(100));
 
     information_init(); /* 打印初始化信息 */
-
+    // disableCore1WDT();
     draw_coordinate_line_handle(0, 0, 18, 18);
     draw_coordinate_show(26, 26);
 }

@@ -2,6 +2,7 @@
 #define _OLED__H_
 
 #include "Items.h"
+#include "sys_typedef.h"
 #include "Caven_Type.h"
 
 #define OLED_CMD  0	//写命令

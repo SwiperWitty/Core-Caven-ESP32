@@ -6,18 +6,16 @@
 
     2023.9.12   
 */
-
-#include "Precompiling_define.h"
-#include"sys_typedef.h"
+#include "Items.h"
+#include "sys_typedef.h"
+#include "Caven_Type.h"
 
 #define AT8563  1
 #define HYM8563 2
 
-#if (Board_Name == ESP32_Cavend)
-    #include"Items.h"
+#if (BOARD_NAME == ESP32_CAVEND)
     #define RTC_TIME_IC     AT8563
-#elif (Board_Name == EY1001)
-    #include"Items.h"
+#elif (BOARD_NAME == EY1001)
     #define RTC_TIME_IC     HYM8563
 #endif
 

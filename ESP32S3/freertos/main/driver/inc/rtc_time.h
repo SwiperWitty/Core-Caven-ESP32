@@ -13,10 +13,10 @@
 #define AT8563  1
 #define HYM8563 2
 
-#if (Board_Name == ESP32_Cavend)
+#if (BOARD_NAME == ESP32_Cavend)
     #include"Items.h"
     #define RTC_TIME_IC     AT8563
-#elif (Board_Name == EY1001)
+#elif (BOARD_NAME == EY1001)
     #include"Items.h"
     #define RTC_TIME_IC     HYM8563
 #endif

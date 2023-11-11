@@ -1,9 +1,5 @@
 #ifndef __LCD_H_
 #define __LCD_H_
-
-#include "Items.h"
-#include "Caven_Type.h"
-
 /*
     ESP32用的lcd驱动，使用硬件spi。
     Logs:
@@ -14,6 +10,14 @@
     -等
 */
 
+#include "Items.h"
+#include "sys_typedef.h"
+#include "Caven_Type.h"
+
+#include "driver/gpio.h"        // because define 
+#include "driver/spi_master.h"
+
+
 typedef enum {
     LCD_type_1_14 = 0,
     LCD_type_1_30 = 1,
@@ -21,21 +25,23 @@ typedef enum {
 
 } LCD_type_coed;
 
-#define LCD_TYPE 1
+#ifdef Exist_LCD 
+    #define LCD_TYPE 1
 
-#define PIN_LCD_MOSI    (13) 
-#define PIN_LCD_MISO    (12)        /* -1 是不使用	*/
-#define PIN_LCD_CLK     (14)
-#define PIN_LCD_CS      (-1)        /* -1 是不使用	*/
+    #define PIN_LCD_MOSI    (13) 
+    #define PIN_LCD_MISO    (12)
+    #define PIN_LCD_CLK     (14)
+    #define PIN_LCD_CS      (-1)        /* -1 是不使用	*/
 
-#define PIN_LCD_DC      (32)
-#define PIN_LCD_RST     (33)
-#define PIN_LCD_BCKL    NULL        /* 直接接到vdd */
+    #define PIN_LCD_DC      (33)
+    #define PIN_LCD_RST     (32)
+    #define PIN_LCD_BCKL    NULL        /* 直接接到vdd */
 
-#ifdef CONFIG_IDF_TARGET_ESP32
-    #define LCD_HOST    SPI2_HOST 
-#else
-    #define LCD_HOST    SPI3_HOST 
+    #ifdef CONFIG_IDF_TARGET_ESP32
+        #define LCD_HOST    SPI2_HOST 
+    #else
+        #define LCD_HOST    SPI3_HOST 
+    #endif
 #endif
 
 #define LCD_SPI_BUFF_MAX 300

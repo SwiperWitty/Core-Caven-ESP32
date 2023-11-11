@@ -1,10 +1,8 @@
 #include "lcd_st7789.h"
-#include "lcdfont.h" /* 字库	*/
 
-#include "driver/spi_master.h"
-#include "driver/gpio.h"
+#include "lcdfont.h"	/* 字库	*/
+#include "gxwl_lg.h"	/* 图库	*/
 
-#include "gxwl_lg.h" 	//
 
 U16 BACK_COLOR = LCD_WHITE; /* 背景色	LCD_BLACK */
 u8 LCD_HORIZONTAL = USE_HORIZONTAL;

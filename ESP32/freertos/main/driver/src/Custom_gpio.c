@@ -1,7 +1,5 @@
 #include "Custom_gpio.h"
 
-#include "driver/gpio.h"
-
 /*
     ESP_LOGE - 错误（最低）0
     ESP_LOGW - 警告
@@ -16,7 +14,7 @@ int Custom_gpio_init(int set)
     int retval = 0;
 #ifdef Exist_GPIO
 
-#if (Board_Name == ESP32_Cavend)
+#if (BOARD_NAME == ESP32_CAVEND)
     if (set)
     {
         gpio_pad_select_gpio(LED_T_IO);
@@ -30,7 +28,7 @@ int Custom_gpio_init(int set)
         gpio_set_direction(LED_T_IO, GPIO_MODE_INPUT_OUTPUT_OD);
     }
     retval = ESP_OK;
-#elif (Board_Name == EY1001)
+#elif (BOARD_NAME == EY1001)
     if (set)
     {
     }
@@ -49,7 +47,7 @@ int LED_Set(char n, int set)
     int retval = ESP_OK;
 #ifdef Exist_GPIO
 
-#if (Board_Name == ESP32_Cavend)
+#if (BOARD_NAME == ESP32_CAVEND)
     switch (n)
     {
     case 1:
@@ -76,13 +74,26 @@ int LED_Set(char n, int set)
         break;
     }
     
-#elif (Board_Name == EY1001)
+#elif (BOARD_NAME == EY1001)
 
 #endif
 
     // ESP_LOGI(TAG, "led (%d) set : (%d) retval (%d) ", n, set, retval);
 #endif
     return retval;
+}
+
+int LED_Flag_run = 0;
+void LED_task_run_enable (int set)
+{
+    if (set)
+    {
+        LED_Flag_run = 1;
+    }
+    else
+    {
+        LED_Flag_run = 0;
+    }
 }
 
 void test_led_task(void *pvParam)
@@ -94,13 +105,13 @@ void test_led_task(void *pvParam)
     while (1)
     {
         num++;
-        if (num % 2)
+        if ((num % 2) && (LED_Flag_run == 1))
         {
             LED_Set(LED_T, TURE);
         }
         else
         {
-            LED_Set(LED_T, 0);
+            LED_Set(LED_T, DISABLE);
         }
         
         // ESP_LOGI("test_led_task FUN", "\n ");

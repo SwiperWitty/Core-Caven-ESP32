@@ -8,16 +8,15 @@
     2023.9.13   
 */
 
-#include "Precompiling_define.h"
-#include"sys_typedef.h"
+#include "Items.h"
+#include "sys_typedef.h"
+#include "Caven_Type.h"
 
 
 
-#if (Board_Name == ESP32_Cavend)
-    #include"Items.h"
+#if (BOARD_NAME == ESP32_CAVEND)
     
-#elif (Board_Name == EY1001)
-    #include"Items.h"
+#elif (BOARD_NAME == EY1001)
     
 #endif
 

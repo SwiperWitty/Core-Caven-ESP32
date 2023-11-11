@@ -13,10 +13,10 @@
 
 
 
-#if (Board_Name == ESP32_Cavend)
+#if (BOARD_NAME == ESP32_Cavend)
     #include"Items.h"
     
-#elif (Board_Name == EY1001)
+#elif (BOARD_NAME == EY1001)
     #include"Items.h"
     
 #endif

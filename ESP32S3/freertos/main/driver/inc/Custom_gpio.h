@@ -13,7 +13,7 @@
 
 
 
-#if (Board_Name == ESP32_Cavend)
+#if (BOARD_NAME == ESP32_Cavend)
     #include"Items.h"
     #define LED_R_IO    GPIO_NUM_13     // GPIO_NUM_13(13) 
     #define LED_B_IO    GPIO_NUM_14     // GPIO_NUM_14(14) 
@@ -21,7 +21,7 @@
     #define LED_T    0
     #define LED_R    1
     #define LED_B    2
-#elif (Board_Name == EY1001)
+#elif (BOARD_NAME == EY1001)
     #include"Items.h"
     
 #endif

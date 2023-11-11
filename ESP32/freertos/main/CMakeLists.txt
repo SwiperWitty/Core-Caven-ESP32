@@ -11,8 +11,10 @@ set(srcs
 
     # "driver/src/default.c"
     "driver/src/information.c"
+    "driver/src/info_frame_handle.c"
     "driver/src/rtc_time.c"
     "driver/src/Custom_gpio.c"
+    "driver/src/Custom_uart.c"
     "driver/src/lcd_st7789.c"
     "driver/src/draw.c"
 )

@@ -7,8 +7,7 @@
 
     2023.9.12   
 */
-
-#include"Precompiling_define.h"
+#include"sys_typedef.h"
 
 #include "nvs_flash.h"
 #include "driver/gpio.h"
@@ -22,9 +21,9 @@
 
 #include "information.h"
 
-#if (Board_Name == ESP32_Cavend)
+#if (BOARD_NAME == ESP32_CAVEND)
     #include"Items.h"
-#elif (Board_Name == EY1001)
+#elif (BOARD_NAME == EY1001)
     #include"Items.h"
 #endif
 
@@ -34,6 +33,9 @@
 #endif 
 #ifdef Exist_GPIO
     #include"Custom_gpio.h"
+#endif 
+#ifdef Exist_UART 
+    #include"Custom_uart.h" 
 #endif 
 #ifdef Exist_LCD
     #include"lcd_st7789.h"

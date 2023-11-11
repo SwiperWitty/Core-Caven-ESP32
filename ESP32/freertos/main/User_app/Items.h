@@ -12,9 +12,6 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 /*
     this is Items.h feil    
@@ -31,6 +28,7 @@
                         /*  基本外设就能实现的功能    */
 // nc
 #define Exist_GPIO 
+#define Exist_UART 
 #define Exist_LCD 
 #define Exist_OLED 
 
