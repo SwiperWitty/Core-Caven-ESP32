@@ -343,7 +343,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 	}
 #elif (LCD_TYPE == 2)
 
-#endif 
+#endif
 
 	LCD_WR_CMD(0x2a); // 列地址设置
 	LCD_WR_DATA(x_sta);
@@ -839,7 +839,10 @@ void LCD_Init(int Set)
 	LCD_Delay(200); //
 	LCD_RES_H();
 	LCD_Delay(100);
+	LCD_Set_HORIZONTAL(USE_HORIZONTAL);
 
+//************* Start Initial Sequence **********// 
+	LCD_WR_CMD(0x36);			// res
 	switch (LCD_HORIZONTAL)
 	{
 	case 0:
@@ -949,18 +952,18 @@ void refresh_lcd_task(void *pvParam)
 	
 	while (1)
 	{
-		refresh_ready++;
-		if (refresh_ready % 2)
-		{
-			LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
-		}
-		else
-		{
-			LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
-		}
+		// refresh_ready++;
+		// if (refresh_ready % 2)
+		// {
+		// 	LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
+		// }
+		// else
+		// {
+		// 	LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
+		// }
 
+		// ESP_LOGI("LCD runing "," time : %d ",refresh_ready);
 		LCD_Delay(100);
-		ESP_LOGI("LCD runing "," time : %d ",refresh_ready);
 		
 	}
 	free(array_buff);

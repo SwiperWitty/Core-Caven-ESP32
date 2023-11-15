@@ -47,7 +47,7 @@ typedef enum {
 #define LCD_SPI_BUFF_MAX 300
 
 /*  LCD config  */
-#define USE_HORIZONTAL 0 // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
+#define USE_HORIZONTAL 1 // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
 #define LCD_W 240        // X MAX 240
 #define LCD_H 240        // Y MAX 240
 #define LCD_PICSIZE 115200
