@@ -61,6 +61,7 @@ void Build_task(void)
     xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, SHOW_TASK_PRIORITY, &lcd_taskhanlde, CORE_ONE);
 
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
+    
     if(pr_timerhanlde == NULL){
         ESP_LOGI("Build_time","Error ");
     }else{

@@ -1,0 +1,6 @@
+{
+    "idf.adapterTargetName": "esp32",
+    "files.associations": {
+        "lcd_st7789.h": "c"
+    }
+}

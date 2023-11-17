@@ -22,7 +22,7 @@
     #endif
 #endif
 
-int Custom_gpio_init (int set);    // 示例 
+int custom_gpio_init (int set);    // 示例 
 int LED_Set (char n,int set);
 void LED_task_run_enable (int set);
 void test_led_task (void *pvParam);

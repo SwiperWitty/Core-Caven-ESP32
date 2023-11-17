@@ -12,7 +12,7 @@ static const char *TAG = "Exist_UART";
 QueueHandle_t uart1_event_queue;
 QueueHandle_t uart2_event_queue;
 
-int Custom_uart1_init(int baud_rate, int set)
+int custom_uart1_init(int baud_rate, int set)
 {
     int retval = 0;
 #ifdef CUSTOM_UART1
@@ -37,7 +37,7 @@ int Custom_uart1_init(int baud_rate, int set)
     return retval;
 }
 
-int Custom_uart2_init(int baud_rate, int set)
+int custom_uart2_init(int baud_rate, int set)
 {
     int retval = 0;
 #ifdef CUSTOM_UART2
@@ -71,7 +71,7 @@ void uart1_task(void *pvParam)
     TickType_t absolute_Time = 1;
     int counter = 0;
     u8 data[512];
-    Custom_uart1_init(115200, ENABLE);
+    custom_uart1_init(115200, ENABLE);
     memset(data, 0, sizeof(data));
     while (1)
     {

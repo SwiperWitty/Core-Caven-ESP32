@@ -9,7 +9,7 @@
 */
 static const char *TAG = "Custom_gpio";
 
-int Custom_gpio_init(int set)
+int custom_gpio_init(int set)
 {
     int retval = 0;
 #ifdef Exist_GPIO
@@ -99,7 +99,7 @@ void LED_task_run_enable (int set)
 void test_led_task(void *pvParam)
 {
     int num = 0;
-    Custom_gpio_init(TURE); /* 简单的外设GPIO */
+    custom_gpio_init(TURE); /* 简单的外设GPIO */
     TickType_t xLast_Time = xTaskGetTickCount();
     TickType_t absolute_Time = 200;
     while (1)

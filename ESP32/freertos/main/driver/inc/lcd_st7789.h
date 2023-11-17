@@ -52,8 +52,8 @@ typedef enum {
 #define LCD_H 240        // Y MAX 240
 #define LCD_PICSIZE 115200
 
-#define LCD_CMD 0  // 写命令
-#define LCD_DATA 1 // 写数据
+#define LCD_CMD     0   // 写命令
+#define LCD_DATA    1   // 写数据
 
 typedef struct
 {

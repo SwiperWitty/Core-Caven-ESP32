@@ -937,6 +937,8 @@ void LCD_Init(int Set)
 void refresh_lcd_task(void *pvParam)
 {
 	static int refresh_ready = 0;
+	int colour = 0;
+	SemaphoreHandle_t XSema_LCDpt = NULL;
 	u8 *array_buff;
 	array_buff = malloc(300);
 	memset(array_buff, 0, 100);
@@ -946,24 +948,26 @@ void refresh_lcd_task(void *pvParam)
 	{
 		array_buff[i] = (i & 0xff);
 	}
+	XSema_LCDpt = xSemaphoreCreateCounting(6,0);
 
 	LCD_Init(TURE);
-	LCD_Show_Picture(0, 0, LCD_W, LCD_H, gImage_gxwl_lg);
+	// LCD_Show_Picture(0, 0, LCD_W, LCD_H, gImage_gxwl_lg);
 	
 	while (1)
 	{
-		// refresh_ready++;
-		// if (refresh_ready % 2)
-		// {
-		// 	LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
-		// }
-		// else
-		// {
-		// 	LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
-		// }
-
-		// ESP_LOGI("LCD runing "," time : %d ",refresh_ready);
-		LCD_Delay(100);
+		if (xSemaphoreTake(XSema_LCDpt,portMAX_DELAY) == pdTRUE)
+		{
+			ESP_LOGI("[LCD]","run again");
+			LCD_Fill(0, 0, LCD_W, LCD_H, colour);
+			colour += 500;
+			if (colour > 0x0fff)
+			{
+				colour = 0;
+			}
+			LCD_Delay(100);
+		}
+		
+		
 		
 	}
 	free(array_buff);
