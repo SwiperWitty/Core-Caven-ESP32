@@ -6,8 +6,10 @@
 
 U16 BACK_COLOR = LCD_WHITE; /* 背景色	LCD_BLACK */
 u8 LCD_HORIZONTAL = USE_HORIZONTAL;
-spi_device_handle_t LCD_spi = {0};
+
 #ifdef Exist_LCD
+
+spi_device_handle_t LCD_spi = {0};
 
 void SPI_CS_Set(char channel, int Set)
 {
@@ -105,7 +107,8 @@ int SPI_Start_Init(int Set)
 			.sclk_io_num = PIN_LCD_CLK,
 			.quadwp_io_num = -1,
 			.quadhd_io_num = -1,
-			.max_transfer_sz = (16 * 320 * 2 + 8)};
+			.max_transfer_sz = (16 * 320 * 2 + 8)
+		};
 		spi_device_interface_config_t devcfg = {
 			.clock_speed_hz = 24 * 1000 * 1000, // Clock out at 26 MHz
 			.mode = 3,							// SPI mode 0-3
@@ -130,7 +133,7 @@ void EPS_SPI_SendData(const u8 *data, int num, int cmd)
 {
 	esp_err_t ret;
 	spi_transaction_t t;
-	int send_size = 8 * num;
+	int send_size = 0;
 
 	if (data == 0)
 	{
@@ -146,7 +149,7 @@ void EPS_SPI_SendData(const u8 *data, int num, int cmd)
 	{
 		t.user = (void *)0;
 	}
-
+	send_size = 8 * num;
 	t.length = send_size;							// Len is in bytes, transaction length is in bits.
 	t.tx_buffer = data;								// Data
 	ret = spi_device_polling_transmit(LCD_spi, &t); // Transmit!
@@ -283,7 +286,7 @@ void LCD_WR_CMD(U8 data)
 void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 {
 	u16 x_sta,y_sta,x_end,y_end;
-#if (LCD_TYPE == 0)
+#if (LCD_TYPE == m_LCD_type_1_14)
 	if (LCD_HORIZONTAL == 0)
 	{
 		x_sta = (x1 + 52);
@@ -312,7 +315,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1 + 52);
 		y_end = (y2 + 52);
 	}
-#elif (LCD_TYPE == 1)
+#elif (LCD_TYPE == m_LCD_type_1_30)
 	if (LCD_HORIZONTAL == 0)
 	{
 		x_sta = (x1);
@@ -341,8 +344,21 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1);
 		y_end = (y2);
 	}
-#elif (LCD_TYPE == 2)
-
+#elif (LCD_TYPE == m_LCD_type_1_69)
+	if (LCD_HORIZONTAL == 1)
+	{
+		x_sta = (x1);
+		x_end = (x2-1);
+		y_sta = (y1 + 20);
+		y_end = (y2 + 20 -1);
+	}
+	else
+	{
+		x_sta = (x1 + 20);
+		x_end = (x2 + 20 - 1);
+		y_sta = (y1);
+		y_end = (y2 - 1);
+	}
 #endif
 
 	LCD_WR_CMD(0x2a); // 列地址设置
@@ -829,6 +845,7 @@ void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
 void LCD_Init(int Set)
 {
 #ifdef Exist_LCD
+	u8 temp_data = 0;
 	LCD_GPIO_Init(Set);
 	SPI_Start_Init(Set);
 	LCD_WR_DATA8(0x00);
@@ -858,7 +875,80 @@ void LCD_Init(int Set)
 		LCD_WR_DATA8(0xA0);
 		break;
 	}
+//************* InitReg **********// 
+#if (USE_LCD_TYPE == m_LCD_type_1_69)
+	LCD_WR_CMD(0x3A);	/* RGB 5-6-5-bit  */
+	LCD_WR_DATA8(0x05);
 
+	LCD_WR_CMD(0xB2);	/* Porch Setting */
+	LCD_WR_DATA8(0x0B);
+	LCD_WR_DATA8(0x0B);
+	LCD_WR_DATA8(0x00);
+	LCD_WR_DATA8(0x33);
+	LCD_WR_DATA8(0x35);
+
+	LCD_WR_CMD(0xB7);	//Gate Control
+	LCD_WR_DATA8(0x11);
+	LCD_WR_CMD(0xBB);	//VCOM Setting
+	LCD_WR_DATA8(0x35);
+
+	LCD_WR_CMD(0xC0);	//LCM Control  
+	LCD_WR_DATA8(0x2C);
+
+	LCD_WR_CMD(0xC2);	//VDV and VRH Command Enable
+	LCD_WR_DATA8(0x01);
+	LCD_WR_CMD(0xC3);	//VRH Set
+	LCD_WR_DATA8(0x0D);
+	LCD_WR_CMD(0xC4);	//VDV Set
+	LCD_WR_DATA8(0x20);
+
+	LCD_WR_CMD(0xC6);  //Frame Rate Control in Normal Mode
+	LCD_WR_DATA8(0x13);
+
+	LCD_WR_CMD(0xD0);	// Power Control 1
+	LCD_WR_DATA8(0xA4);
+	LCD_WR_DATA8(0xA1);
+
+	LCD_WR_CMD(0xD6);
+    LCD_WR_DATA8(0xA1);
+
+	LCD_WR_CMD(0xE0);	//Positive Voltage Gamma Control
+	LCD_WR_DATA8(0xF0);
+	LCD_WR_DATA8(0x06);
+	LCD_WR_DATA8(0x0B);
+	LCD_WR_DATA8(0x0A);
+	LCD_WR_DATA8(0x09);
+	LCD_WR_DATA8(0x26);
+	LCD_WR_DATA8(0x29);
+	LCD_WR_DATA8(0x33);
+	LCD_WR_DATA8(0x41);
+	LCD_WR_DATA8(0x18);
+	LCD_WR_DATA8(0x16);
+	LCD_WR_DATA8(0x15);
+	LCD_WR_DATA8(0x29);
+	LCD_WR_DATA8(0x2D);
+
+	LCD_WR_CMD(0xE1);	//Negative Voltage Gamma Control
+	LCD_WR_DATA8(0xF0);
+	LCD_WR_DATA8(0x04);
+	LCD_WR_DATA8(0x08);
+	LCD_WR_DATA8(0x08);
+	LCD_WR_DATA8(0x07);
+	LCD_WR_DATA8(0x03);
+	LCD_WR_DATA8(0x28);
+	LCD_WR_DATA8(0x32);
+	LCD_WR_DATA8(0x40);
+	LCD_WR_DATA8(0x3B);
+	LCD_WR_DATA8(0x19);
+	LCD_WR_DATA8(0x18);
+	LCD_WR_DATA8(0x2A);
+	LCD_WR_DATA8(0x2E);
+
+	LCD_WR_CMD(0xE4);
+    LCD_WR_DATA8(0x25);
+    LCD_WR_DATA8(0x00);
+    LCD_WR_DATA8(0x00);
+#else	// 1.14,1.30,...
 	LCD_WR_CMD(0x3A);
 	LCD_WR_DATA8(0x05);
 
@@ -869,32 +959,29 @@ void LCD_Init(int Set)
 	LCD_WR_DATA8(0x33);
 	LCD_WR_DATA8(0x33);
 
-	LCD_WR_CMD(0xB7);
+	LCD_WR_CMD(0xB7);	//Gate Control
 	LCD_WR_DATA8(0x35);
-
-	LCD_WR_CMD(0xBB);
+	LCD_WR_CMD(0xBB);	//VCOM Setting
 	LCD_WR_DATA8(0x19);
 
-	LCD_WR_CMD(0xC0);
+	LCD_WR_CMD(0xC0);	//LCM Control  
 	LCD_WR_DATA8(0x2C);
 
-	LCD_WR_CMD(0xC2);
+	LCD_WR_CMD(0xC2);	//VDV and VRH Command Enable
 	LCD_WR_DATA8(0x01);
-
-	LCD_WR_CMD(0xC3);
+	LCD_WR_CMD(0xC3);	//VRH Set
 	LCD_WR_DATA8(0x12);
-
-	LCD_WR_CMD(0xC4);
+	LCD_WR_CMD(0xC4);	//VDV Set
 	LCD_WR_DATA8(0x20);
 
-	LCD_WR_CMD(0xC6);
+	LCD_WR_CMD(0xC6);  //Frame Rate Control in Normal Mode
 	LCD_WR_DATA8(0x0F);
 
-	LCD_WR_CMD(0xD0);
+	LCD_WR_CMD(0xD0);	// Power Control 1
 	LCD_WR_DATA8(0xA4);
 	LCD_WR_DATA8(0xA1);
 
-	LCD_WR_CMD(0xE0);
+	LCD_WR_CMD(0xE0);	//Positive Voltage Gamma Control
 	LCD_WR_DATA8(0xD0);
 	LCD_WR_DATA8(0x04);
 	LCD_WR_DATA8(0x0D);
@@ -910,7 +997,7 @@ void LCD_Init(int Set)
 	LCD_WR_DATA8(0x1F);
 	LCD_WR_DATA8(0x23);
 
-	LCD_WR_CMD(0xE1);
+	LCD_WR_CMD(0xE1);	//Negative Voltage Gamma Control
 	LCD_WR_DATA8(0xD0);
 	LCD_WR_DATA8(0x04);
 	LCD_WR_DATA8(0x0C);
@@ -925,10 +1012,11 @@ void LCD_Init(int Set)
 	LCD_WR_DATA8(0x1F);
 	LCD_WR_DATA8(0x20);
 	LCD_WR_DATA8(0x23);
+#endif
 
-	LCD_WR_CMD(0x21);
-	LCD_WR_CMD(0x11);
-	LCD_WR_CMD(0x29);
+	LCD_WR_CMD(0x21);	//Display Inversion On
+	LCD_WR_CMD(0x11);	//Sleep Out
+	LCD_WR_CMD(0x29);	//Display On
 	LCD_Delay(100);
 	LCD_Fill(0, 0, LCD_W, LCD_H, BACK_COLOR);
 #endif
@@ -952,7 +1040,8 @@ void refresh_lcd_task(void *pvParam)
 
 	LCD_Init(TURE);
 	// LCD_Show_Picture(0, 0, LCD_W, LCD_H, gImage_gxwl_lg);
-	
+
+	ESP_LOGI("[LCD]","init TYPE %d",USE_LCD_TYPE);
 	while (1)
 	{
 		if (xSemaphoreTake(XSema_LCDpt,portMAX_DELAY) == pdTRUE)

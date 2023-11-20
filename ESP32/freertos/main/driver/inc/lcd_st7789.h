@@ -19,15 +19,14 @@
 
 
 typedef enum {
-    LCD_type_1_14 = 0,
-    LCD_type_1_30 = 1,
-    LCD_type_2_40 = 2,
+    m_LCD_type_1_14 = 0,
+    m_LCD_type_1_30,
+    m_LCD_type_1_69,
+    m_LCD_type_2_40,
 
 } LCD_type_coed;
 
 #ifdef Exist_LCD 
-    #define LCD_TYPE 1
-
     #define PIN_LCD_MOSI    (13) 
     #define PIN_LCD_MISO    (12)
     #define PIN_LCD_CLK     (14)
@@ -47,10 +46,27 @@ typedef enum {
 #define LCD_SPI_BUFF_MAX 300
 
 /*  LCD config  */
-#define USE_HORIZONTAL 1 // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
-#define LCD_W 240        // X MAX 240
-#define LCD_H 240        // Y MAX 240
-#define LCD_PICSIZE 115200
+#define USE_HORIZONTAL  1   // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
+#define USE_LCD_TYPE    m_LCD_type_1_69   // 设置
+#if (USE_LCD_TYPE == m_LCD_type_1_30)
+    #define LCD_W 240        
+    #define LCD_H 240    
+    #define LCD_PICSIZE 115200    
+#elif (USE_LCD_TYPE == m_LCD_type_1_14)
+    #define LCD_W 135
+    #define LCD_H 240
+    #define LCD_PICSIZE 64800
+#elif (USE_LCD_TYPE == m_LCD_type_1_69)
+    #define LCD_W 240
+    #define LCD_H 280
+    #define LCD_PICSIZE 134400
+#elif (USE_LCD_TYPE == m_LCD_type_2_40)
+    #define LCD_W 320
+    #define LCD_H 240
+    #define LCD_PICSIZE 153600
+#endif //
+
+
 
 #define LCD_CMD     0   // 写命令
 #define LCD_DATA    1   // 写数据
