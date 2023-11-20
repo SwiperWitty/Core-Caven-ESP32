@@ -286,7 +286,7 @@ void LCD_WR_CMD(U8 data)
 void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 {
 	u16 x_sta,y_sta,x_end,y_end;
-#if (LCD_TYPE == m_LCD_type_1_14)
+#if (USE_LCD_TYPE == m_LCD_type_1_14)
 	if (LCD_HORIZONTAL == 0)
 	{
 		x_sta = (x1 + 52);
@@ -315,7 +315,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1 + 52);
 		y_end = (y2 + 52);
 	}
-#elif (LCD_TYPE == m_LCD_type_1_30)
+#elif (USE_LCD_TYPE == m_LCD_type_1_30)
 	if (LCD_HORIZONTAL == 0)
 	{
 		x_sta = (x1);
@@ -344,7 +344,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1);
 		y_end = (y2);
 	}
-#elif (LCD_TYPE == m_LCD_type_1_69)
+#elif (USE_LCD_TYPE == m_LCD_type_1_69)
 	if (LCD_HORIZONTAL == 1)
 	{
 		x_sta = (x1);
@@ -359,6 +359,8 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1);
 		y_end = (y2 - 1);
 	}
+#elif (USE_LCD_TYPE == m_LCD_type_2_40)
+
 #endif
 
 	LCD_WR_CMD(0x2a); // 列地址设置
