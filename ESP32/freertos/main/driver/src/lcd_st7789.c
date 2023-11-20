@@ -286,7 +286,7 @@ void LCD_WR_CMD(U8 data)
 void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 {
 	u16 x_sta,y_sta,x_end,y_end;
-#if (USE_LCD_TYPE == m_LCD_type_1_14)
+#if (USE_LCD_TYPE == LCD_TYPE_1_14)
 	if (LCD_HORIZONTAL == 0)
 	{
 		x_sta = (x1 + 52);
@@ -315,7 +315,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1 + 52);
 		y_end = (y2 + 52);
 	}
-#elif (USE_LCD_TYPE == m_LCD_type_1_30)
+#elif (USE_LCD_TYPE == LCD_TYPE_1_30)
 	if (LCD_HORIZONTAL == 0)
 	{
 		x_sta = (x1);
@@ -344,7 +344,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1);
 		y_end = (y2);
 	}
-#elif (USE_LCD_TYPE == m_LCD_type_1_69)
+#elif (USE_LCD_TYPE == LCD_TYPE_1_69)
 	if (LCD_HORIZONTAL == 1)
 	{
 		x_sta = (x1);
@@ -359,7 +359,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_sta = (y1);
 		y_end = (y2);
 	}
-#elif (USE_LCD_TYPE == m_LCD_type_2_40)
+#elif (USE_LCD_TYPE == LCD_TYPE_2_40)
 
 #endif
 
@@ -878,7 +878,7 @@ void LCD_Init(int Set)
 		break;
 	}
 //************* InitReg **********// 
-#if (USE_LCD_TYPE == m_LCD_type_1_69)
+#if (USE_LCD_TYPE == LCD_TYPE_1_69)
 	LCD_WR_CMD(0x3A);	/* RGB 5-6-5-bit  */
 	LCD_WR_DATA8(0x05);
 
@@ -1041,7 +1041,7 @@ void refresh_lcd_task(void *pvParam)
 	XSema_LCDpt = xSemaphoreCreateCounting(6,0);
 
 	LCD_Init(TURE);
-	// LCD_Show_Picture(0, 0, LCD_W, LCD_H, gImage_gxwl_lg);
+	LCD_Show_Picture(0, 0, LCD_W, LCD_H, gImage_gxwl_lg);
 
 	ESP_LOGI("[LCD]","init TYPE %d",USE_LCD_TYPE);
 	while (1)
@@ -1049,7 +1049,7 @@ void refresh_lcd_task(void *pvParam)
 		if (xSemaphoreTake(XSema_LCDpt,portMAX_DELAY) == pdTRUE)
 		{
 			ESP_LOGI("[LCD]","run again");
-			LCD_Fill(0, 0, LCD_W, LCD_H, colour);
+			// LCD_Fill(0, 0, LCD_W, LCD_H, colour);
 			colour += 500;
 			if (colour > 0x0fff)
 			{

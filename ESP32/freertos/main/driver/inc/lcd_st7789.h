@@ -17,14 +17,12 @@
 #include "driver/gpio.h"        // because define 
 #include "driver/spi_master.h"
 
+/*  LCD_TYPE    */
+#define LCD_TYPE_1_14   0
+#define LCD_TYPE_1_30   1
+#define LCD_TYPE_1_69   2
+#define LCD_TYPE_2_40   3
 
-typedef enum {
-    m_LCD_type_1_14 = 0,
-    m_LCD_type_1_30,
-    m_LCD_type_1_69,
-    m_LCD_type_2_40,
-
-} LCD_type_coed;
 
 #ifdef Exist_LCD 
     #define PIN_LCD_MOSI    (13) 
@@ -47,20 +45,20 @@ typedef enum {
 
 /*  LCD config  */
 #define USE_HORIZONTAL  1   // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
-#define USE_LCD_TYPE    m_LCD_type_1_69   // 设置
-#if (USE_LCD_TYPE == m_LCD_type_1_30)
+#define USE_LCD_TYPE    LCD_TYPE_1_30   // 设置
+#if (USE_LCD_TYPE == LCD_TYPE_1_30)
     #define LCD_W 240        
     #define LCD_H 240    
     #define LCD_PICSIZE 115200    
-#elif (USE_LCD_TYPE == m_LCD_type_1_14)
+#elif (USE_LCD_TYPE == LCD_TYPE_1_14)
     #define LCD_W 135
     #define LCD_H 240
     #define LCD_PICSIZE 64800
-#elif (USE_LCD_TYPE == m_LCD_type_1_69)
+#elif (USE_LCD_TYPE == LCD_TYPE_1_69)
     #define LCD_W 240
     #define LCD_H 280
     #define LCD_PICSIZE 134400
-#elif (USE_LCD_TYPE == m_LCD_type_2_40)
+#elif (USE_LCD_TYPE == LCD_TYPE_2_40)
     #define LCD_W 320
     #define LCD_H 240
     #define LCD_PICSIZE 153600
