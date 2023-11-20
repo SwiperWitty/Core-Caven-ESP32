@@ -348,16 +348,16 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 	if (LCD_HORIZONTAL == 1)
 	{
 		x_sta = (x1);
-		x_end = (x2-1);
+		x_end = (x2);
 		y_sta = (y1 + 20);
-		y_end = (y2 + 20 -1);
+		y_end = (y2 + 20);
 	}
 	else
 	{
 		x_sta = (x1 + 20);
-		x_end = (x2 + 20 - 1);
+		x_end = (x2 + 20);
 		y_sta = (y1);
-		y_end = (y2 - 1);
+		y_end = (y2);
 	}
 #elif (USE_LCD_TYPE == m_LCD_type_2_40)
 
