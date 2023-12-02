@@ -4,7 +4,7 @@
 #include "gxwl_lg.h"	/* 图库	*/
 
 
-U16 BACK_COLOR = LCD_WHITE; /* 背景色	LCD_BLACK */
+U16 BACK_COLOR = LCD_WHITE; /* 背景色	LCD_BLACK LCD_WHITE*/
 u8 LCD_HORIZONTAL = USE_HORIZONTAL;
 
 #ifdef Exist_LCD
@@ -1038,27 +1038,30 @@ void refresh_lcd_task(void *pvParam)
 	{
 		array_buff[i] = (i & 0xff);
 	}
-	XSema_LCDpt = xSemaphoreCreateCounting(6,0);
+	XSema_LCDpt = xSemaphoreCreateCounting(6,1);
 
 	LCD_Init(TURE);
-	LCD_Show_Picture(0, 0, LCD_W, LCD_H, gImage_gxwl_lg);
+	// LCD_Show_Picture(0, 0, 240, 240, gImage_gxwl_lg);
 
 	ESP_LOGI("[LCD]","init TYPE %d",USE_LCD_TYPE);
 	while (1)
 	{
-		if (xSemaphoreTake(XSema_LCDpt,portMAX_DELAY) == pdTRUE)
-		{
-			ESP_LOGI("[LCD]","run again");
-			// LCD_Fill(0, 0, LCD_W, LCD_H, colour);
-			colour += 500;
-			if (colour > 0x0fff)
-			{
-				colour = 0;
-			}
-			LCD_Delay(100);
-		}
-		
-		
+		LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
+		LCD_Fill(0, 0, LCD_W, LCD_H, LCD_GREEN);
+		LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
+		// if (xSemaphoreTake(XSema_LCDpt,portMAX_DELAY) == pdTRUE)
+		// {
+		// 	ESP_LOGI("[LCD]","run again");
+		// 	colour = 0xffff;
+		// 	// LCD_Fill(0, 0, LCD_W, LCD_H, colour);
+		// 	colour += 500;
+		// 	if (colour > 0x0fff)
+		// 	{
+		// 		colour = 0;
+		// 	}
+		// 	LCD_Delay(100);
+		// }
+		// LCD_Delay(10);
 		
 	}
 	free(array_buff);
