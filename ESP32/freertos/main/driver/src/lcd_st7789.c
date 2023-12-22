@@ -2,9 +2,9 @@
 
 #include "lcdfont.h"	/* 字库	*/
 #include "gxwl_lg.h"	/* 图库	*/
+#include "ls_lg.h"	/* 图库	*/
 
-
-U16 BACK_COLOR = LCD_WHITE; /* 背景色	LCD_BLACK LCD_WHITE*/
+U16 BACK_COLOR = LCD_BLACK; /* 背景色	LCD_BLACK LCD_WHITE*/
 u8 LCD_HORIZONTAL = USE_HORIZONTAL;
 
 #ifdef Exist_LCD
@@ -1041,14 +1041,15 @@ void refresh_lcd_task(void *pvParam)
 	XSema_LCDpt = xSemaphoreCreateCounting(6,1);
 
 	LCD_Init(TURE);
-	// LCD_Show_Picture(0, 0, 240, 240, gImage_gxwl_lg);
+	// LCD_Show_Picture(0, 0, 240, 280, gImage_gxwl_lg);
+	LCD_Show_Picture(0, 20, 240, 240, gImage_ls);
 
 	ESP_LOGI("[LCD]","init TYPE %d",USE_LCD_TYPE);
 	while (1)
 	{
-		LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
-		LCD_Fill(0, 0, LCD_W, LCD_H, LCD_GREEN);
-		LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
+		// LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
+		// LCD_Fill(0, 0, LCD_W, LCD_H, LCD_GREEN);
+		// LCD_Fill(0, 0, LCD_W, LCD_H, LCD_BLUE);
 		// if (xSemaphoreTake(XSema_LCDpt,portMAX_DELAY) == pdTRUE)
 		// {
 		// 	ESP_LOGI("[LCD]","run again");
@@ -1061,7 +1062,7 @@ void refresh_lcd_task(void *pvParam)
 		// 	}
 		// 	LCD_Delay(100);
 		// }
-		// LCD_Delay(10);
+		LCD_Delay(10);
 		
 	}
 	free(array_buff);
