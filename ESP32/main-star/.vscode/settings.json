@@ -1,0 +1,10 @@
+{
+    "idf.adapterTargetName": "esp32",
+    "files.associations": {
+        "lcd_st7789.h": "c",
+        "gxwl_lg.h": "c",
+        "custom_gpio.h": "c"
+    },
+    "idf.portWin": "COM62",
+    "idf.flashType": "UART"
+}
