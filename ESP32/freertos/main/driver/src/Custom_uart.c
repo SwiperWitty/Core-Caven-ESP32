@@ -70,7 +70,7 @@ void uart1_task(void *pvParam)
     uart_event_t event;
     TickType_t absolute_Time = 1;
     int counter = 0;
-    u8 data[512];
+    uint8_t data[512];
     custom_uart1_init(115200, ENABLE);
     memset(data, 0, sizeof(data));
     while (1)

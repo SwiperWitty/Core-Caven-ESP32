@@ -11,7 +11,7 @@
 int receive_info_frame_handle (const void * data, int size, char channel)
 {
     int retval = 0;
-    u8 data_buff[500];
+    uint8_t data_buff[500];
     memcpy(data_buff,data,size);
     for (int i = 0; i < size; i++)
     {

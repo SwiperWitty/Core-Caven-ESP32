@@ -20,10 +20,18 @@ set(srcs
     "driver/src/draw.c"
 )
 
+file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")
+list(APPEND srcs ${SOURCE_FILE2})
+
 # [*.c]文件合集 + [*.h]头文件
 idf_component_register(SRCS  
     "${srcs}"
     INCLUDE_DIRS "User_app"		#头文件
     INCLUDE_DIRS "driver/inc"	#头文件
- 
+    
+    INCLUDE_DIRS "GUI"		    #头文件
+    INCLUDE_DIRS "GUI/ui"		#头文件
+    INCLUDE_DIRS "GUI/ui/components"
+    INCLUDE_DIRS "GUI/lvgl"		#头文件
+    INCLUDE_DIRS "GUI/lvgl/src/core"
 )

@@ -1,11 +1,10 @@
 #include "lcd_st7789.h"
 
 #include "lcdfont.h"	/* 字库	*/
-#include "gxwl_lg.h"	/* 图库	*/
 #include "ls_lg.h"	/* 图库	*/
 
 U16 BACK_COLOR = LCD_BLACK; /* 背景色	LCD_BLACK LCD_WHITE*/
-u8 LCD_HORIZONTAL = USE_HORIZONTAL;
+uint8_t LCD_HORIZONTAL = USE_HORIZONTAL;
 
 #ifdef Exist_LCD
 
@@ -129,7 +128,7 @@ int SPI_Start_Init(int Set)
 	return retval;
 }
 
-void EPS_SPI_SendData(const u8 *data, int num, int cmd)
+void EPS_SPI_SendData(const uint8_t *data, int num, int cmd)
 {
 	esp_err_t ret;
 	spi_transaction_t t;
@@ -187,7 +186,7 @@ void LCD_Writ_String(const void *DATA, int num)
 ******************************************************************************/
 void LCD_WR_DATA8(U8 data)
 {
-	u8 spi_tx_buff = data;
+	uint8_t spi_tx_buff = data;
 
 	SPI_CS_Set(1, ENABLE);
 
@@ -201,7 +200,7 @@ void LCD_WR_DATA8(U8 data)
  */
 void LCD_WR_DATA(U16 data)
 {
-	u8 spi_tx_buff[2];
+	uint8_t spi_tx_buff[2];
 	spi_tx_buff[0] = (data >> 8) & 0xff;
 	spi_tx_buff[1] = data & 0xff;
 
@@ -227,7 +226,7 @@ void LCD_Send_Data(const U8 *data, int num)
 	int all_size = num;
 	int point_move = 0;
 	int size_data = 0;
-	u8 *spi_tx_buff = malloc(LCD_SPI_BUFF_MAX);
+	uint8_t *spi_tx_buff = malloc(LCD_SPI_BUFF_MAX);
 
 	for (int i = 0; i < all_size; i += size_data)
 	{
@@ -265,7 +264,7 @@ void LCD_Send_Data(const U8 *data, int num)
 ******************************************************************************/
 void LCD_WR_CMD(U8 data)
 {
-	u8 spi_tx_buff = data;
+	uint8_t spi_tx_buff = data;
 
 	SPI_CS_Set(1, ENABLE);
 
@@ -285,7 +284,7 @@ void LCD_WR_CMD(U8 data)
 ******************************************************************************/
 void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 {
-	u16 x_sta,y_sta,x_end,y_end;
+	U16 x_sta,y_sta,x_end,y_end;
 #if (USE_LCD_TYPE == LCD_TYPE_1_14)
 	if (LCD_HORIZONTAL == 0)
 	{
@@ -382,11 +381,11 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 void LCD_Fill(U16 x_sta, U16 y_sta, U16 x_end, U16 y_end, U16 color)
 {
 #ifdef Exist_LCD
-	u8 *pic_buff = malloc(650); /* 一个y 320 * 2	*/
-	u8 color_l;
-	u8 color_h;
-	u16 x_len = (x_end - x_sta);
-	u16 y_len = (y_end - y_sta);
+	uint8_t *pic_buff = malloc(650); /* 一个y 320 * 2	*/
+	uint8_t color_l;
+	uint8_t color_h;
+	U16 x_len = (x_end - x_sta);
+	U16 y_len = (y_end - y_sta);
 	int i = x_len * y_len;
 
 	color_l = 0xff & color;
@@ -414,7 +413,7 @@ void LCD_Fill(U16 x_sta, U16 y_sta, U16 x_end, U16 y_end, U16 color)
 				如果是其他值，则理解为查询当前屏幕方向
 	  返回值：  返回当前屏幕显示方向
 ******************************************************************************/
-int LCD_Set_HORIZONTAL(u8 set)
+int LCD_Set_Horizontal(uint8_t set)
 {
 	int retval = 0;
 #ifdef Exist_LCD
@@ -823,10 +822,10 @@ void LCD_Show_String(U16 x, U16 y, const char *p, U16 fc, U16 bc, char sizey)
 void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
 {
 #ifdef Exist_LCD
-	u16 i, j;
-	u32 k = 0;
+	U16 i, j;
+	U32 k = 0;
 	int n = 0;
-	u8 *pic_buff = malloc(650);
+	uint8_t *pic_buff = malloc(650);
 	LCD_Address_Set(x, y, (x + length - 1), (y + width - 1));
 
 	for (i = 0; i < length; i++)
@@ -847,7 +846,7 @@ void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
 void LCD_Init(int Set)
 {
 #ifdef Exist_LCD
-	u8 temp_data = 0;
+	uint8_t temp_data = 0;
 	LCD_GPIO_Init(Set);
 	SPI_Start_Init(Set);
 	LCD_WR_DATA8(0x00);
@@ -858,7 +857,7 @@ void LCD_Init(int Set)
 	LCD_Delay(200); //
 	LCD_RES_H();
 	LCD_Delay(100);
-	LCD_Set_HORIZONTAL(USE_HORIZONTAL);
+	LCD_Set_Horizontal(USE_HORIZONTAL);
 
 //************* Start Initial Sequence **********// 
 	LCD_WR_CMD(0x36);			// res
@@ -1024,12 +1023,56 @@ void LCD_Init(int Set)
 #endif
 }
 
+#include "ui.h"
+#define BUFF_LEN 5
+static lv_disp_draw_buf_t draw_buf_dsc_1;
+static lv_color_t buf_1[MY_DISP_HOR_RES * BUFF_LEN];
+static lv_disp_drv_t disp_drv;
+static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
+{
+	uint32_t w = (area->x2 - area->x1 + 1);
+	uint32_t h = (area->y2 - area->y1 + 1);
+	// M5.Lcd.drawBitmap(area->x1, area->y1, w, h, &color_p->full);
+	// lcd_show_image(area->x1, area->y1, w, h, &color_p->full);
+	// Mode_Use.LCD.Show_Picture_pFun(area->x1, area->y1, w, h, (uint8_t*)&color_p->full); // Photo
+	LCD_Show_Picture(area->x1, area->y1, w, h, (uint8_t *)&color_p->full);
+	lv_disp_flush_ready(disp_drv);
+}
+uint32_t custom_millis(void)
+{
+	uint32_t retval;
+	retval = xTaskGetTickCount();
+	return retval;
+}
+/**
+ * Initialize the Hardware Abstraction Layer (HAL) for LVGL
+ */
+static void hal_init(void)
+{
+}
+void gui_init(void)
+{
+	/*Initialize LVGL*/
+	lv_init();
+	/*Initialize the HAL (display, input devices, tick) for LVGL*/
+	hal_init();
+	lv_disp_draw_buf_init(&draw_buf_dsc_1, buf_1, NULL, MY_DISP_HOR_RES * BUFF_LEN);
+	lv_disp_drv_init(&disp_drv);
+	disp_drv.hor_res = MY_DISP_HOR_RES;
+	disp_drv.ver_res = MY_DISP_VER_RES;
+	disp_drv.flush_cb = disp_flush;
+	disp_drv.draw_buf = &draw_buf_dsc_1;
+	lv_disp_drv_register(&disp_drv);
+	ui_init();
+}
+
+
 void refresh_lcd_task(void *pvParam)
 {
 	static int refresh_ready = 0;
 	int colour = 0;
 	SemaphoreHandle_t XSema_LCDpt = NULL;
-	u8 *array_buff;
+	uint8_t *array_buff;
 	array_buff = malloc(300);
 	memset(array_buff, 0, 100);
 	memcpy(array_buff, "this is num :    ", strlen("this is num :    "));
@@ -1039,12 +1082,17 @@ void refresh_lcd_task(void *pvParam)
 		array_buff[i] = (i & 0xff);
 	}
 	XSema_LCDpt = xSemaphoreCreateCounting(6,1);
-
+	LCD_Set_Horizontal(0);
 	LCD_Init(TURE);
 	
-	LCD_Show_Picture(0, 20, 240, 240, gImage_ls);
+	// LCD_Show_Picture(0, 20, 240, 240, gImage_ls);
+	ESP_LOGI("[LCD]", "init TYPE %d", USE_LCD_TYPE);
 
-	ESP_LOGI("[LCD]","init TYPE %d",USE_LCD_TYPE);
+	LCD_Delay(1000);
+	gui_init();
+	lv_label_set_text(ui_NUM, "0000");
+	lv_label_set_text(ui_NUMCT, "    ");
+	lv_slider_set_value(ui_NUMC, 0, LV_ANIM_OFF);
 	while (1)
 	{
 		// LCD_Fill(0, 0, LCD_W, LCD_H, LCD_RED);
@@ -1062,6 +1110,7 @@ void refresh_lcd_task(void *pvParam)
 		// 	}
 		// 	LCD_Delay(100);
 		// }
+		lv_timer_handler();
 		LCD_Delay(10);
 		
 	}

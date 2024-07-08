@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "lcd_st7789.h": "c",
+        "caven_type.h": "c"
+    }
+}

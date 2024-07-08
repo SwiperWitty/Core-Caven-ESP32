@@ -45,10 +45,10 @@ typedef struct
     char flag;
     char refresh;
     char direction;
-    u8 str_place[2];
-    u8 *string;
-    u8 pic_place[4];
-    // u8 pic[LCD_PICSIZE];
+    uint8_t str_place[2];
+    uint8_t *string;
+    uint8_t pic_place[4];
+    // uint8_t pic[LCD_PICSIZE];
 } LCD_data_Type;
 
 // 画笔颜色
@@ -100,7 +100,7 @@ void LCD_Show_String(U16 x, U16 y, const char *p, U16 coloer, U16 b_coloer, char
 void LCD_Show_Chinese(U16 x, U16 y, char *s, U16 coloer, U16 b_coloer, char Size, char mode); // 显示汉字串
 void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const unsigned char pic[]);        // 显示图片
 
-int LCD_Set_HORIZONTAL(u8 set);
+int LCD_Set_Horizontal(uint8_t set);
 
 void LCD_Init(int SET); // LCD初始化
 

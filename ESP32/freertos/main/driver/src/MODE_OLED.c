@@ -3,7 +3,7 @@
 #include "Base_IIC.h"
 #include "oledfont.h"
 
-u8 OLED_GRAM[144][8];
+uint8_t OLED_GRAM[144][8];
 
 //发送一个字节
 //mode:数据/命令标志 0,表示命令;1,表示数据;
