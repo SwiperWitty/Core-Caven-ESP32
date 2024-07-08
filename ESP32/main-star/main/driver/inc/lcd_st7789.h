@@ -1,5 +1,8 @@
 #ifndef __LCD_H_
 #define __LCD_H_
+
+#include "stdint.h"
+
 /*
     ESP32用的lcd驱动，使用硬件spi。
     Logs:
@@ -10,19 +13,19 @@
     -等
 */
 
-#include "Items.h"
-#include "sys_typedef.h"
-#include "Caven_Type.h"
+// #include "Items.h"
+// #include "sys_typedef.h"
+// #include "Caven_Type.h"
 
-#include "driver/gpio.h"        // because define 
-#include "driver/spi_master.h"
+
 
 /*  LCD_TYPE    */
-#define LCD_TYPE_1_14   0
 #define LCD_TYPE_1_30   1
 #define LCD_TYPE_1_69   2
-#define LCD_TYPE_2_40   3
+#define LCD_TYPE_1_90   3
+#define LCD_TYPE_2_40   4
 
+#define Exist_LCD 
 
 #ifdef Exist_LCD 
     #define PIN_LCD_MOSI    (13) 
@@ -44,41 +47,10 @@
 #define LCD_SPI_BUFF_MAX 500
 
 /*  LCD config  */
-#define USE_HORIZONTAL  1   // 设置默认横屏或者竖屏显示 0或1为竖屏 2或3为横屏
-#define USE_LCD_TYPE    LCD_TYPE_1_69   // 设置
-#if (USE_LCD_TYPE == LCD_TYPE_1_30)
-    #define LCD_W 240        
-    #define LCD_H 240    
-    #define LCD_PICSIZE 115200    
-#elif (USE_LCD_TYPE == LCD_TYPE_1_14)
-    #define LCD_W 135
-    #define LCD_H 240
-    #define LCD_PICSIZE 64800
-#elif (USE_LCD_TYPE == LCD_TYPE_1_69)
-    #define LCD_W 240
-    #define LCD_H 280
-    #define LCD_PICSIZE 134400
-#elif (USE_LCD_TYPE == LCD_TYPE_2_40)
-    #define LCD_W 320
-    #define LCD_H 240
-    #define LCD_PICSIZE 153600
-#endif //
-
-
+#define USE_LCD_TYPE    LCD_TYPE_1_90   // 设置
 
 #define LCD_CMD     0   // 写命令
 #define LCD_DATA    1   // 写数据
-
-typedef struct
-{
-    char flag;
-    char refresh;
-    char direction;
-    uint8_t str_place[2];
-    uint8_t *string;
-    uint8_t pic_place[4];
-    // uint8_t pic[LCD_PICSIZE];
-} LCD_data_Type;
 
 // 画笔颜色
 #define LCD_WHITE       0xFFFF
@@ -102,6 +74,30 @@ typedef struct
 #define LCD_LGRAY       0XC618  // 浅灰色(PANNEL),窗体背景色
 #define LCD_LGRAYBLUE   0XA651  // 浅灰蓝色(中间层颜色)
 #define LCD_LBBLUE      0X2B12  // 浅棕蓝色(选择条目的反色)
+#ifndef U8
+    #define U8  unsigned char
+    #define S8  signed char
+    #define U16 unsigned short
+    #define S16 signed short
+    #define U32 unsigned int
+    #define S32 signed int
+    #define U64 unsigned long long
+#endif
+#ifndef ENABLE
+    #define DISABLE 0
+    #define ENABLE (!DISABLE)
+#endif
+
+typedef struct
+{
+    char flag;
+    char refresh;
+    char direction;
+    U8 str_place[2];
+    U8 *string;
+    U8 pic_place[4];
+    // U8 pic[LCD_PICSIZE];
+} LCD_data_Type;
 
 struct LCD_
 {
@@ -114,7 +110,7 @@ struct LCD_
 
     void (*Show_String)(U16 x, U16 y, const char *p, U16 coloer, U16 b_coloer, char Size);       // 显示字符串
     void (*Show_Chinese)(U16 x, U16 y, char *s, U16 coloer, U16 b_coloer, char Size, char mode); // 显示汉字串
-    void (*Show_Picture)(U16 x, U16 y, U16 length, U16 width, const unsigned char pic[]);        // 显示图片
+    void (*Show_Picture)(U16 x, U16 y, U16 length, U16 width,U8 pic[]);        // 显示图片
 
     int (*Set_HORIZONTAL)(char set);
 };
@@ -126,13 +122,13 @@ void LCD_Draw_Circle(U16 x0, U16 y0, char r, U16 color);              // 在指�
 void LCD_Draw_Rectangle(U16 x1, U16 y1, U16 x2, U16 y2, U16 color);   // 在指定位置画一个矩形
 
 void LCD_Show_String(U16 x, U16 y, const char *p, U16 coloer, U16 b_coloer, char Size);       // 显示字符串
-void LCD_Show_Chinese(U16 x, U16 y, char *s, U16 coloer, U16 b_coloer, char Size, char mode); // 显示汉字串
-void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const unsigned char pic[]);        // 显示图片
+void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width,U8 pic[]);        // 显示图片
 
-int LCD_Set_Horizontal(uint8_t set);
+int LCD_Set_Horizontal(U8 set);
 
 void LCD_Init(int SET); // LCD初始化
 
 void refresh_lcd_task(void *pvParam);
+
 
 #endif

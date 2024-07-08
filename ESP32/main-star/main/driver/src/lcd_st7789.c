@@ -1,10 +1,20 @@
 #include "lcd_st7789.h"
 
+#include "string.h"
+
+#include "driver/gpio.h" // because define
+#include "driver/spi_master.h"
+
 #include "lcdfont.h"	/* 字库	*/
 #include "ls_lg.h"	/* 图库	*/
 
-U16 BACK_COLOR = LCD_BLACK; /* 背景色	LCD_BLACK LCD_WHITE*/
-uint8_t LCD_HORIZONTAL = USE_HORIZONTAL;
+int LCD_PicSize = 0;
+U16 LCD_W_Max = 0;
+U16 LCD_H_Max = 0;
+char lcd_start = 0;
+
+U16 LCD_Back_color = LCD_BLACK; /* 背景色	LCD_BLACK LCD_WHITE*/
+U8 LCD_Horizontal = 1;
 
 #ifdef Exist_LCD
 
@@ -22,9 +32,8 @@ void SPI_CS_Set(char channel, int Set)
 	default:
 		break;
 	}
-#endif	
+#endif
 }
-
 
 void LCD_RES_H(void) /* 这么写是为了兼容宏 */
 {
@@ -106,8 +115,7 @@ int SPI_Start_Init(int Set)
 			.sclk_io_num = PIN_LCD_CLK,
 			.quadwp_io_num = -1,
 			.quadhd_io_num = -1,
-			.max_transfer_sz = (16 * 320 * 2 + 8)
-		};
+			.max_transfer_sz = (16 * 320 * 2 + 8)};
 		spi_device_interface_config_t devcfg = {
 			.clock_speed_hz = 24 * 1000 * 1000, // Clock out at 26 MHz
 			.mode = 3,							// SPI mode 0-3
@@ -128,7 +136,7 @@ int SPI_Start_Init(int Set)
 	return retval;
 }
 
-void EPS_SPI_SendData(const uint8_t *data, int num, int cmd)
+void EPS_SPI_SendData(const U8 *data, int num, int cmd)
 {
 	esp_err_t ret;
 	spi_transaction_t t;
@@ -174,11 +182,6 @@ void LCD_Writ_Bus(U8 data)
 	assert(ret == ESP_OK);							// Should have had no issues.
 }
 
-void LCD_Writ_String(const void *DATA, int num)
-{
-	// SPI_Send_String(DATA, num);
-}
-
 /******************************************************************************
 	  函数说明：LCD写入数据
 	  入口数据：dat 写入的数据
@@ -186,7 +189,7 @@ void LCD_Writ_String(const void *DATA, int num)
 ******************************************************************************/
 void LCD_WR_DATA8(U8 data)
 {
-	uint8_t spi_tx_buff = data;
+	U8 spi_tx_buff = data;
 
 	SPI_CS_Set(1, ENABLE);
 
@@ -196,11 +199,11 @@ void LCD_WR_DATA8(U8 data)
 }
 
 /*
- *大端先发 [h l]
+ * 大端先发 [h l]
  */
 void LCD_WR_DATA(U16 data)
 {
-	uint8_t spi_tx_buff[2];
+	U8 spi_tx_buff[2];
 	spi_tx_buff[0] = (data >> 8) & 0xff;
 	spi_tx_buff[1] = data & 0xff;
 
@@ -209,11 +212,6 @@ void LCD_WR_DATA(U16 data)
 	EPS_SPI_SendData(spi_tx_buff, 2, LCD_DATA);
 
 	SPI_CS_Set(1, DISABLE);
-
-	// SPI_CS_Set(1, ENABLE);
-	// LCD_Writ_Bus(data >> 8);
-	// LCD_Writ_Bus(data & 0X00FF);
-	// SPI_CS_Set(1, DISABLE);
 }
 
 /******************************************************************************
@@ -226,7 +224,7 @@ void LCD_Send_Data(const U8 *data, int num)
 	int all_size = num;
 	int point_move = 0;
 	int size_data = 0;
-	uint8_t *spi_tx_buff = malloc(LCD_SPI_BUFF_MAX);
+	U8 *spi_tx_buff = malloc(LCD_SPI_BUFF_MAX);
 
 	for (int i = 0; i < all_size; i += size_data)
 	{
@@ -248,13 +246,6 @@ void LCD_Send_Data(const U8 *data, int num)
 		}
 	}
 	free(spi_tx_buff);
-
-	// SPI_CS_Set(1, ENABLE);
-	// for (size_t i = 0; i < num; i++)
-	// {
-	// 	LCD_Writ_Bus(*(data + i));
-	// }
-	// SPI_CS_Set(1, DISABLE);
 }
 
 /******************************************************************************
@@ -264,7 +255,7 @@ void LCD_Send_Data(const U8 *data, int num)
 ******************************************************************************/
 void LCD_WR_CMD(U8 data)
 {
-	uint8_t spi_tx_buff = data;
+	U8 spi_tx_buff = data;
 
 	SPI_CS_Set(1, ENABLE);
 
@@ -284,52 +275,23 @@ void LCD_WR_CMD(U8 data)
 ******************************************************************************/
 void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 {
-	U16 x_sta,y_sta,x_end,y_end;
-#if (USE_LCD_TYPE == LCD_TYPE_1_14)
-	if (LCD_HORIZONTAL == 0)
-	{
-		x_sta = (x1 + 52);
-		x_end = (x2 + 52);
-		y_sta = (y1 + 40);
-		y_end = (y2 + 40);
-	}
-	else if (LCD_HORIZONTAL == 1)
-	{
-		x_sta = (x1 + 53);
-		x_end = (x2 + 53);
-		y_sta = (y1 + 40);
-		y_end = (y2 + 40);
-	}
-	else if (LCD_HORIZONTAL == 2)
-	{
-		x_sta = (x1 + 40);
-		x_end = (x2 + 40);
-		y_sta = (y1 + 53);
-		y_end = (y2 + 53);
-	}
-	else
-	{
-		x_sta = (x1 + 40);
-		x_end = (x2 + 40);
-		y_sta = (y1 + 52);
-		y_end = (y2 + 52);
-	}
-#elif (USE_LCD_TYPE == LCD_TYPE_1_30)
-	if (LCD_HORIZONTAL == 0)
+	U16 x_sta, y_sta, x_end, y_end;
+#if (USE_LCD_TYPE == LCD_TYPE_1_30)
+	if (LCD_Horizontal == 0)
 	{
 		x_sta = (x1);
 		x_end = (x2);
 		y_sta = (y1);
 		y_end = (y2);
 	}
-	else if (LCD_HORIZONTAL == 1)
+	else if (LCD_Horizontal == 1)
 	{
 		x_sta = (x1);
 		x_end = (x2);
 		y_sta = (y1 + 80);
 		y_end = (y2 + 80);
 	}
-	else if (LCD_HORIZONTAL == 2)
+	else if (LCD_Horizontal == 2)
 	{
 		x_sta = (x1);
 		x_end = (x2);
@@ -344,7 +306,7 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		y_end = (y2);
 	}
 #elif (USE_LCD_TYPE == LCD_TYPE_1_69)
-	if (LCD_HORIZONTAL == 1)
+	if (LCD_Horizontal == 1)
 	{
 		x_sta = (x1);
 		x_end = (x2);
@@ -357,6 +319,21 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 		x_end = (x2 + 20);
 		y_sta = (y1);
 		y_end = (y2);
+	}
+#elif (USE_LCD_TYPE == LCD_TYPE_1_90)
+	if (LCD_Horizontal == 0 || LCD_Horizontal == 1)
+	{
+		x_sta = (x1 + 35);
+		x_end = (x2 + 35);
+		y_sta = (y1);
+		y_end = (y2);
+	}
+	else
+	{
+		x_sta = (x1);
+		x_end = (x2);
+		y_sta = (y1 + 35);
+		y_end = (y2 + 35);
 	}
 #elif (USE_LCD_TYPE == LCD_TYPE_2_40)
 
@@ -381,9 +358,9 @@ void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 void LCD_Fill(U16 x_sta, U16 y_sta, U16 x_end, U16 y_end, U16 color)
 {
 #ifdef Exist_LCD
-	uint8_t *pic_buff = malloc(650); /* 一个y 320 * 2	*/
-	uint8_t color_l;
-	uint8_t color_h;
+	U8 *pic_buff = malloc(650); /* 一个y 320 * 2	*/
+	U8 color_l;
+	U8 color_h;
 	U16 x_len = (x_end - x_sta);
 	U16 y_len = (y_end - y_sta);
 	int i = x_len * y_len;
@@ -413,15 +390,15 @@ void LCD_Fill(U16 x_sta, U16 y_sta, U16 x_end, U16 y_end, U16 color)
 				如果是其他值，则理解为查询当前屏幕方向
 	  返回值：  返回当前屏幕显示方向
 ******************************************************************************/
-int LCD_Set_Horizontal(uint8_t set)
+int LCD_Set_Horizontal(U8 set)
 {
 	int retval = 0;
 #ifdef Exist_LCD
 	if (set < 4)
 	{
-		LCD_HORIZONTAL = set;
+		LCD_Horizontal = set;
 	}
-	retval = LCD_HORIZONTAL;
+	retval = LCD_Horizontal;
 #endif
 	return retval;
 }
@@ -544,130 +521,6 @@ void LCD_Draw_Circle(U16 x0, U16 y0, char r, U16 color)
 }
 
 /******************************************************************************
-	  函数说明：显示单个24x24汉字
-	  入口数据：x,y显示坐标
-				*s 要显示的汉字
-				fc 字的颜色
-				bc 字的背景色
-				sizey 字号
-				mode:  0非叠加模式  1叠加模式
-	  返回值：  无
-******************************************************************************/
-void LCD_Show_Chinese24x24(U16 x, U16 y, char *s, U16 fc, U16 bc, char sizey, char mode)
-{
-#ifdef String_Chinese
-	char i, j, m = 0;
-	U16 k;
-	U16 HZnum;		 // 汉字数目
-	U16 TypefaceNum; // 一个字符所占字节大小
-	U16 x0 = x;
-	TypefaceNum = (sizey / 8 + ((sizey % 8) ? 1 : 0)) * sizey;
-	HZnum = sizeof(tfont24) / sizeof(typFNT_GB24); // 统计汉字数目
-	for (k = 0; k < HZnum; k++)
-	{
-		if ((tfont24[k].Index[0] == *(s)) && (tfont24[k].Index[1] == *(s + 1)))
-		{
-			LCD_Address_Set(x, y, x + sizey - 1, y + sizey - 1);
-			for (i = 0; i < TypefaceNum; i++)
-			{
-				for (j = 0; j < 8; j++)
-				{
-					if (!mode) // 非叠加方式
-					{
-						if (tfont24[k].Msk[i] & (0x01 << j))
-							LCD_WR_DATA(fc);
-						else
-							LCD_WR_DATA(bc);
-						m++;
-						if (m % sizey == 0)
-						{
-							m = 0;
-							break;
-						}
-					}
-					else // 叠加方式
-					{
-						if (tfont24[k].Msk[i] & (0x01 << j))
-							LCD_Draw_Point(x, y, fc); // 画一个点
-						x++;
-						if ((x - x0) == sizey)
-						{
-							x = x0;
-							y++;
-							break;
-						}
-					}
-				}
-			}
-		}
-		continue; // 查找到对应点阵字库立即退出，防止多个汉字重复取模带来影响
-	}
-#endif
-}
-
-/******************************************************************************
-	  函数说明：显示单个32x32汉字
-	  入口数据：x,y显示坐标
-				*s 要显示的汉字
-				fc 字的颜色
-				bc 字的背景色
-				sizey 字号
-				mode:  0非叠加模式  1叠加模式
-	  返回值：  无
-******************************************************************************/
-void LCD_Show_Chinese32x32(U16 x, U16 y, char *s, U16 fc, U16 bc, char sizey, char mode)
-{
-#ifdef String_Chinese
-	char i, j, m = 0;
-	U16 k;
-	U16 HZnum;		 // 汉字数目
-	U16 TypefaceNum; // 一个字符所占字节大小
-	U16 x0 = x;
-	TypefaceNum = (sizey / 8 + ((sizey % 8) ? 1 : 0)) * sizey;
-	HZnum = sizeof(tfont32) / sizeof(typFNT_GB32); // 统计汉字数目
-	for (k = 0; k < HZnum; k++)
-	{
-		if ((tfont32[k].Index[0] == *(s)) && (tfont32[k].Index[1] == *(s + 1)))
-		{
-			LCD_Address_Set(x, y, x + sizey - 1, y + sizey - 1);
-			for (i = 0; i < TypefaceNum; i++)
-			{
-				for (j = 0; j < 8; j++)
-				{
-					if (!mode) // 非叠加方式
-					{
-						if (tfont32[k].Msk[i] & (0x01 << j))
-							LCD_WR_DATA(fc);
-						else
-							LCD_WR_DATA(bc);
-						m++;
-						if (m % sizey == 0)
-						{
-							m = 0;
-							break;
-						}
-					}
-					else // 叠加方式
-					{
-						if (tfont32[k].Msk[i] & (0x01 << j))
-							LCD_Draw_Point(x, y, fc); // 画一个点
-						x++;
-						if ((x - x0) == sizey)
-						{
-							x = x0;
-							y++;
-							break;
-						}
-					}
-				}
-			}
-		}
-		continue; // 查找到对应点阵字库立即退出，防止多个汉字重复取模带来影响
-	}
-#endif
-}
-
-/******************************************************************************
 	  函数说明：显示单个字符
 	  入口数据：x,y显示坐标
 				num 要显示的字符
@@ -742,38 +595,6 @@ void LCD_Show_Char(U16 x, U16 y, char num, U16 fc, U16 bc, char sizey, char mode
 	}
 #endif
 }
-/*    以上为文字最小单元      */
-
-/******************************************************************************
-	  函数说明：显示汉字串
-	  入口数据：x,y显示坐标
-				*s 要显示的汉字串
-				fc 字的颜色
-				bc 字的背景色
-				sizey 字号 可选 24 32
-				mode:  0非叠加模式  1叠加模式
-	  返回值：  无
-******************************************************************************/
-void LCD_Show_Chinese(U16 x, U16 y, char *s, U16 fc, U16 bc, char sizey, char mode)
-{
-	while (*s != 0)
-	{
-		if (sizey == 24)
-		{
-			LCD_Show_Chinese24x24(x, y, s, fc, bc, sizey, mode);
-		}
-		else if (sizey == 32)
-		{
-			LCD_Show_Chinese32x32(x, y, s, fc, bc, sizey, mode);
-		}
-		else
-		{
-			return;
-		}
-		s += 2;
-		x += sizey;
-	}
-}
 
 /******************************************************************************
 	  函数说明：显示字符串
@@ -791,13 +612,13 @@ void LCD_Show_String(U16 x, U16 y, const char *p, U16 fc, U16 bc, char sizey)
 	{
 		x *= (sizey / 2);
 		y *= (sizey);
-		if (x >= LCD_W)
+		if (x >= LCD_W_Max)
 		{
-			x = (LCD_W - (sizey / 2));
+			x = (LCD_W_Max - (sizey / 2));
 		}
-		if (y >= LCD_H)
+		if (y >= LCD_H_Max)
 		{
-			y = (LCD_H - sizey);
+			y = (LCD_H_Max - sizey);
 		}
 	}
 	else
@@ -819,25 +640,24 @@ void LCD_Show_String(U16 x, U16 y, const char *p, U16 fc, U16 bc, char sizey)
 				pic[]  图片数组
 	  返回值：  无
 ******************************************************************************/
-void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
+void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, U8 pic[])
 {
 #ifdef Exist_LCD
 	U16 i, j;
-	U32 k = 0;
-	int n = 0;
-	uint8_t *pic_buff = malloc(650);
+	int temp_num = 0;
+	int temp_run = 0;
+	U8 *pic_buff = malloc(650);
 	LCD_Address_Set(x, y, (x + length - 1), (y + width - 1));
 
 	for (i = 0; i < length; i++)
 	{
 		for (j = 0; j < width; j++)
 		{
-			pic_buff[n++] = pic[k * 2];
-			pic_buff[n++] = pic[k * 2 + 1];
-			k++;
+			pic_buff[temp_num++] = pic[temp_run++];
+			pic_buff[temp_num++] = pic[temp_run++];
 		}
 		LCD_Send_Data(pic_buff, width * 2);
-		n = 0;
+		temp_num = 0;
 	}
 	free(pic_buff);
 #endif
@@ -846,7 +666,7 @@ void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
 void LCD_Init(int Set)
 {
 #ifdef Exist_LCD
-	uint8_t temp_data = 0;
+	U8 temp_data = 0;
 	LCD_GPIO_Init(Set);
 	SPI_Start_Init(Set);
 	LCD_WR_DATA8(0x00);
@@ -857,11 +677,10 @@ void LCD_Init(int Set)
 	LCD_Delay(200); //
 	LCD_RES_H();
 	LCD_Delay(100);
-	LCD_Set_Horizontal(USE_HORIZONTAL);
 
-//************* Start Initial Sequence **********// 
-	LCD_WR_CMD(0x36);			// res
-	switch (LCD_HORIZONTAL)
+	//************* Start Initial Sequence **********//
+	LCD_WR_CMD(0x36); // res
+	switch (LCD_Horizontal)
 	{
 	case 0:
 		LCD_WR_DATA8(0x00);
@@ -876,44 +695,110 @@ void LCD_Init(int Set)
 		LCD_WR_DATA8(0xA0);
 		break;
 	}
-//************* InitReg **********// 
-#if (USE_LCD_TYPE == LCD_TYPE_1_69)
-	LCD_WR_CMD(0x3A);	/* RGB 5-6-5-bit  */
+//************* InitReg **********//
+#if (USE_LCD_TYPE == LCD_TYPE_1_30)
+	LCD_WR_CMD(0x3A);
 	LCD_WR_DATA8(0x05);
 
-	LCD_WR_CMD(0xB2);	/* Porch Setting */
+	LCD_WR_CMD(0xB2);
+	LCD_WR_DATA8(0x0C);
+	LCD_WR_DATA8(0x0C);
+	LCD_WR_DATA8(0x00);
+	LCD_WR_DATA8(0x33);
+	LCD_WR_DATA8(0x33);
+
+	LCD_WR_CMD(0xB7); // Gate Control
+	LCD_WR_DATA8(0x35);
+	LCD_WR_CMD(0xBB); // VCOM Setting
+	LCD_WR_DATA8(0x19);
+
+	LCD_WR_CMD(0xC0); // LCM Control
+	LCD_WR_DATA8(0x2C);
+
+	LCD_WR_CMD(0xC2); // VDV and VRH Command Enable
+	LCD_WR_DATA8(0x01);
+	LCD_WR_CMD(0xC3); // VRH Set
+	LCD_WR_DATA8(0x12);
+	LCD_WR_CMD(0xC4); // VDV Set
+	LCD_WR_DATA8(0x20);
+
+	LCD_WR_CMD(0xC6); // Frame Rate Control in Normal Mode
+	LCD_WR_DATA8(0x0F);
+
+	LCD_WR_CMD(0xD0); // Power Control 1
+	LCD_WR_DATA8(0xA4);
+	LCD_WR_DATA8(0xA1);
+
+	LCD_WR_CMD(0xE0); // Positive Voltage Gamma Control
+	LCD_WR_DATA8(0xD0);
+	LCD_WR_DATA8(0x04);
+	LCD_WR_DATA8(0x0D);
+	LCD_WR_DATA8(0x11);
+	LCD_WR_DATA8(0x13);
+	LCD_WR_DATA8(0x2B);
+	LCD_WR_DATA8(0x3F);
+	LCD_WR_DATA8(0x54);
+	LCD_WR_DATA8(0x4C);
+	LCD_WR_DATA8(0x18);
+	LCD_WR_DATA8(0x0D);
+	LCD_WR_DATA8(0x0B);
+	LCD_WR_DATA8(0x1F);
+	LCD_WR_DATA8(0x23);
+
+	LCD_WR_CMD(0xE1); // Negative Voltage Gamma Control
+	LCD_WR_DATA8(0xD0);
+	LCD_WR_DATA8(0x04);
+	LCD_WR_DATA8(0x0C);
+	LCD_WR_DATA8(0x11);
+	LCD_WR_DATA8(0x13);
+	LCD_WR_DATA8(0x2C);
+	LCD_WR_DATA8(0x3F);
+	LCD_WR_DATA8(0x44);
+	LCD_WR_DATA8(0x51);
+	LCD_WR_DATA8(0x2F);
+	LCD_WR_DATA8(0x1F);
+	LCD_WR_DATA8(0x1F);
+	LCD_WR_DATA8(0x20);
+	LCD_WR_DATA8(0x23);
+	LCD_W_Max = 240;
+	LCD_H_Max = 240;
+#elif (USE_LCD_TYPE == LCD_TYPE_1_69)
+	LCD_WR_CMD(0x3A); /* RGB 5-6-5-bit  */
+	LCD_WR_DATA8(0x05);
+
+	LCD_WR_CMD(0xB2); /* Porch Setting */
 	LCD_WR_DATA8(0x0B);
 	LCD_WR_DATA8(0x0B);
 	LCD_WR_DATA8(0x00);
 	LCD_WR_DATA8(0x33);
 	LCD_WR_DATA8(0x35);
 
-	LCD_WR_CMD(0xB7);	//Gate Control
+	LCD_WR_CMD(0xB7); // Gate Control
 	LCD_WR_DATA8(0x11);
-	LCD_WR_CMD(0xBB);	//VCOM Setting
+	LCD_WR_CMD(0xBB); // VCOM Setting
 	LCD_WR_DATA8(0x35);
 
-	LCD_WR_CMD(0xC0);	//LCM Control  
+	LCD_WR_CMD(0xC0); // LCM Control
 	LCD_WR_DATA8(0x2C);
 
-	LCD_WR_CMD(0xC2);	//VDV and VRH Command Enable
+	LCD_WR_CMD(0xC2); // VDV and VRH Command Enable
 	LCD_WR_DATA8(0x01);
-	LCD_WR_CMD(0xC3);	//VRH Set
+	LCD_WR_CMD(0xC3); // VRH Set
 	LCD_WR_DATA8(0x0D);
-	LCD_WR_CMD(0xC4);	//VDV Set
+	LCD_WR_CMD(0xC4); // VDV Set
 	LCD_WR_DATA8(0x20);
 
-	LCD_WR_CMD(0xC6);  //Frame Rate Control in Normal Mode
+	LCD_WR_CMD(0xC6); // Frame Rate Control in Normal Mode
 	LCD_WR_DATA8(0x13);
 
-	LCD_WR_CMD(0xD0);	// Power Control 1
+	LCD_WR_CMD(0xD0); // Power Control 1
 	LCD_WR_DATA8(0xA4);
 	LCD_WR_DATA8(0xA1);
 
 	LCD_WR_CMD(0xD6);
-    LCD_WR_DATA8(0xA1);
+	LCD_WR_DATA8(0xA1);
 
-	LCD_WR_CMD(0xE0);	//Positive Voltage Gamma Control
+	LCD_WR_CMD(0xE0); // Positive Voltage Gamma Control
 	LCD_WR_DATA8(0xF0);
 	LCD_WR_DATA8(0x06);
 	LCD_WR_DATA8(0x0B);
@@ -929,7 +814,7 @@ void LCD_Init(int Set)
 	LCD_WR_DATA8(0x29);
 	LCD_WR_DATA8(0x2D);
 
-	LCD_WR_CMD(0xE1);	//Negative Voltage Gamma Control
+	LCD_WR_CMD(0xE1); // Negative Voltage Gamma Control
 	LCD_WR_DATA8(0xF0);
 	LCD_WR_DATA8(0x04);
 	LCD_WR_DATA8(0x08);
@@ -946,80 +831,87 @@ void LCD_Init(int Set)
 	LCD_WR_DATA8(0x2E);
 
 	LCD_WR_CMD(0xE4);
-    LCD_WR_DATA8(0x25);
-    LCD_WR_DATA8(0x00);
-    LCD_WR_DATA8(0x00);
-#else	// 1.14,1.30,...
-	LCD_WR_CMD(0x3A);
+	LCD_WR_DATA8(0x25);
+	LCD_WR_DATA8(0x00);
+	LCD_WR_DATA8(0x00);
+	LCD_W_Max = 240;
+	LCD_H_Max = 280;
+#elif (USE_LCD_TYPE == LCD_TYPE_1_90)
+	LCD_WR_CMD(0x3A); /* RGB 5-6-5-bit  */
 	LCD_WR_DATA8(0x05);
 
-	LCD_WR_CMD(0xB2);
+	LCD_WR_CMD(0xB2); /* Porch Setting */
 	LCD_WR_DATA8(0x0C);
 	LCD_WR_DATA8(0x0C);
 	LCD_WR_DATA8(0x00);
 	LCD_WR_DATA8(0x33);
-	LCD_WR_DATA8(0x33);
-
-	LCD_WR_CMD(0xB7);	//Gate Control
 	LCD_WR_DATA8(0x35);
-	LCD_WR_CMD(0xBB);	//VCOM Setting
-	LCD_WR_DATA8(0x19);
 
-	LCD_WR_CMD(0xC0);	//LCM Control  
+	LCD_WR_CMD(0xB7); // Gate Control
+	LCD_WR_DATA8(0x35);
+	LCD_WR_CMD(0xBB); // VCOM Setting
+	LCD_WR_DATA8(0x1A);
+
+	LCD_WR_CMD(0xC0); // LCM Control
 	LCD_WR_DATA8(0x2C);
-
-	LCD_WR_CMD(0xC2);	//VDV and VRH Command Enable
+	LCD_WR_CMD(0xC2); // VDV and VRH Command Enable
 	LCD_WR_DATA8(0x01);
-	LCD_WR_CMD(0xC3);	//VRH Set
-	LCD_WR_DATA8(0x12);
-	LCD_WR_CMD(0xC4);	//VDV Set
+	LCD_WR_CMD(0xC3); // VRH Set
+	LCD_WR_DATA8(0x0B);
+	LCD_WR_CMD(0xC4); // VDV Set
 	LCD_WR_DATA8(0x20);
-
-	LCD_WR_CMD(0xC6);  //Frame Rate Control in Normal Mode
+	LCD_WR_CMD(0xC6); // Frame Rate Control in Normal Mode
 	LCD_WR_DATA8(0x0F);
 
-	LCD_WR_CMD(0xD0);	// Power Control 1
+	LCD_WR_CMD(0xD0); // Power Control 1
 	LCD_WR_DATA8(0xA4);
 	LCD_WR_DATA8(0xA1);
 
-	LCD_WR_CMD(0xE0);	//Positive Voltage Gamma Control
-	LCD_WR_DATA8(0xD0);
+	LCD_WR_CMD(0x21);
+	LCD_WR_CMD(0xE0); // Positive Voltage Gamma Control
+	LCD_WR_DATA8(0xF0);
+	LCD_WR_DATA8(0x00);
 	LCD_WR_DATA8(0x04);
-	LCD_WR_DATA8(0x0D);
-	LCD_WR_DATA8(0x11);
-	LCD_WR_DATA8(0x13);
-	LCD_WR_DATA8(0x2B);
-	LCD_WR_DATA8(0x3F);
-	LCD_WR_DATA8(0x54);
-	LCD_WR_DATA8(0x4C);
-	LCD_WR_DATA8(0x18);
+	LCD_WR_DATA8(0x04);
+	LCD_WR_DATA8(0x04);
+	LCD_WR_DATA8(0x05);
+	LCD_WR_DATA8(0x29);
+	LCD_WR_DATA8(0x33);
+	LCD_WR_DATA8(0x3E);
+	LCD_WR_DATA8(0x38);
+	LCD_WR_DATA8(0x12);
+	LCD_WR_DATA8(0x12);
+	LCD_WR_DATA8(0x28);
+	LCD_WR_DATA8(0x30);
+
+	LCD_WR_CMD(0xE1); // Negative Voltage Gamma Control
+	LCD_WR_DATA8(0xF0);
+	LCD_WR_DATA8(0x07);
+	LCD_WR_DATA8(0x0A);
 	LCD_WR_DATA8(0x0D);
 	LCD_WR_DATA8(0x0B);
-	LCD_WR_DATA8(0x1F);
-	LCD_WR_DATA8(0x23);
-
-	LCD_WR_CMD(0xE1);	//Negative Voltage Gamma Control
-	LCD_WR_DATA8(0xD0);
-	LCD_WR_DATA8(0x04);
-	LCD_WR_DATA8(0x0C);
-	LCD_WR_DATA8(0x11);
-	LCD_WR_DATA8(0x13);
-	LCD_WR_DATA8(0x2C);
-	LCD_WR_DATA8(0x3F);
-	LCD_WR_DATA8(0x44);
-	LCD_WR_DATA8(0x51);
-	LCD_WR_DATA8(0x2F);
-	LCD_WR_DATA8(0x1F);
-	LCD_WR_DATA8(0x1F);
-	LCD_WR_DATA8(0x20);
-	LCD_WR_DATA8(0x23);
+	LCD_WR_DATA8(0x07);
+	LCD_WR_DATA8(0x28);
+	LCD_WR_DATA8(0x33);
+	LCD_WR_DATA8(0x3E);
+	LCD_WR_DATA8(0x36);
+	LCD_WR_DATA8(0x14);
+	LCD_WR_DATA8(0x14);
+	LCD_WR_DATA8(0x29);
+	LCD_WR_DATA8(0x32);
+	LCD_W_Max = 170;
+	LCD_H_Max = 320;
+#elif (USE_LCD_TYPE == LCD_TYPE_2_40)
+	LCD_W_Max = 320;
+	LCD_H_Max = 240;
 #endif
 
-	LCD_WR_CMD(0x21);	//Display Inversion On
-	LCD_WR_CMD(0x11);	//Sleep Out
-	LCD_WR_CMD(0x29);	//Display On
+	LCD_WR_CMD(0x21); // Display Inversion On
+	LCD_WR_CMD(0x11); // Sleep Out
+	LCD_WR_CMD(0x29); // Display On
 	LCD_Delay(100);
-	LCD_Fill(0, 0, LCD_W, LCD_H, BACK_COLOR);
+	LCD_Fill(0, 0, LCD_W_Max, LCD_H_Max, LCD_Back_color);
+	LCD_PicSize = LCD_W_Max * LCD_H_Max * 2;
 #endif
 }
 
@@ -1082,7 +974,7 @@ void refresh_lcd_task(void *pvParam)
 		array_buff[i] = (i & 0xff);
 	}
 	XSema_LCDpt = xSemaphoreCreateCounting(6,1);
-	LCD_Set_Horizontal(0);
+	LCD_Set_Horizontal(3);
 	LCD_Init(TURE);
 	
 	// LCD_Show_Picture(0, 20, 240, 240, gImage_ls);
