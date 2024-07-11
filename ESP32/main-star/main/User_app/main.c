@@ -59,7 +59,7 @@ void Build_task(void)
     }
 }
 
-#include "ls_lg.h"	/* 图库	*/
+#include "hongshu.h"	/* 图库	*/
 
 void Main_Init(void)
 {
@@ -72,5 +72,5 @@ void Main_Init(void)
     draw_coordinate_show(26, 26);
     LCD_Set_TargetModel(m_LCD_TYPE_1_28);
     MODE_LCD_Init(1);
-    LCD_Show_Picture(0, 0, 240, 240, gImage_ls);
+    LCD_Show_Picture(0, 0, 240, 240, gImage_hongshu);
 }

@@ -39,10 +39,16 @@ void st7789_dever_delay(int time)
 
 spi_device_handle_t LCD_spi = {0};
 
+int flag_dc = 0;
+
+void set_flag_dc (int n)
+{
+    flag_dc = n;
+}
+
 void preposition_DC_Fun(spi_transaction_t *t)
 {
-	int dc = (int)t->user;
-	if (dc)
+	if (flag_dc)
 	{
 		gpio_set_level(PIN_LCD_DC, 1);
 	}
@@ -66,7 +72,7 @@ int Base_SPI_Init(int Set)
 			.quadhd_io_num = -1,
 			.max_transfer_sz = (16 * 320 * 2 + 8)};
 		spi_device_interface_config_t devcfg = {
-			.clock_speed_hz = 24 * 1000 * 1000, // Clock out at 26 MHz
+			.clock_speed_hz = 26 * 1000 * 1000, // Clock out at 26 MHz
 			.mode = 3,							// SPI mode 0-3
 			.spics_io_num = -1,					// CS pin
 			.queue_size = 7,					// We want to be able to queue 7 transactions at a time
@@ -202,10 +208,10 @@ static void LCD_WR_CMD(uint8_t data)
 {
     MODE_st7789_dever_CS(1);
     // User_GPIO_set(1, 10, 0); // 写命令
-    gpio_set_level(PIN_LCD_DC, 0);
+    set_flag_dc (0);
     MODE_st7789_dever_Writ_Bus(data);
     // User_GPIO_set(1, 10, 1); // 写数据	预备
-    gpio_set_level(PIN_LCD_DC, 1);
+    set_flag_dc (1);
     // MODE_st7789_dever_CS(0); // 写命令之后必然要写数据，所以不要取消片选
 }
 
