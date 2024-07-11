@@ -974,13 +974,18 @@ void refresh_lcd_task(void *pvParam)
 		array_buff[i] = (i & 0xff);
 	}
 	XSema_LCDpt = xSemaphoreCreateCounting(6,1);
-	LCD_Set_Horizontal(3);
+	LCD_Set_Horizontal(0);
 	LCD_Init(TURE);
 	
-	// LCD_Show_Picture(0, 20, 240, 240, gImage_ls);
+	LCD_Show_Picture(0, 0, 240, 240, gImage_ls);
 	ESP_LOGI("[LCD]", "init TYPE %d", USE_LCD_TYPE);
 
 	LCD_Delay(1000);
+	while (1)
+	{
+		LCD_Delay(1000);
+	};
+	
 	gui_init();
 	lv_label_set_text(ui_NUM, "0000");
 	lv_label_set_text(ui_NUMCT, "    ");

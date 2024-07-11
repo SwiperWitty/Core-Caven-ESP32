@@ -5,7 +5,6 @@
 
 #include "main.h"
 
-extern LCD_data_Type ESP32_lcd_show;
 
 
 void time_prt_Callback_fun (TimerHandle_t xtime)
@@ -28,7 +27,6 @@ void app_main(void)
     temp_array = malloc(300);
     while (1)
     {
-
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
     free(temp_array);
@@ -48,7 +46,7 @@ void Build_task(void)
     custom_uart_task_Fun();
     xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, LED_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
     
-    xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, SHOW_TASK_PRIORITY, &lcd_taskhanlde, CORE_ONE);
+    // xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, SHOW_TASK_PRIORITY, &lcd_taskhanlde, CORE_ONE);
 
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
     
@@ -61,6 +59,8 @@ void Build_task(void)
     }
 }
 
+#include "ls_lg.h"	/* 图库	*/
+
 void Main_Init(void)
 {
     // Allow other core to finish initialization
@@ -70,4 +70,7 @@ void Main_Init(void)
     // disableCore1WDT();
     draw_coordinate_line_handle(0, 0, 18, 18);
     draw_coordinate_show(26, 26);
+    LCD_Set_TargetModel(m_LCD_TYPE_1_28);
+    MODE_LCD_Init(1);
+    LCD_Show_Picture(0, 0, 240, 240, gImage_ls);
 }

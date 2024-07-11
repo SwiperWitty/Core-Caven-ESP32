@@ -30,7 +30,6 @@
 #define Exist_GPIO 
 #define Exist_UART 
 #define EXIST_BLUETOOTH 
-#define Exist_LCD 
 #define Exist_OLED 
 
                         /*  只需要加上逻辑才能的功能    */

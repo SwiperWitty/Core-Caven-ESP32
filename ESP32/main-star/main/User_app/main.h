@@ -38,9 +38,10 @@
     #include"Custom_uart.h" 
 #endif 
 #ifdef Exist_LCD
-    #include"lcd_st7789.h"
+    #include "MODE_LCD.h"
 #endif 
 
+#include "MODE_LCD.h"
 #include"draw.h"
 
 #define CORE_ZERO   0

@@ -47,7 +47,7 @@
 #define LCD_SPI_BUFF_MAX 500
 
 /*  LCD config  */
-#define USE_LCD_TYPE    LCD_TYPE_1_90   // 设置
+#define USE_LCD_TYPE    LCD_TYPE_1_30   // 设置
 
 #define LCD_CMD     0   // 写命令
 #define LCD_DATA    1   // 写数据

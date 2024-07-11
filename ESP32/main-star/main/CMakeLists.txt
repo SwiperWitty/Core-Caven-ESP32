@@ -16,7 +16,8 @@ set(srcs
     "driver/src/Custom_gpio.c"
     "driver/src/Custom_uart.c"
     "driver/src/Custom_bluetooth.c"
-    "driver/src/lcd_st7789.c"
+    "driver/src/MODE_st7789_dever.c"
+    "driver/src/MODE_LCD.c"
     "driver/src/draw.c"
 )
 
