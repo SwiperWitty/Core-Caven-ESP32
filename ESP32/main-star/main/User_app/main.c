@@ -72,5 +72,6 @@ void Main_Init(void)
     draw_coordinate_show(26, 26);
     LCD_Set_TargetModel(m_LCD_TYPE_1_28);
     MODE_LCD_Init(1);
+    // LCD_Show_String(0,0, "hello ", LCD_Word_Color, LCD_Back_Color, 16);    // 显示字符串
     LCD_Show_Picture(0, 0, 240, 240, gImage_hongshu);
 }

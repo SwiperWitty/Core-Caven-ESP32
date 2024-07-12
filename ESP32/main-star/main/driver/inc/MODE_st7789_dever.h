@@ -1,18 +1,16 @@
 #ifndef _MODE_ST7789_DEVER_H_
 #define _MODE_ST7789_DEVER_H_
 
-// #include "Base.h"
 #include "stdint.h"
 #include "string.h"
 
+
+#ifdef CONFIG_IDF_TARGET_ESP32
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
-#define Exist_LCD
-
-#ifdef Exist_LCD 
     #define PIN_LCD_MOSI    (13) 
     #define PIN_LCD_MISO    (12)
     #define PIN_LCD_CLK     (14)
@@ -27,7 +25,18 @@
     #else
         #define LCD_HOST    SPI3_HOST 
     #endif
+    #define Exist_LCD
+#else
+#include "Base.h"
+
+    #define PIN_LCD_CS      (-1)        /* -1 是不使用	*/
+
+    #define PIN_LCD_DC      (10)        // PA10
+    #define PIN_LCD_RST     (0)         // PB0
+    #define PIN_LCD_BCKL    (-1)        /* 直接接到vdd */
+
 #endif
+
 
 /*
 
