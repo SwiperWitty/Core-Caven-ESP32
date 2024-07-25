@@ -26,15 +26,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "driver/gpio.h"
-#include "sdkconfig.h"
 
 extern void ESP_DEBUG_Hex_Fun (uint8_t *data,int data_length);
 
 static const char *TAG = "filesys";
 #define BASE_PATH "storage"
 #define MOUNT_PATH "/data"
-#define Start_ADDR 128
+#define Start_ADDR 128      // 这个位置放一些必要信息 
 
 // Handle of the wear levelling library instance
 static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
@@ -44,7 +42,7 @@ const char *base_path = "/extflash";
 const char *flash_file = "tag.txt";
 size_t bytes_total, bytes_free;
 
-static esp_flash_t* example_init_ext_flash(void);
+// static esp_flash_t* example_init_ext_flash(void);
 static const esp_partition_t* example_add_partition(esp_flash_t* ext_flash, const char* partition_label);
 static void example_list_data_partitions(void);
 static bool example_mount_fatfs(const char* partition_label);
@@ -54,11 +52,37 @@ static void initialize_filesystem(void);
 char fat_file_str[100];
 char Start_str_len = 0;
 
+void filesystem_save_title (int a,int b)
+{
+    FILE *f = NULL;
+    sprintf(fat_file_str,"/%s%s/%s",BASE_PATH,MOUNT_PATH,flash_file);
+    ESP_LOGI(TAG, "file_str %s", fat_file_str);
+    f = fopen(fat_file_str, "rb+");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        Start_str_len = 0;
+        while(1)
+        {
+            vTaskDelay(100);
+        }
+    }
+    else
+    {
+        fprintf(f, "ESP32 File system version %s ", esp_get_idf_version());      // 写入内容
+        fprintf(f, "dataA:[%d] dataB:[%d]",a,b);
+        fclose(f);
+        ESP_LOGI(TAG, "dataA:[%d] dataB:[%d]",a,b);
+        ESP_LOGI(TAG, "File written");
+        Start_str_len = 1;
+    }
+}
+
 void filesystem_init (void)
 {
     int retval = 0;
     FILE *f = NULL;
-    int temp_num;
+    char *str_pointer = NULL;
+    int temp_num,str_len;
     uint8_t temp_data[64];
     char line[128];
     initialize_filesystem();
@@ -77,38 +101,48 @@ void filesystem_init (void)
         Start_str_len = strlen(line);
         if (Start_str_len)
         {
+            if (Start_str_len > 128)
+            {
+                Start_str_len = 128;
+            }
+            
             ESP_LOGI(TAG, "Read from file: '%s' <-- Start_str_len: %d", line,Start_str_len);
+            str_pointer = strstr(line,"dataA:[");
+            if (str_pointer != NULL)
+            {
+                str_len = strlen("dataA:[");
+                temp_num = atoi(str_pointer+str_len);   // 指针偏移
+                ESP_LOGI(TAG, "%s -> get dataA: %d",str_pointer+str_len,temp_num);
+
+            }
+            str_pointer = strstr(line,"dataB:[");
+            if (str_pointer != NULL)
+            {
+                str_len = strlen("dataB:[");
+                temp_num = atoi(str_pointer+str_len);
+                ESP_LOGI(TAG, "%s -> get dataB: %d",str_pointer+str_len,temp_num);
+
+            }
         }
     }
 
     if(Start_str_len > 0)
     {
-        ESP_LOGW(TAG, "file using ,no write ");
+        ESP_LOGW(TAG, "file using ,Don't write ");
+        retval = 0;
     }
     else
     {
         ESP_LOGW(TAG, "build & Opening file");
+        f = fopen(fat_file_str, "w");       // 新建文件，清空文件内容
+        vTaskDelay(100);
+        fclose(f);
         retval = 1;
     }
 
     if(retval == 1)
     {
-        sprintf(fat_file_str,"/%s%s/%s",BASE_PATH,MOUNT_PATH,flash_file);
-        ESP_LOGI(TAG, "file_str %s", fat_file_str);
-        f = fopen(fat_file_str, "wb");
-        if (f == NULL) {
-            ESP_LOGE(TAG, "Failed to open file for writing");
-            while(1)
-            {
-                vTaskDelay(100);
-            }
-        }
-        else
-        {
-            fprintf(f, "ESP32 File system version %s ", esp_get_idf_version());      // 写入内容
-            fclose(f);
-            ESP_LOGI(TAG, "File written");
-        }
+        filesystem_save_title (0,0);
     }
     filesystem_get_space_size (&temp_num);
 }
@@ -189,7 +223,7 @@ int filesystem_write_mode (int set)
     // ESP_LOGI(TAG, "file_str %s", fat_file_str);
     if (set != 0 && write_open_f == NULL)
     {
-        write_open_f = fopen(fat_file_str, "wb");
+        write_open_f = fopen(fat_file_str, "rb+");
         if (write_open_f == NULL) {
             ESP_LOGE(TAG, "Failed to open file for reading");
         }
@@ -221,39 +255,12 @@ int filesystem_write_mode (int set)
 }
 
 /*
-    读取文件内容
-    fread
-*/
-int filesystem_read_data (int addr,void *data,int size)
-{
-    int retval = 0;
-    int temp_run = 0;
-    filesystem_read_mode (1);
-    if (addr < 0 || data == NULL || size <= 0 || read_open_f == NULL)
-    {
-        retval = 1;
-        ESP_LOGW(TAG, "Read warning");
-    }
-    else 
-    {
-        temp_run = addr + Start_ADDR;
-        fseek(read_open_f,temp_run,SEEK_SET);             // 开始偏移
-        fread(data,sizeof(uint8_t),size,read_open_f);
-        // ESP_DEBUG_Hex_Fun ((uint8_t *)data,20);
-        // ESP_LOGI(TAG, "Read from file succ ,Start addr: %d ",addr);
-        filesystem_read_mode (0);
-    }
-    return retval;
-}
-
-/*
     写文件
     fwrite
 */
 int filesystem_write_data (int addr,void *data,int size)
 {
     int retval = 0;
-    filesystem_write_mode (1);
     if (addr < 0 || data == NULL || size <= 0 || write_open_f == NULL)
     {
         retval = 1;
@@ -272,9 +279,32 @@ int filesystem_write_data (int addr,void *data,int size)
             fseek(write_open_f,addr,SEEK_SET);             // 开始偏移
             fwrite(data,sizeof(uint8_t),size,write_open_f);
 
-            ESP_LOGI(TAG, "Write succ,Start addr:%d",addr);
+            ESP_LOGI(TAG, "Write succ,Start addr:0x%X",addr);
         }
-        filesystem_write_mode (0);
+    }
+    return retval;
+}
+
+/*
+    读取文件内容
+    fread
+*/
+int filesystem_read_data (int addr,void *data,int size)
+{
+    int retval = 0;
+    int temp_run = 0;
+    if (addr < 0 || data == NULL || size <= 0 || read_open_f == NULL)
+    {
+        retval = 1;
+        ESP_LOGW(TAG, "Read warning");
+    }
+    else 
+    {
+        temp_run = addr + Start_ADDR;
+        fseek(read_open_f,temp_run,SEEK_SET);             // 开始偏移
+        fread(data,sizeof(uint8_t),size,read_open_f);
+        // ESP_DEBUG_Hex_Fun ((uint8_t *)data,20);
+        // ESP_LOGI(TAG, "Read from file succ ,Start addr: %d ",addr);
     }
     return retval;
 }
@@ -384,7 +414,7 @@ static void initialize_filesystem(void)
     example_get_fatfs_usage(&bytes_total, &bytes_free);
     temp_fnum = bytes_total-bytes_free;
     temp_fnum /= bytes_total;
-    ESP_LOGW(TAG, "FAT FS: %d kB total, %d kB free ,proportion: %f%%", bytes_total / 1024, bytes_free / 1024,temp_fnum);
+    ESP_LOGW(TAG, "FAT FS: %d kB total, %d kB free ,proportion: %f", bytes_total / 1024, bytes_free / 1024,temp_fnum);
     ESP_LOGW(TAG,"initialize succ \n");
 
     example_list_data_partitions();
