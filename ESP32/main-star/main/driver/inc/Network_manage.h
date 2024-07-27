@@ -1,0 +1,22 @@
+#ifndef _NETWORK_MANAGE_H_
+#define _NETWORK_MANAGE_H_
+
+#include "stdint.h"
+
+#define DEFAULT_WIFI_NAME "Cavendish"    // GX
+#define DEFAULT_WIFI_PASS "1234567890"    // GX201909
+
+#define DEFAULT_RJ45_IP "192.168.1.168"
+#define DEFAULT_RJ45_PORT 8160 
+
+#define CONFIG_EXAMPLE_USE_INTERNAL_ETHERNET 1
+#define CONFIG_EXAMPLE_ETH_PHY_RTL8201 1
+
+#define RTL8201_ETH_PHY_ADDR 1
+#define RTL8201_ETH_RST_GPIO GPIO_NUM_5
+#define RTL8201_ETH_MDC_GPIO GPIO_NUM_23
+#define RTL8201_ETH_MDIO_GPIO GPIO_NUM_18
+
+int Network_manage_Init (int mode);
+
+#endif

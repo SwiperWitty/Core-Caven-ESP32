@@ -8,14 +8,14 @@
 # 所有参与编译的 [*.c]文件
 set(srcs    
     "User_app/main.c"           # [app_main] 程序入口所在
-
     # "driver/src/default.c"
     "driver/src/information.c"
     "driver/src/info_frame_handle.c"
     "driver/src/rtc_time.c"
-    "driver/src/Custom_gpio.c"
     "driver/src/Custom_uart.c"
-    "driver/src/Custom_bluetooth.c"
+    # "driver/src/Custom_bluetooth.c"
+    "driver/src/Network_manage.c"
+    "driver/src/Custom_gpio.c"
     "driver/src/MODE_st7789_dever.c"
     "driver/src/MODE_LCD.c"
     "driver/src/draw.c"

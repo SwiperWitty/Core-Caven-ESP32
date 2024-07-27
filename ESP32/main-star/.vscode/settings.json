@@ -10,7 +10,8 @@
         "caven_type.h": "c",
         "mode_lcd.h": "c",
         "sys_typedef.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "network_manage.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"

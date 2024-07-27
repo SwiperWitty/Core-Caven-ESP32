@@ -285,7 +285,7 @@ void LCD_WR_CMD(U8 data)
 ******************************************************************************/
 void LCD_Address_Set(U16 x1, U16 y1, U16 x2, U16 y2)
 {
-	u16 x_sta,y_sta,x_end,y_end;
+	U16 x_sta,y_sta,x_end,y_end;
 #if (USE_LCD_TYPE == LCD_TYPE_1_14)
 	if (LCD_HORIZONTAL == 0)
 	{
@@ -385,8 +385,8 @@ void LCD_Fill(U16 x_sta, U16 y_sta, U16 x_end, U16 y_end, U16 color)
 	uint8_t *pic_buff = malloc(650); /* 一个y 320 * 2	*/
 	uint8_t color_l;
 	uint8_t color_h;
-	u16 x_len = (x_end - x_sta);
-	u16 y_len = (y_end - y_sta);
+	U16 x_len = (x_end - x_sta);
+	U16 y_len = (y_end - y_sta);
 	int i = x_len * y_len;
 
 	color_l = 0xff & color;
@@ -823,8 +823,8 @@ void LCD_Show_String(U16 x, U16 y, const char *p, U16 fc, U16 bc, char sizey)
 void LCD_Show_Picture(U16 x, U16 y, U16 length, U16 width, const U8 pic[])
 {
 #ifdef Exist_LCD
-	u16 i, j;
-	u32 k = 0;
+	U16 i, j;
+	U32 k = 0;
 	int n = 0;
 	uint8_t *pic_buff = malloc(650);
 	LCD_Address_Set(x, y, (x + length - 1), (y + width - 1));
@@ -858,7 +858,7 @@ void LCD_Init(int Set)
 	LCD_Delay(200); //
 	LCD_RES_H();
 	LCD_Delay(100);
-	LCD_Set_HORIZONTAL(USE_HORIZONTAL);
+	LCD_Set_Horizontal(USE_HORIZONTAL);
 
 //************* Start Initial Sequence **********// 
 	LCD_WR_CMD(0x36);			// res

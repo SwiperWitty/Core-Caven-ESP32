@@ -41,6 +41,7 @@
     #include "MODE_LCD.h"
 #endif 
 
+#include "Network_manage.h"
 #include "MODE_LCD.h"
 #include"draw.h"
 

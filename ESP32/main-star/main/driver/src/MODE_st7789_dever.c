@@ -1,6 +1,6 @@
 #include "MODE_st7789_dever.h"
 
-static uint8_t LCD_Horizontal = 0;
+static char LCD_Horizontal = 0;
 static char LCD_Target_Model = 0;
 int flag_dc = 0;
 
@@ -583,7 +583,7 @@ void MODE_st7789_dever_Set_Address(uint16_t x1, uint16_t y1, uint16_t x2, uint16
     break;
     case 14: // 1.69
     {
-        if (LCD_Horizontal == 1)
+        if (LCD_Horizontal == 0 || LCD_Horizontal == 1)
         {
             x_sta = (x1);
             x_end = (x2);

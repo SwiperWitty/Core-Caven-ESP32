@@ -9,7 +9,7 @@ uint16_t LCD_H_Max = 0;
 int LCD_PicSize = 0;
 
 static char LCD_Target_Model = 0;
-static uint8_t LCD_Horizontal = 0;
+static char LCD_Horizontal = 0;
 
 // Very important 
 static void (*s_LCD_Set_Address_pFun)(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);

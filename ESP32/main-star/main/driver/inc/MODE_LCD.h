@@ -5,7 +5,8 @@
 #include "Caven_Type.h"
 
 /*
-
+    m_LCD_TYPE_1_69 验证使用完成    2024.07.27
+    
 */
 
 extern uint16_t  LCD_Back_Color; // 背景色
