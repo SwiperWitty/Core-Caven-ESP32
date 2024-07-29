@@ -3,8 +3,8 @@
 
 #include "stdint.h"
 
-#define DEFAULT_WIFI_NAME "Cavendish"    // GX
-#define DEFAULT_WIFI_PASS "1234567890"    // GX201909
+#define DEFAULT_WIFI_NAME "GX"    // GX Cavendish
+#define DEFAULT_WIFI_PASS "GX201909"    // GX201909 1234567890
 
 #define DEFAULT_RJ45_IP "192.168.1.168"
 #define DEFAULT_RJ45_PORT 8160 
@@ -16,6 +16,11 @@
 #define RTL8201_ETH_RST_GPIO GPIO_NUM_5
 #define RTL8201_ETH_MDC_GPIO GPIO_NUM_23
 #define RTL8201_ETH_MDIO_GPIO GPIO_NUM_18
+
+extern uint16_t tcp_server_port_connect_counter_when_using; //!!!! 
+extern uint16_t tcp_server_port;                            //!!!! 
+extern uint8_t lwip_task_idle_timer_counter;                //!!!! 
+extern uint8_t port_8160_using;
 
 int Network_manage_Init (int mode);
 
