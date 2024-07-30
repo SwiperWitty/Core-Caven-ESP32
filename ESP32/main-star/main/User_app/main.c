@@ -43,7 +43,8 @@ void Build_task(void)
     xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, LED_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
     
     // xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, SHOW_TASK_PRIORITY, &lcd_taskhanlde, CORE_ONE);
-
+    xTaskCreate(eps32_HTTPS_task, "https get task", 8192, NULL, 5, NULL);
+    
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
     
 
@@ -69,7 +70,11 @@ void Main_Init(void)
     LCD_Set_TargetModel(m_LCD_TYPE_1_69);
     LCD_Set_Horizontal(1);
     MODE_LCD_Init(1);
-    Network_manage_Init (0xff);
+    eth_config_ip (0,"192.168.1.169","192.168.1.1","255.255.255.0");
+    wifi_config_ip (0,NULL,NULL,NULL);  // 设置静态模式
+    wifi_config_ip (2,"192.168.11.61","192.168.11.1","255.255.255.0");  // 静态模式ip
+
+    Network_manage_Init (0xff,1);
     // LCD_Show_String(0,0, "hello ", LCD_Word_Color, LCD_Back_Color, 16);    // 显示字符串
     LCD_Show_Picture(0, 0, 240, 240, gImage_hongshu);
     ESP_LOGI("LCD Init","Model[%d],x:%d y:%d ",m_LCD_TYPE_1_69,LCD_W_Max,LCD_H_Max);

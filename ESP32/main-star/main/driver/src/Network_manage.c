@@ -26,9 +26,17 @@ uint8_t lwip_task_idle_timer_counter;                //!!!!
 uint8_t port_8160_using;
 static const char *TAG = "Network_manage";
 
-static char NET_ip[30] = {0};
-static int NET_port = 0;
 static int esp_netif_init_flag = 0;
+// 静态的ip
+static uint8_t SYS_MAC_addr[6] = {0xc8,0x2e,0x18,0x6b,0x83,0x00};
+static char eth_mode = 0;
+static char wifi_mode = 0;
+static char eth_ip[30];
+static char eth_gw[30];
+static char eth_netmask[30];
+static char wifi_ip[30];
+static char wifi_gw[30];
+static char wifi_netmask[30];
 
 #define CONFIG_ESP_WIFI_AUTH_OPEN 1
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_OPEN
@@ -38,7 +46,10 @@ static wifi_ap_record_t wifi_ap_info[WIFI_SSID_SCAN_MAX_VALUE];
 static uint16_t wifi_ap_num = WIFI_SSID_SCAN_MAX_VALUE;
 static char WIFI_name[30] = {0};
 static char WIFI_pass[30] = {0};
-
+// 这里是本次设备分配到的ip，很可能是动态的
+static uint8_t s_WIFI_ip[4];
+static uint8_t s_WIFI_netmask[4];
+static uint8_t s_WIFI_gateway[4];
 static void print_auth_mode(int authmode)
 {
     switch (authmode) {
@@ -133,11 +144,11 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
             esp_wifi_connect();         // 启动WIFI连接
             break;
         case WIFI_EVENT_STA_CONNECTED:  // WIFI连上路由器后，触发此事件
-            ESP_LOGI(TAG, "connected to AP succ !!!");
+            ESP_LOGI(TAG, "WIFI connected to AP succ");
             break;
         case WIFI_EVENT_STA_DISCONNECTED:   // WIFI从路由器断开连接后触发此事件
             esp_wifi_connect();             // 继续重连
-            ESP_LOGI(TAG,"connect to the AP fail,retry now[%s]",WIFI_name);
+            ESP_LOGI(TAG,"WIFI connect to the AP fail,retry now[%s]",WIFI_name);
             break;
         default:
             break;
@@ -149,7 +160,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
         switch(event_id)
         {
             case IP_EVENT_STA_GOT_IP:           // 只有获取到路由器分配的IP，才认为是连上了路由器
-                ESP_LOGW(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+                ESP_LOGW(TAG, "WIFI Got ip:" IPSTR, IP2STR(&event->ip_info.ip));
                 break;
             default:
                 break;
@@ -212,39 +223,69 @@ void ipstr_to_ip_address(char *str, uint8_t *ip)
 }
 /*
     mode = 0,dhcp
-    mode = 0,static
+    mode = 1,static (此时如果wifi_ip内数据有效则变更ip,也就是固定IP更新)
+    mode = 2,set ip (不会立即生效，只会把内容放进ip设置里面，这样没有启动wifi_init,也能改ip)
+    mode = other    查询 wifi_mode
     ip_str  ip地址
     gw_str  默认网关
     netmask_str 掩码
 */
-void wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
+int wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
 {
-    if (mode == 0 || ip_str == NULL)
+    int retval = 0;
+    if (mode == 0)
     {
-
+        wifi_mode = 0;
+        ESP_LOGW(TAG,"set wifi allocation dhcp ip");
+    }
+    else if (mode == 1)
+    {
+        wifi_mode = 1;
+        ESP_LOGW(TAG,"set wifi allocation static ip");
+    }
+    else if (mode == 2)
+    {
+        ESP_LOGI(TAG,"set wifi ip");
     }
     else
     {
+        retval = wifi_mode;
+        return retval;
+    }
+    if (ip_str != NULL)
+    {
+        memset(wifi_ip,0,sizeof(wifi_ip));
+        memset(wifi_gw,0,sizeof(wifi_gw));
+        memset(wifi_netmask,0,sizeof(wifi_netmask));
+        
+        memcpy(wifi_ip,ip_str,strlen(ip_str));
+        memcpy(wifi_gw,gw_str,strlen(gw_str));
+        memcpy(wifi_netmask,netmask_str,strlen(netmask_str));
+        ESP_LOGI(TAG, "wifi ip change :%s",wifi_ip);
+    }
+    if (mode == 1 && strlen(wifi_ip) > 0)
+    {
         tcpip_adapter_ip_info_t wifi_ip_info;
         uint8_t ip_temp[4];
+
         ESP_LOGW(TAG,"set wifi Custom ip ->");
         // 第一步先关闭DHCP功能,默认是打开的
         tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
         // 第二步设置IP地址相关参数
         memset(ip_temp,0,4);
-        ipstr_to_ip_address(ip_str,ip_temp);
+        ipstr_to_ip_address(wifi_ip,ip_temp);
         // IP4_ADDR(&wifi_ip_info.ip,192,168,137,200);
         IP4_ADDR(&wifi_ip_info.ip,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi ip address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
         memset(ip_temp,0,4);
-        ipstr_to_ip_address(gw_str,ip_temp);
+        ipstr_to_ip_address(wifi_gw,ip_temp);
         // IP4_ADDR(&wifi_ip_info.gw,192,168,0,1);
         IP4_ADDR(&wifi_ip_info.gw,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi gateway address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
         memset(ip_temp,0,4);
-        ipstr_to_ip_address(netmask_str,ip_temp);
+        ipstr_to_ip_address(wifi_netmask,ip_temp);
         // IP4_ADDR(&wifi_ip_info.netmask,255,255,255,0);
         IP4_ADDR(&wifi_ip_info.netmask,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi netmask address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
@@ -253,13 +294,22 @@ void wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
         //第三步打开dhcp
         tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_STA);
     }
+    
+    return retval;
 }
 
-static void wifi_init(void)
+static void wifi_init(int set)
 {
 #if 1
     uint16_t ap_count = 0;
-    
+    if (set == 0)
+    {
+        ESP_LOGI(TAG, "WIFI exit <-- \n");
+        esp_wifi_disconnect();
+        return;
+    }
+
+    ESP_LOGI(TAG, "WIFI Start --> \n");
     if (strlen(WIFI_name) == 0)
     {
         memcpy(WIFI_name,DEFAULT_WIFI_NAME,strlen(DEFAULT_WIFI_NAME));
@@ -311,7 +361,18 @@ static void wifi_init(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,ESP_EVENT_ANY_ID,&wifi_event_handler,NULL,&instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,IP_EVENT_STA_GOT_IP,&wifi_event_handler,NULL,&instance_got_ip));
     // 静态IP
-    wifi_config_ip (1,"192.168.11.166","192.168.11.1","255.255.255.0");
+    if (strlen(wifi_ip) == 0)
+    {
+        memcpy(wifi_ip,"192.168.11.168",strlen("192.168.11.168"));
+        memcpy(wifi_gw,"192.168.11.1",strlen("192.168.11.1"));
+        memcpy(wifi_netmask,"255.255.255.0",strlen("255.255.255.0"));
+        ESP_LOGI(TAG, "wifi ip no set,default wifi ip:%s",wifi_ip);
+    }
+    if (wifi_config_ip (0X0F,NULL,NULL,NULL) == 1)
+    {
+        wifi_config_ip (1,NULL,NULL,NULL);      // 静态ip有效后，执行更改ip
+    }
+    
     // 修改成自定义的SSID和密码
     wifi_config_t wifi_config = {
         .sta = {
@@ -333,74 +394,175 @@ static void wifi_init(void)
 }
 
 esp_netif_t *eth_netif;
-uint8_t RJ45_ip[4];
-uint8_t RJ45_netmask[4];
-uint8_t RJ45_gateway[4];
+// 这里是本次设备分配到的ip，很可能是动态的
+static uint8_t RJ45_ip[4];
+static uint8_t RJ45_netmask[4];
+static uint8_t RJ45_gateway[4];
+
+/*
+    mode = 0,dhcp
+    mode = 1,static 
+
+    ip_str  ip地址
+    gw_str  默认网关
+    netmask_str 掩码
+*/
+int eth_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
+{
+    int retval = 0;
+    if (mode == 0)
+    {
+        eth_mode = 0;
+        ESP_LOGW(TAG,"set eth dhcp ip");    // 路由器才会自动分配IP 
+    }
+    else if (mode == 1)
+    {
+        eth_mode = 1;
+        ESP_LOGW(TAG,"set eth static ip");
+    }
+    else
+    {
+        retval = eth_mode;
+        return retval;
+    }
+    if (ip_str != NULL)
+    {
+        memset(eth_ip,0,sizeof(eth_ip));
+        memset(eth_gw,0,sizeof(eth_gw));
+        memset(eth_netmask,0,sizeof(eth_netmask));
+        
+        memcpy(eth_ip,ip_str,strlen(ip_str));
+        memcpy(eth_gw,gw_str,strlen(gw_str));
+        memcpy(eth_netmask,netmask_str,strlen(netmask_str));
+        ESP_LOGI(TAG, "eth ip change :%s",eth_ip);
+    }
+    return retval;
+}
+
+static void eth_Link_UP_handle (void *event_data)
+{
+    uint8_t mac_addr[6];
+    char ip_temp[4];
+    char ip_DNS[20] = "144.144.144.144";
+    esp_eth_handle_t eth_handle = *(esp_eth_handle_t *)event_data;
+    port_8160_using = 0;
+    
+    tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_ETH, "Cavendish eth"); // 实际在DHCP动态分配IP时候才生效，静态IP时候不生效
+    if (eth_mode == 0)
+    {
+        ESP_LOGI(TAG, "Ethernet allocation ip : dhcp");
+
+    }
+    else
+    {
+        // 设置相关静态IP
+        ESP_LOGI(TAG, "Ethernet allocation : static");
+        if (strlen(eth_ip) == 0)
+        {
+            memcpy(eth_ip,"192.168.1.168",strlen("192.168.1.168"));
+            memcpy(eth_gw,"192.168.1.1",strlen("192.168.1.1"));
+            memcpy(eth_netmask,"255.255.255.0",strlen("255.255.255.0"));
+        }
+        tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_ETH);
+        tcpip_adapter_ip_info_t eth;
+        eth.ip.addr = ipaddr_addr(eth_ip);
+        eth.netmask.addr = ipaddr_addr(eth_netmask);
+        eth.gw.addr = ipaddr_addr(eth_gw);
+        tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_ETH, &eth);
+
+        // 设置DNS
+        tcpip_adapter_dns_info_t dns_info = {0};
+        memset(ip_temp, 0, 4);
+        dns_info.ip.type = IPADDR_TYPE_V4;
+        dns_info.ip.u_addr.ip4.addr = ipaddr_addr(ip_DNS);
+        tcpip_adapter_set_dns_info(TCPIP_ADAPTER_IF_ETH, ESP_NETIF_DNS_FALLBACK, &dns_info);
+    }
+    memset(mac_addr,0,sizeof(mac_addr));
+    esp_eth_ioctl(eth_handle, ETH_CMD_G_MAC_ADDR, mac_addr);
+    ESP_LOGI(TAG, "Ethernet HW MAC Addr %02x:%02x:%02x:%02x:%02x:%02x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+
+    // rj45_tcp_client_task_init();
+}
 
 static void eth_event_handler(void *arg, esp_event_base_t event_base,int32_t event_id, void *event_data)
 {
-    uint8_t mac_addr[6] = {0};
-    char *p = NULL;
-    uint8_t counter = 0;
-    // get_mac_address_resepond_info(mac_addr, &counter);
     /* we can get the ethernet driver handle from event data */
-    esp_eth_handle_t eth_handle = *(esp_eth_handle_t *)event_data;
-
-    switch (event_id)
+    if (event_base == ETH_EVENT)
     {
-    case ETHERNET_EVENT_CONNECTED:
-        ESP_LOGW(TAG, "Ethernet Link up");
-        break;
-    case ETHERNET_EVENT_DISCONNECTED:
-        ESP_LOGW(TAG, "Ethernet Link Down");
-        break;
-    case ETHERNET_EVENT_START:
-        ESP_LOGI(TAG, "Ethernet Started");
-        break;
-    case ETHERNET_EVENT_STOP:
-        ESP_LOGI(TAG, "Ethernet Stopped");
-        break;
-    default:
-        break;
+        switch (event_id)
+        {
+        case ETHERNET_EVENT_CONNECTED:
+            ESP_LOGW(TAG, "Ethernet Link up");
+            eth_Link_UP_handle (event_data);
+            break;
+        case ETHERNET_EVENT_DISCONNECTED:
+            ESP_LOGW(TAG, "Ethernet Link Down \n");
+            break;
+        case ETHERNET_EVENT_START:
+            ESP_LOGI(TAG, "Ethernet Started");
+            break;
+        case ETHERNET_EVENT_STOP:
+            ESP_LOGI(TAG, "Ethernet Stopped \n");
+            break;
+        default:
+            break;
+        }
+    }
+    
+    if (event_base == IP_EVENT)
+    {
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        const esp_netif_ip_info_t *ip_info = &event->ip_info;
+        switch (event_id)
+        {
+        case IP_EVENT_ETH_GOT_IP:
+            RJ45_ip[0] = esp_ip4_addr1_16(&ip_info->ip);
+            RJ45_ip[1] = esp_ip4_addr2_16(&ip_info->ip);
+            RJ45_ip[2] = esp_ip4_addr3_16(&ip_info->ip);
+            RJ45_ip[3] = esp_ip4_addr4_16(&ip_info->ip);
+
+            RJ45_netmask[0] = esp_ip4_addr1_16(&ip_info->netmask);
+            RJ45_netmask[1] = esp_ip4_addr2_16(&ip_info->netmask);
+            RJ45_netmask[2] = esp_ip4_addr3_16(&ip_info->netmask);
+            RJ45_netmask[3] = esp_ip4_addr4_16(&ip_info->netmask);
+
+            RJ45_gateway[0] = esp_ip4_addr1_16(&ip_info->gw);
+            RJ45_gateway[1] = esp_ip4_addr2_16(&ip_info->gw);
+            RJ45_gateway[2] = esp_ip4_addr3_16(&ip_info->gw);
+            RJ45_gateway[3] = esp_ip4_addr4_16(&ip_info->gw);
+            
+            ESP_LOGI(TAG, "ETHIP:" IPSTR, IP2STR(&ip_info->ip));
+            ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
+            ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
+            ESP_LOGW(TAG, "Ethernet Got IP Address \n");
+            break;
+        default:
+            break;
+        }
     }
 }
 
-/** Event handler for IP_EVENT_ETH_GOT_IP */
-static void got_ip_event_handler(void *arg, esp_event_base_t event_base,int32_t event_id, void *event_data)
-{
-    ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-    const esp_netif_ip_info_t *ip_info = &event->ip_info;
-
-    RJ45_ip[0] = esp_ip4_addr1_16(&ip_info->ip);
-    RJ45_ip[1] = esp_ip4_addr2_16(&ip_info->ip);
-    RJ45_ip[2] = esp_ip4_addr3_16(&ip_info->ip);
-    RJ45_ip[3] = esp_ip4_addr4_16(&ip_info->ip);
-
-    RJ45_netmask[0] = esp_ip4_addr1_16(&ip_info->netmask);
-    RJ45_netmask[1] = esp_ip4_addr2_16(&ip_info->netmask);
-    RJ45_netmask[2] = esp_ip4_addr3_16(&ip_info->netmask);
-    RJ45_netmask[3] = esp_ip4_addr4_16(&ip_info->netmask);
-
-    RJ45_gateway[0] = esp_ip4_addr1_16(&ip_info->gw);
-    RJ45_gateway[1] = esp_ip4_addr2_16(&ip_info->gw);
-    RJ45_gateway[2] = esp_ip4_addr3_16(&ip_info->gw);
-    RJ45_gateway[3] = esp_ip4_addr4_16(&ip_info->gw);
-    
-    ESP_LOGI(TAG, "Ethernet Got IP Address");
-    ESP_LOGI(TAG, "ETHIP:" IPSTR, IP2STR(&ip_info->ip));
-    ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
-    ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
-    ESP_LOGI(TAG, " \n");
-}
-
-static void rtl8201_init(void)
+static void rtl8201_init(int set)
 {
 #if 1
-    uint8_t counter = 0;
-    uint8_t mac_addr[6] = {0x10, 0x97, 0xbd, 0x34, 0x01, 0x50};
-
+    uint8_t mac_addr[6] = {0xc8,0x2e,0x18,0x6b,0x83,0x00};
+    if (set == 0)
+    {
+        ESP_LOGI(TAG, "RJ45 exit <-- \n");
+        return;
+    }
+    if (SYS_MAC_addr[0] + SYS_MAC_addr[1] + SYS_MAC_addr[3] + SYS_MAC_addr[4])
+    {
+        memcpy(mac_addr,SYS_MAC_addr,sizeof(mac_addr));
+    }
+    
     ESP_LOGI(TAG, "RJ45 Start --> \n");
-    // get_mac_address_resepond_info(mac_addr, &counter);
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
     if (esp_netif_init_flag == 0)
     {
         ESP_ERROR_CHECK(esp_netif_init());
@@ -413,17 +575,16 @@ static void rtl8201_init(void)
     // Set default handlers to process TCP/IP stuffs
     ESP_ERROR_CHECK(esp_eth_set_default_handlers(eth_netif));
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &eth_event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &eth_event_handler, NULL));
 
     eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG(); // ETH_MAC_DEFAULT_CONFIG 这个函数里面定义了MDC和MDIO引脚，这些RMII接口引脚是固定引脚，所以写在底层函数中，不能改变
     eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG(); // 这个ETH_PHY_DEFAULT_CONFIG函数中定义了LAN8720复位引脚和phy_addr 获取方式
-    phy_config.phy_addr = 1;
 
     #if CONFIG_EXAMPLE_USE_INTERNAL_ETHERNET
     mac_config.smi_mdc_gpio_num = RTL8201_ETH_MDC_GPIO;
     mac_config.smi_mdio_gpio_num = RTL8201_ETH_MDIO_GPIO;
     phy_config.reset_gpio_num = RTL8201_ETH_RST_GPIO;
-    // phy_config.reset_gpio_num = -1;
+    phy_config.phy_addr = 0;
     esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&mac_config);
 
     #if CONFIG_EXAMPLE_ETH_PHY_IP101
@@ -443,7 +604,6 @@ static void rtl8201_init(void)
     esp_eth_handle_t eth_handle = NULL;
     ESP_ERROR_CHECK(esp_eth_driver_install(&config, &eth_handle));
     esp_eth_ioctl(eth_handle, ETH_CMD_S_MAC_ADDR, mac_addr);
-
     ESP_LOGI(TAG, "IP mac add : %02x:%02x:%02x:%02x:%02x:%02x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
     /* attach Ethernet driver to TCP/IP stack */
@@ -454,20 +614,38 @@ static void rtl8201_init(void)
 #endif
 }
 
-int Network_manage_Init (int mode)
+void Network_manage_set_mac (uint8_t *mac)
+{
+    if (mac != NULL)
+    {
+        memcpy(SYS_MAC_addr,mac,6);
+    }
+}
+
+void Network_manage_get_mac (uint8_t *mac)
+{
+    if (mac != NULL)
+    {
+        memcpy(mac,SYS_MAC_addr,6);
+    }
+}
+
+int Network_manage_Init (int mode,int set)
 {
     int retval = 0;
+    ESP_LOGW(TAG, "SYS mac add : %02x:%02x:%02x:%02x:%02x:%02x", 
+    SYS_MAC_addr[0], SYS_MAC_addr[1], SYS_MAC_addr[2], SYS_MAC_addr[3], SYS_MAC_addr[4], SYS_MAC_addr[5]);
     switch (mode)
     {
     case 1:
-        wifi_init();
+        wifi_init(set);
         break;
     case 2:
-        rtl8201_init();
+        rtl8201_init(set);
         break;
     case 0xFF:
-        rtl8201_init();
-        wifi_init();
+        rtl8201_init(set);
+        wifi_init(set);
         break;
     default:
         esp_wifi_stop();

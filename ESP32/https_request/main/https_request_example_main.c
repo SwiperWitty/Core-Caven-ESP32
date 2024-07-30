@@ -36,6 +36,11 @@
 #include "esp_crt_bundle.h"
 #endif
 
+uint16_t tcp_server_port_connect_counter_when_using; //!!!! 
+uint16_t tcp_server_port;                            //!!!! 
+uint8_t lwip_task_idle_timer_counter;                //!!!! 
+uint8_t port_8160_using;
+
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "www.howsmyssl.com"
 #define WEB_PORT "443"

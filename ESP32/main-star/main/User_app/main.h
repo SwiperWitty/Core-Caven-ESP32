@@ -45,6 +45,8 @@
 #include "MODE_LCD.h"
 #include"draw.h"
 
+#include "https.h"
+
 #define CORE_ZERO   0
 #define CORE_ONE    1
 
