@@ -10,12 +10,15 @@
 // #include "protocol_examples_common.h"
 #include "esp_netif.h"
 #include "esp_tls.h"
+#include "esp_http_client.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
+
+#include "cJSON.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -28,9 +31,13 @@
 // static const char *TAG = "https_request";
 
 /* Constants that aren't configurable in menuconfig */
-#define WEB_SERVER "www.howsmyssl.com"
+#define WEB_SERVER "www.baidu.com"
 #define WEB_PORT "443"
-#define WEB_URL "https://www.howsmyssl.com/a/check"
+#define WEB_URL "https://www.baidu.com"
+
+char http_url_str[100] = "https://www.baidu.com";
+uint32_t http_port_value = 443;
+void https_with_url(void);
 
 #define CONFIG_MBEDTLS_CERTIFICATE_BUNDLE 1
 #define CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL 1
@@ -38,9 +45,9 @@
 
 #define SERVER_URL_MAX_SZ 256
 
-static const char *TAG = "example";
+static const char *TAG = "https";
 
-static const char HOWSMYSSL_REQUEST[] = "GET " WEB_URL " HTTP/1.1\r\n"
+static const char HOWSMYSSL_REQUEST[1024] = "GET " WEB_URL " HTTP/1.1\r\n"
                              "Host: "WEB_SERVER"\r\n"
                              "User-Agent: esp-idf/1.0 esp32\r\n"
                              "\r\n";
@@ -78,6 +85,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
     char buf[512];
     int ret, len;
 
+    /*1.建立https连接*/
     struct esp_tls *tls = esp_tls_conn_http_new(WEB_SERVER_URL, &cfg);
 
     if (tls != NULL) {
@@ -95,6 +103,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
     }
 #endif
     size_t written_bytes = 0;
+    /*2.写入http请求*/
     do {
         ret = esp_tls_conn_write(tls,
                                  REQUEST + written_bytes,
@@ -109,7 +118,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
     } while (written_bytes < strlen(REQUEST));
 
     ESP_LOGI(TAG, "Reading HTTP response...");
-
+    /*3.等待服务器回应*/
     do {
         len = sizeof(buf) - 1;
         bzero(buf, sizeof(buf));
@@ -126,11 +135,14 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
 
         if (ret == 0) {
             ESP_LOGI(TAG, "connection closed");
+            // 完成
             break;
         }
-
-        len = ret;
-        ESP_LOGD(TAG, "%d bytes read", len);
+        if (ret < len)
+        {
+            len = ret;
+        }
+        ESP_LOGI(TAG, "%d bytes read", len);
         /* Print response directly to stdout as it is read */
         for (int i = 0; i < len; i++) {
             putchar(buf[i]);
@@ -139,6 +151,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
     } while (1);
 
 exit:
+    // https_with_url();
     esp_tls_conn_delete(tls);
     for (int countdown = 10; countdown >= 0; countdown--) {
         ESP_LOGI(TAG, "%d...", countdown);
@@ -150,36 +163,44 @@ exit:
 static void https_get_request_using_crt_bundle(void)
 {
     ESP_LOGI(TAG, "https_request using crt bundle");
+    /*启动根证书捆绑包，并指定捆绑软件附加功能*/
     esp_tls_cfg_t cfg = {
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
-    https_get_request(cfg, WEB_URL, HOWSMYSSL_REQUEST);
+    https_get_request(cfg, http_url_str, HOWSMYSSL_REQUEST);
 }
 #endif // CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
 
 static void https_get_request_using_cacert_buf(void)
 {
     ESP_LOGI(TAG, "https_request using cacert_buf");
+    /*
+    	1.指定cacert_buf缓冲区中的pem二进制文件
+    	2.cacert_bytes为该二进制文件大小
+    */
     esp_tls_cfg_t cfg = {
         .cacert_buf = (const unsigned char *) server_root_cert_pem_start,
         .cacert_bytes = server_root_cert_pem_end - server_root_cert_pem_start,
     };
-    https_get_request(cfg, WEB_URL, HOWSMYSSL_REQUEST);
+    https_get_request(cfg, http_url_str, HOWSMYSSL_REQUEST);
 }
 
 static void https_get_request_using_global_ca_store(void)
 {
     esp_err_t esp_ret = ESP_FAIL;
     ESP_LOGI(TAG, "https_request using global ca_store");
+    /*使用wolfssl设置全局CA存储数据TLS/SSL*/
     esp_ret = esp_tls_set_global_ca_store(server_root_cert_pem_start, server_root_cert_pem_end - server_root_cert_pem_start);
     if (esp_ret != ESP_OK) {
         ESP_LOGE(TAG, "Error in setting the global ca store: [%02X] (%s),could not complete the https_request using global_ca_store", esp_ret, esp_err_to_name(esp_ret));
         return;
     }
+    /*所有连接使用全局ca_store*/
     esp_tls_cfg_t cfg = {
         .use_global_ca_store = true,
     };
-    https_get_request(cfg, WEB_URL, HOWSMYSSL_REQUEST);
+    https_get_request(cfg, http_url_str, HOWSMYSSL_REQUEST);
+    /*释放全局ca_store*/
     esp_tls_free_global_ca_store();
 }
 
@@ -209,7 +230,7 @@ static void https_get_request_using_already_saved_session(const char *url)
 }
 #endif
 
-static void https_request_task(void *pvparameters)
+static void https_request_task()
 {
     ESP_LOGI(TAG, "Start https_request example");
 
@@ -245,23 +266,10 @@ static void https_request_task(void *pvparameters)
     vTaskDelete(NULL);
 }
 
-// void app_main(void)
-// {
-    
-//     ESP_ERROR_CHECK(esp_netif_init());
-//     ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-//     /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-//      * Read "Establishing Wi-Fi or Ethernet Connection" section in
-//      * examples/protocols/README.md for more information about this function.
-//      */
-    
-
-    
-// }
-
 void eps32_HTTPS_task (void *empty)
 {
-    ESP_ERROR_CHECK(example_connect());
+    // ESP_ERROR_CHECK(example_connect());
     https_request_task();
+    
+    vTaskDelay(pdMS_TO_TICKS(100));
 }

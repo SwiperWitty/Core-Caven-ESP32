@@ -46,7 +46,19 @@ ls -l /dev/ttyUSB*				#查看当前电脑存在的串口
 
 ~~~
 
+### WIN环境
 
+自定义启动idf，把安装好的快捷方式copy一个，然后改目标，起始位置。
+
+~~~txt
+C:\Windows\system32\cmd.exe /k ""D:\Espressif\idf_cmd_init.bat" esp-idf-8cf2e7bc74dd70d2c1882399372e65d7"
+
+esp-idf-8cf2e7bc74dd70d2c1882399372e65d7这个东西在esp_idf.json
+~~~
+
+
+
+![image-20240731092256419](https://gitee.com/Swiper_witty/caven_img/raw/master/img/202407310922459.png)
 
 ____
 
@@ -73,16 +85,24 @@ idf.py -p /dev/ttyUSB0 flash monitor
 
 
 
-____
-
-
+______
 
 ### Menu
 
-~~~txt
-txt
+- 内存，主频（4M,240MHZ）
+- FreeRTOS (Component config->FreeRTOS (1000)Tick rate (Hz))
+- 内存划分文件（partitions.csv）
+- 看门狗（1000ms，cpu0,cpu1 Component config ESP System Settings）
+- 开启wifi，以及网络（Example Configuration RTL8201）
 
-~~~
+
+
+可选
+
+- SRAM (Component config ESP32-specific Support for external) ->(1000)Maximum 
+- HTTPS  (Component config ESP HTTP client) ->Enable https & ESP-TLS->Enable client session tickets
+
+如果界面没有出现wifi的配置，说明main文件夹下缺少了`Kconfig.projbuild`文件。
 
 
 

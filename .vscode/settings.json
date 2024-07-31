@@ -3,5 +3,6 @@
         "lcd_st7789.h": "c",
         "caven_type.h": "c",
         "mode_st7789_dever.h": "c"
-    }
+    },
+    "cmake.sourceDirectory": "E:/WORK/COM/Core-Caven-ESP32/ESP32/ble_spp_server"
 }

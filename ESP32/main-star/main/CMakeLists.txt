@@ -36,4 +36,7 @@ idf_component_register(SRCS
     INCLUDE_DIRS "GUI/ui/components"
     INCLUDE_DIRS "GUI/lvgl"		#头文件
     INCLUDE_DIRS "GUI/lvgl/src/core"
+    INCLUDE_DIRS "."
+    EMBED_TXTFILES server_root_cert.pem local_server_cert.pem
+    
 )
