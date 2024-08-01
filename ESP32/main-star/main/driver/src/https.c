@@ -1,4 +1,5 @@
 #include "https.h"
+#include "Network_manage.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,16 +29,30 @@
 #include "esp_crt_bundle.h"
 #endif
 
-// static const char *TAG = "https_request";
 
-/* Constants that aren't configurable in menuconfig */
-#define WEB_SERVER "www.baidu.com"
+//Constants that aren't configurable in menuconfig
+#define WEB_SERVER "https://open-sandbox.atma.io"
 #define WEB_PORT "443"
-#define WEB_URL "https://www.baidu.com"
+#define WEB_URL "https://open-sandbox.atma.io/trace/track-and-trace/api/v1/rovinj/events?tenant=rovinj"
 
-char http_url_str[100] = "https://www.baidu.com";
-uint32_t http_port_value = 443;
-void https_with_url(void);
+#define body   "{\"eventType\":\"ObjectEvent\",\"action\":\"OBSERVE\",\"eventTime\":\"2024-04-11T10:47:29.066Z\",\"identifiers\":[\"303431711C5B07C000002714\"],\"readPoint\":\"SN-123123\",\"businessLocation\":\"urn:atma.io:loc:rovinj:rovinj:9018\",\"businessStep\":\"urn:epcglobal:cbv:bizstep:inspecting\",\"disposition\":\"urn:epcglobal:cbv:disp:conformant\",\"extensionElements\":{\"TID\":\"E2082734893739367282\",\"Session Scan\":\"1\",\"Session Action\":\"Normal\"}}"
+/*
+static const char HOWSMYSSL_REQUEST[1024] = "POST " WEB_URL " HTTP/1.1\r\n"
+                             "Host: "WEB_SERVER"\r\n"
+                             "User-Agent: esp-idf/1.0 esp32\r\n"
+                             "Content-Type: application/json\r\n"
+                             "Subscription-Key: d31b82fdd20d4d019dc0f014447384f8\r\n"
+                             "Content-Length: 408\r\n"
+                             "\r\n"
+                             body
+                             "\r\n";
+*/
+#ifdef CONFIG_EXAMPLE_CLIENT_SESSION_TICKETS
+static const char LOCAL_SRV_REQUEST[] = "GET " CONFIG_EXAMPLE_LOCAL_SERVER_URL " HTTP/1.1\r\n"
+                             "Host: "WEB_SERVER"\r\n"
+                             "User-Agent: esp-idf/1.0 esp32\r\n"
+                             "\r\n";
+#endif
 
 #define CONFIG_MBEDTLS_CERTIFICATE_BUNDLE 1
 #define CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL 1
@@ -47,17 +62,13 @@ void https_with_url(void);
 
 static const char *TAG = "https";
 
-static const char HOWSMYSSL_REQUEST[1024] = "GET " WEB_URL " HTTP/1.1\r\n"
-                             "Host: "WEB_SERVER"\r\n"
-                             "User-Agent: esp-idf/1.0 esp32\r\n"
-                             "\r\n";
+static char https_Host_str[100] = {0};
+static char https_url_str[100] = {0};
+static char https_port_str[10] = {"443"};
 
-#ifdef CONFIG_EXAMPLE_CLIENT_SESSION_TICKETS
-static const char LOCAL_SRV_REQUEST[] = "GET " CONFIG_EXAMPLE_LOCAL_SERVER_URL " HTTP/1.1\r\n"
-                             "Host: "WEB_SERVER"\r\n"
-                             "User-Agent: esp-idf/1.0 esp32\r\n"
-                             "\r\n";
-#endif
+static char https_head_str[300];
+static int https_head_len = 0;
+static char https_send_buff[1024];
 
 /* Root cert for howsmyssl.com, taken from server_root_cert.pem
 
@@ -83,8 +94,9 @@ static bool save_client_session = false;
 static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, const char *REQUEST)
 {
     char buf[512];
-    int ret, len;
-
+    int ret = 0, len;
+    char succ_str[30] = "202 Accepted";
+    char* succ_flag = NULL;
     /*1.建立https连接*/
     struct esp_tls *tls = esp_tls_conn_http_new(WEB_SERVER_URL, &cfg);
 
@@ -104,6 +116,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
 #endif
     size_t written_bytes = 0;
     /*2.写入http请求*/
+    ESP_LOGI(TAG, "\n%s \n",REQUEST);
     do {
         ret = esp_tls_conn_write(tls,
                                  REQUEST + written_bytes,
@@ -125,6 +138,11 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
         ret = esp_tls_conn_read(tls, (char *)buf, len);
 
         if (ret == ESP_TLS_ERR_SSL_WANT_WRITE  || ret == ESP_TLS_ERR_SSL_WANT_READ) {
+            if (succ_flag != NULL)
+            {
+                ESP_LOGW(TAG, "get HTTP succ");
+                goto exit;
+            }
             continue;
         }
 
@@ -134,7 +152,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
         }
 
         if (ret == 0) {
-            ESP_LOGI(TAG, "connection closed");
+            ESP_LOGI(TAG, "connection closed !");
             // 完成
             break;
         }
@@ -142,21 +160,30 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
         {
             len = ret;
         }
-        ESP_LOGI(TAG, "%d bytes read", len);
+        
         /* Print response directly to stdout as it is read */
-        for (int i = 0; i < len; i++) {
-            putchar(buf[i]);
+        if (len)
+        {
+            succ_flag = strstr(buf, succ_str);
+            ESP_LOGI(TAG, "%d bytes read", len);
+            for (int i = 0; i < len; i++) {
+                putchar(buf[i]);
+            }
+            putchar('\n'); // JSON output doesn't have a newline at end
         }
-        putchar('\n'); // JSON output doesn't have a newline at end
+        if (succ_flag != NULL)
+        {
+            goto exit;
+        }
     } while (1);
 
 exit:
-    // https_with_url();
-    esp_tls_conn_delete(tls);
-    for (int countdown = 10; countdown >= 0; countdown--) {
-        ESP_LOGI(TAG, "%d...", countdown);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    if(ret != 0)
+    {
+        ESP_LOGI(TAG, "connection closed !!");
     }
+    esp_tls_conn_delete(tls);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
@@ -167,7 +194,7 @@ static void https_get_request_using_crt_bundle(void)
     esp_tls_cfg_t cfg = {
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
-    https_get_request(cfg, http_url_str, HOWSMYSSL_REQUEST);
+    https_get_request(cfg, https_url_str, https_send_buff);
 }
 #endif // CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
 
@@ -182,7 +209,7 @@ static void https_get_request_using_cacert_buf(void)
         .cacert_buf = (const unsigned char *) server_root_cert_pem_start,
         .cacert_bytes = server_root_cert_pem_end - server_root_cert_pem_start,
     };
-    https_get_request(cfg, http_url_str, HOWSMYSSL_REQUEST);
+    https_get_request(cfg, https_url_str, https_send_buff);
 }
 
 static void https_get_request_using_global_ca_store(void)
@@ -199,7 +226,7 @@ static void https_get_request_using_global_ca_store(void)
     esp_tls_cfg_t cfg = {
         .use_global_ca_store = true,
     };
-    https_get_request(cfg, http_url_str, HOWSMYSSL_REQUEST);
+    https_get_request(cfg, https_url_str, https_send_buff);
     /*释放全局ca_store*/
     esp_tls_free_global_ca_store();
 }
@@ -230,46 +257,210 @@ static void https_get_request_using_already_saved_session(const char *url)
 }
 #endif
 
-static void https_request_task()
+int https_request_config_init (char *way_str,char *Host_str,char *URL_str,char *port_str)
 {
-    ESP_LOGI(TAG, "Start https_request example");
-
-#ifdef CONFIG_EXAMPLE_CLIENT_SESSION_TICKETS
-    char *server_url = NULL;
-#ifdef CONFIG_EXAMPLE_LOCAL_SERVER_URL_FROM_STDIN
-    char url_buf[SERVER_URL_MAX_SZ];
-    if (strcmp(CONFIG_EXAMPLE_LOCAL_SERVER_URL, "FROM_STDIN") == 0) {
-        example_configure_stdin_stdout();
-        fgets(url_buf, SERVER_URL_MAX_SZ, stdin);
-        int len = strlen(url_buf);
-        url_buf[len - 1] = '\0';
-        server_url = url_buf;
-    } else {
-        ESP_LOGE(TAG, "Configuration mismatch: invalid url for local server");
-        abort();
+    int retval = 0;
+    int temp_num = 0;
+    int temp_run = 0;
+    char temp_str[300];
+    if (way_str == NULL || Host_str == NULL || URL_str == NULL)
+    {
+        retval = 1;
+        return retval;
     }
-    printf("\nServer URL obtained is %s\n", url_buf);
-#else
-    server_url = CONFIG_EXAMPLE_LOCAL_SERVER_URL;
-#endif /* CONFIG_EXAMPLE_LOCAL_SERVER_URL_FROM_STDIN */
-    https_get_request_to_local_server(server_url);
-    https_get_request_using_already_saved_session(server_url);
-#endif
+    memset(temp_str,0,sizeof(temp_str));
+    temp_num = strlen(way_str);
+    if (temp_num)
+    {
+        memcpy(&temp_str[temp_run],way_str,temp_num);
+        temp_run += temp_num;
+        memcpy(&temp_str[temp_run]," ",1);
+        temp_run += 1;
+    }
+    else
+    {
+        retval = 1;
+        return retval;
+    }
+    temp_num = strlen(URL_str);
+    if (temp_num)
+    {
+        memset(https_url_str,0,sizeof(https_url_str));
+        memcpy(https_url_str,URL_str,temp_num);
+        memcpy(&temp_str[temp_run],URL_str,temp_num);
+        temp_run += temp_num;
+        temp_num = strlen(" HTTP/1.1\r\n");
+        memcpy(&temp_str[temp_run]," HTTP/1.1\r\n",temp_num);       // 请求行
+        temp_run += temp_num;
+    }
+    else
+    {
+        retval = 1;
+        return retval;
+    }
+    temp_num = strlen(Host_str);
+    if (temp_num)
+    {
+        memset(https_Host_str,0,sizeof(https_Host_str));
+        memcpy(https_Host_str,Host_str,temp_num);
 
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
-    https_get_request_using_crt_bundle();
-#endif
-    printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
-    https_get_request_using_cacert_buf();
-    https_get_request_using_global_ca_store();
-    ESP_LOGI(TAG, "Finish https_request example");
-    vTaskDelete(NULL);
+        memset(https_head_str,0,sizeof(https_head_str));
+        memcpy(https_head_str,temp_str,temp_run);
+        https_head_len = temp_run;
+
+        https_request_add_header ("Host",Host_str);
+        temp_run = https_head_len;
+        https_request_add_header ("User-Agent","esp-idf/1.0 esp32");
+        temp_run = https_head_len;
+        https_request_add_header ("Content-Type","application/json");
+        temp_run = https_head_len;
+    }
+    else
+    {
+        retval = 1;
+        return retval;
+    }
+    if (port_str != NULL)
+    {
+        temp_num = strlen(port_str);
+        if (temp_num && temp_num < sizeof(https_port_str))
+        {
+            memset(https_port_str,0,sizeof(https_port_str));
+            memcpy(https_port_str,port_str,temp_num);
+            ESP_LOGI(TAG, "port:%s",port_str);
+        }
+    }
+    if (retval == 0)
+    {
+        // ESP_LOGI(TAG, " \n%s",https_head_str);
+    }
+    return retval;
+}
+
+int https_request_add_header (char *type,char *data)
+{
+    int retval = 0;
+    int temp_num = 0;
+    if (type == NULL || data == NULL)
+    {
+        ESP_LOGE(TAG, "where are you data ?");
+        retval = 1;
+    }
+    else if (https_head_len == 0)
+    {
+        ESP_LOGE(TAG, "where are you header ?");
+        retval = 2;
+    }
+    else
+    {
+        retval = https_head_len;
+        temp_num = strlen(type);
+        memcpy(&https_head_str[https_head_len],type,temp_num);
+        https_head_len += temp_num;
+
+        temp_num = strlen(": ");
+        memcpy(&https_head_str[https_head_len],": ",temp_num);
+        https_head_len += temp_num;
+
+        temp_num = strlen(data);
+        memcpy(&https_head_str[https_head_len],data,temp_num);
+        https_head_len += temp_num;
+
+        temp_num = strlen("\r\n");
+        memcpy(&https_head_str[https_head_len],"\r\n",temp_num);
+        https_head_len += temp_num;
+
+        temp_num = strlen("\r\n");
+        memcpy(&https_head_str[https_head_len],"\r\n",temp_num);
+
+        retval = 0;
+    }
+    return retval;
+}
+
+int https_request_Fun (char type,char *data_str)
+{
+    int retval = 1;
+    int temp_run = 0;
+    int temp_num = 0;
+    char temp_str[20];
+    if (https_head_len == 0)
+    {
+        ESP_LOGE(TAG, "where are you header ?");
+        return retval;
+    }
+    else if (strlen(https_url_str) == 0)
+    {
+        ESP_LOGE(TAG, "where are you url ?");
+        return retval;
+    }
+    else if (data_str == NULL)
+    {
+        ESP_LOGE(TAG, "where are you data_str ?");
+        return retval;
+    }
+    temp_num = strlen(data_str);
+    if (temp_num == 0 || temp_num > 800)
+    {
+        ESP_LOGE(TAG, "data_str len error");
+        return retval;
+    }
+    
+    retval = https_head_len;
+    memset(temp_str,0,sizeof(temp_str));
+    sprintf(temp_str,"%d",temp_num);
+    https_request_add_header ("Content-Length",temp_str);
+    temp_run = https_head_len + 2;  // 把header结束符"\r\n"算进去
+    https_head_len = retval;        // 不能将Content算入头长度中，否则下次头长度会叠加
+    
+    memcpy(&https_send_buff[0],https_head_str,temp_run);    // 将头载入
+    memcpy(&https_send_buff[temp_run],data_str,temp_num);   // 将body载入
+    temp_run += temp_num;
+    temp_num = strlen("\r\n");
+    memcpy(&https_send_buff[temp_run],"\r\n",temp_num);     // 数据结束
+    retval = 0;
+    switch (type)
+    {
+    case 1:
+        https_get_request_using_crt_bundle();
+        break;
+    case 2:
+        https_get_request_using_cacert_buf();
+        break;
+    case 3:
+        https_get_request_using_global_ca_store();
+        break;
+    default:
+        https_get_request_using_crt_bundle();
+        break;
+    }
+    return retval;
 }
 
 void eps32_HTTPS_task (void *empty)
 {
-    // ESP_ERROR_CHECK(example_connect());
-    https_request_task();
+    int times = 0;
+    https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL);
+    https_request_add_header ("Subscription-Key","d31b82fdd20d4d019dc0f014447384f8");
+    https_request_add_header ("12345","67890");
+
+    ESP_LOGI(TAG, " \n%s",https_head_str);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+
+    ESP_LOGI(TAG, "way 1");
+    https_request_Fun (1,body);
+    ESP_LOGI(TAG, "way 2");
+    https_request_Fun (2,body);
+    ESP_LOGI(TAG, "way 3");
+    https_request_Fun (3,body);
     
-    vTaskDelay(pdMS_TO_TICKS(100));
+    while (1)
+    {
+        times ++;
+        // printf("Minimum free heap size: %d bytes,times [%d]\n", esp_get_minimum_free_heap_size(),times);
+        // https_request_Fun (1,body);
+        vTaskDelay(pdMS_TO_TICKS(200));
+        
+    }
+    
 }

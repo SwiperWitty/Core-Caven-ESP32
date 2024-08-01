@@ -14,16 +14,44 @@ void time_prt_Callback_fun (TimerHandle_t xtime)
 
 void Main_Init(void);
 void Build_task(void);
+
+uint8_t get_buff[0x1024];
+int get_num = 0;
+int get_time = 0;
+void rj45_get_fun (void *data)
+{
+    uint8_t rec = *(uint8_t *)data;
+    get_buff[get_num] = rec;
+    get_num ++;
+    get_time = xTaskGetTickCount();
+    if (get_num > sizeof(get_buff) - 1)
+    {
+        get_num = sizeof(get_buff) - 1;
+    }
+}
+
 void app_main(void)
 {
     Main_Init();
     Build_task();
     printf("app_main run to Core %d \n \n", xPortGetCoreID());
     char *temp_array;
+    int temp_num = 0;
     temp_array = malloc(300);
+    tcp_server_receive_State_Machine_Bind (rj45_get_fun);
+    int run_time = xTaskGetTickCount();
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(10));
+        run_time = xTaskGetTickCount();
+        if (((run_time - get_time) > 50 && get_num) || get_num > 300)
+        {
+            temp_num = get_num;
+            get_num = 0;
+            tcp_server_send_data(get_buff, temp_num);
+            ESP_LOGI("debug","Collect rj45 data updata,%d",temp_num);
+        }
+        
     }
     free(temp_array);
 }
@@ -44,7 +72,8 @@ void Build_task(void)
     
     // xTaskCreatePinnedToCore(refresh_lcd_task, "task-[LCD]", 4096 * 4, NULL, SHOW_TASK_PRIORITY, &lcd_taskhanlde, CORE_ONE);
     xTaskCreate(eps32_HTTPS_task, "https get task", 8192, NULL, 5, NULL);
-    
+    xTaskCreate(tcp_server_link_task, "tcp server task", 1024*4, NULL, 6, NULL);
+
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
     
 
@@ -70,13 +99,14 @@ void Main_Init(void)
     LCD_Set_TargetModel(m_LCD_TYPE_1_69);
     LCD_Set_Horizontal(1);
     MODE_LCD_Init(1);
-    eth_config_ip (0,"192.168.1.169","192.168.1.1","255.255.255.0");
+    eth_config_ip (1,"192.168.1.169","192.168.1.1","255.255.255.0");
     wifi_config_ip (0,NULL,NULL,NULL);  // 设置静态模式
     wifi_config_ip (2,"192.168.11.61","192.168.11.1","255.255.255.0");  // 静态模式ip
 
-    Network_manage_Init (0xff,1);
+    Network_manage_Init (0x2,1);
     // LCD_Show_String(0,0, "hello ", LCD_Word_Color, LCD_Back_Color, 16);    // 显示字符串
     LCD_Show_Picture(0, 0, 240, 240, gImage_hongshu);
     ESP_LOGI("LCD Init","Model[%d],x:%d y:%d ",m_LCD_TYPE_1_69,LCD_W_Max,LCD_H_Max);
+
 }
 

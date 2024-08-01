@@ -12,7 +12,8 @@
         "sys_typedef.h": "c",
         "main.h": "c",
         "network_manage.h": "c",
-        "https.h": "c"
+        "https.h": "c",
+        "tcp_server_link.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"

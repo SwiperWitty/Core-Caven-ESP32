@@ -22,6 +22,8 @@ extern uint16_t tcp_server_port;                            //!!!!
 extern uint8_t lwip_task_idle_timer_counter;                //!!!! 
 extern uint8_t port_8160_using;
 
+typedef void (*D_Callback_pFun) (void *data);   // 数据回调类型
+
 int Network_manage_Init (int mode,int set);
 void Network_manage_set_mac (uint8_t *mac);
 void Network_manage_get_mac (uint8_t *mac);
