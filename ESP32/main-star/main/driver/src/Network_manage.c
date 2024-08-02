@@ -27,6 +27,8 @@ uint8_t port_8160_using;
 static const char *TAG = "Network_manage";
 
 static int esp_netif_init_flag = 0;
+static int wifi_flag = 0;
+static int eth_flag = 0;
 // 静态的ip
 static uint8_t SYS_MAC_addr[6] = {0xc8,0x2e,0x18,0x6b,0x83,0x00};
 static char eth_mode = 0;
@@ -153,6 +155,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
         default:
             break;
         }
+        wifi_flag = 0;
     }
     if(event_base == IP_EVENT)                  // IP相关事件
     {
@@ -160,8 +163,29 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
         switch(event_id)
         {
             case IP_EVENT_STA_GOT_IP:           // 只有获取到路由器分配的IP，才认为是连上了路由器
-                ESP_LOGW(TAG, "WIFI Got ip:" IPSTR, IP2STR(&event->ip_info.ip));
-                break;
+            {
+                s_WIFI_ip[0] = esp_ip4_addr1_16(&event->ip_info.ip);
+                s_WIFI_ip[1] = esp_ip4_addr2_16(&event->ip_info.ip);
+                s_WIFI_ip[2] = esp_ip4_addr3_16(&event->ip_info.ip);
+                s_WIFI_ip[3] = esp_ip4_addr4_16(&event->ip_info.ip);
+
+                s_WIFI_netmask[0] = esp_ip4_addr1_16(&event->ip_info.netmask);
+                s_WIFI_netmask[1] = esp_ip4_addr2_16(&event->ip_info.netmask);
+                s_WIFI_netmask[2] = esp_ip4_addr3_16(&event->ip_info.netmask);
+                s_WIFI_netmask[3] = esp_ip4_addr4_16(&event->ip_info.netmask);
+
+                s_WIFI_gateway[0] = esp_ip4_addr1_16(&event->ip_info.gw);
+                s_WIFI_gateway[1] = esp_ip4_addr2_16(&event->ip_info.gw);
+                s_WIFI_gateway[2] = esp_ip4_addr3_16(&event->ip_info.gw);
+                s_WIFI_gateway[3] = esp_ip4_addr4_16(&event->ip_info.gw);
+                
+                ESP_LOGI(TAG, "WIFIIP:" IPSTR, IP2STR(&event->ip_info.ip));
+                ESP_LOGI(TAG, "WIFIMASK:" IPSTR, IP2STR(&event->ip_info.netmask));
+                ESP_LOGI(TAG, "WIFIGW:" IPSTR, IP2STR(&event->ip_info.gw));
+                ESP_LOGW(TAG, "WIFI Got IP Address \n");
+                wifi_flag = 1;
+            }
+            break;
             default:
                 break;
         }
@@ -225,7 +249,7 @@ void ipstr_to_ip_address(char *str, uint8_t *ip)
     mode = 0,dhcp
     mode = 1,static (此时如果wifi_ip内数据有效则变更ip,也就是固定IP更新)
     mode = 2,set ip (不会立即生效，只会把内容放进ip设置里面，这样没有启动wifi_init,也能改ip)
-    mode = other    查询 wifi_mode
+    mode = other    查询mode
     ip_str  ip地址
     gw_str  默认网关
     netmask_str 掩码
@@ -395,14 +419,14 @@ static void wifi_init(int set)
 
 esp_netif_t *eth_netif;
 // 这里是本次设备分配到的ip，很可能是动态的
-static uint8_t RJ45_ip[4];
-static uint8_t RJ45_netmask[4];
-static uint8_t RJ45_gateway[4];
+static uint8_t s_RJ45_ip[4];
+static uint8_t s_RJ45_netmask[4];
+static uint8_t s_RJ45_gateway[4];
 
 /*
     mode = 0,dhcp
     mode = 1,static 
-
+    mode = other    查询mode
     ip_str  ip地址
     gw_str  默认网关
     netmask_str 掩码
@@ -451,7 +475,6 @@ static void eth_Link_UP_handle (void *event_data)
     if (eth_mode == 0)
     {
         ESP_LOGI(TAG, "Ethernet allocation ip : dhcp");
-
     }
     else
     {
@@ -507,6 +530,7 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,int32_t eve
         default:
             break;
         }
+        eth_flag = 0;
     }
     
     if (event_base == IP_EVENT)
@@ -516,25 +540,26 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,int32_t eve
         switch (event_id)
         {
         case IP_EVENT_ETH_GOT_IP:
-            RJ45_ip[0] = esp_ip4_addr1_16(&ip_info->ip);
-            RJ45_ip[1] = esp_ip4_addr2_16(&ip_info->ip);
-            RJ45_ip[2] = esp_ip4_addr3_16(&ip_info->ip);
-            RJ45_ip[3] = esp_ip4_addr4_16(&ip_info->ip);
+            s_RJ45_ip[0] = esp_ip4_addr1_16(&ip_info->ip);
+            s_RJ45_ip[1] = esp_ip4_addr2_16(&ip_info->ip);
+            s_RJ45_ip[2] = esp_ip4_addr3_16(&ip_info->ip);
+            s_RJ45_ip[3] = esp_ip4_addr4_16(&ip_info->ip);
 
-            RJ45_netmask[0] = esp_ip4_addr1_16(&ip_info->netmask);
-            RJ45_netmask[1] = esp_ip4_addr2_16(&ip_info->netmask);
-            RJ45_netmask[2] = esp_ip4_addr3_16(&ip_info->netmask);
-            RJ45_netmask[3] = esp_ip4_addr4_16(&ip_info->netmask);
+            s_RJ45_netmask[0] = esp_ip4_addr1_16(&ip_info->netmask);
+            s_RJ45_netmask[1] = esp_ip4_addr2_16(&ip_info->netmask);
+            s_RJ45_netmask[2] = esp_ip4_addr3_16(&ip_info->netmask);
+            s_RJ45_netmask[3] = esp_ip4_addr4_16(&ip_info->netmask);
 
-            RJ45_gateway[0] = esp_ip4_addr1_16(&ip_info->gw);
-            RJ45_gateway[1] = esp_ip4_addr2_16(&ip_info->gw);
-            RJ45_gateway[2] = esp_ip4_addr3_16(&ip_info->gw);
-            RJ45_gateway[3] = esp_ip4_addr4_16(&ip_info->gw);
+            s_RJ45_gateway[0] = esp_ip4_addr1_16(&ip_info->gw);
+            s_RJ45_gateway[1] = esp_ip4_addr2_16(&ip_info->gw);
+            s_RJ45_gateway[2] = esp_ip4_addr3_16(&ip_info->gw);
+            s_RJ45_gateway[3] = esp_ip4_addr4_16(&ip_info->gw);
             
             ESP_LOGI(TAG, "ETHIP:" IPSTR, IP2STR(&ip_info->ip));
             ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
             ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
             ESP_LOGW(TAG, "Ethernet Got IP Address \n");
+            eth_flag = 1;
             break;
         default:
             break;
@@ -629,6 +654,46 @@ void Network_manage_get_mac (uint8_t *mac)
         memcpy(mac,SYS_MAC_addr,6);
     }
 }
+/*
+    ip_str = NULL,理解为查询网络状态
+    retval = 1，在线
+    retval = 0，掉线
+*/
+int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str)
+{
+    int retval = 0;
+    if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
+    {
+        retval = wifi_flag;
+    }
+    else
+    {
+        memcpy(ip_str,s_WIFI_ip,4);
+        memcpy(gw_str,s_WIFI_gateway,4);
+        memcpy(netmask_str,s_WIFI_netmask,4);
+    }
+    return retval;
+}
+/*
+    ip_str = NULL,理解为查询网络状态
+    retval = 1，在线
+    retval = 0，掉线
+*/
+int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str)
+{
+    int retval = 0;
+    if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
+    {
+        retval = eth_flag;
+    }
+    else
+    {
+        memcpy(ip_str,s_RJ45_ip,4);
+        memcpy(gw_str,s_RJ45_gateway,4);
+        memcpy(netmask_str,s_RJ45_netmask,4);
+    }
+    return retval;
+}
 
 int Network_manage_Init (int mode,int set)
 {
@@ -649,7 +714,8 @@ int Network_manage_Init (int mode,int set)
         break;
     default:
         esp_wifi_stop();
-
+        eth_flag = 0;
+        wifi_flag = 0;
         break;
     }
     return retval;

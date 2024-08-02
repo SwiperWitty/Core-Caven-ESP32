@@ -1,14 +1,12 @@
 #include "https.h"
-#include "Network_manage.h"
 
 #include <stdio.h>
 #include <string.h>
 
+#include "nvs_flash.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "nvs_flash.h"
-// #include "protocol_examples_common.h"
 #include "esp_netif.h"
 #include "esp_tls.h"
 #include "esp_http_client.h"
@@ -336,7 +334,9 @@ int https_request_config_init (char *way_str,char *Host_str,char *URL_str,char *
     }
     return retval;
 }
-
+/*
+    给header添加一些type
+*/
 int https_request_add_header (char *type,char *data)
 {
     int retval = 0;
@@ -378,6 +378,12 @@ int https_request_add_header (char *type,char *data)
     return retval;
 }
 
+/*
+    添加数据长度体
+    将data_str融入https_send_buff
+    给body加上末尾
+    按照type发送
+*/
 int https_request_Fun (char type,char *data_str)
 {
     int retval = 1;
@@ -411,13 +417,16 @@ int https_request_Fun (char type,char *data_str)
     sprintf(temp_str,"%d",temp_num);
     https_request_add_header ("Content-Length",temp_str);
     temp_run = https_head_len + 2;  // 把header结束符"\r\n"算进去
-    https_head_len = retval;        // 不能将Content算入头长度中，否则下次头长度会叠加
+    https_head_len = retval;        // 还原https_head_len，不能将Content算入头长度中，否则下次头长度会叠加
     
     memcpy(&https_send_buff[0],https_head_str,temp_run);    // 将头载入
     memcpy(&https_send_buff[temp_run],data_str,temp_num);   // 将body载入
     temp_run += temp_num;
     temp_num = strlen("\r\n");
     memcpy(&https_send_buff[temp_run],"\r\n",temp_num);     // 数据结束
+    temp_run += temp_num;
+    https_send_buff[temp_run] = 0;  // 切断
+
     retval = 0;
     switch (type)
     {
@@ -437,6 +446,79 @@ int https_request_Fun (char type,char *data_str)
     return retval;
 }
 
+void JSON_DataToAtmajson (int utc,char *epc,char *tid,char *sn,char *str,char num,char state,char *ret_data)
+{
+    char temp_str[30];
+    cJSON *all_data_item = cJSON_CreateObject();
+    cJSON *tags = cJSON_CreateObject();
+    cJSON *array = cJSON_CreateArray();
+    if (all_data_item != NULL)
+    {
+        char *out = 0;
+        int add_flag = 0;
+        //
+        cJSON_AddStringToObject(all_data_item, "eventType", "ObjectEvent");
+        cJSON_AddStringToObject(all_data_item, "action", "OBSERVE");
+        cJSON_AddStringToObject(all_data_item, "eventTime", "2024-04-11T10:47:29.066Z");    // 时间
+        
+        cJSON_AddItemToArray(array, cJSON_CreateString(epc));    // epc
+        cJSON_AddItemToObject(all_data_item, "identifiers", array);
+
+        cJSON_AddStringToObject(all_data_item, "readPoint", sn);            // 序列号
+        cJSON_AddStringToObject(all_data_item, "businessLocation", str);    // 合成的拼接
+        cJSON_AddStringToObject(all_data_item, "businessStep", "urn:epcglobal:cbv:bizstep:inspecting");
+        cJSON_AddStringToObject(all_data_item, "disposition", "urn:epcglobal:cbv:disp:conformant");
+        if (tags != NULL)
+        {
+            // cJSON_AddNullToObject(tags, "TID");
+            cJSON_AddStringToObject(tags, "TID", tid);       // tid
+            memset(temp_str,0,sizeof(temp_str));
+            sprintf(temp_str,"%d",num);
+            cJSON_AddStringToObject(tags, "Session Scan", temp_str);                 // 编号
+            memset(temp_str,0,sizeof(temp_str));
+            switch (state)
+            {
+            case 1:
+                sprintf(temp_str,"%s","Normal");
+                break;
+            case 2:
+                sprintf(temp_str,"%s","Duplicate");
+                break;
+            case 3:
+                sprintf(temp_str,"%s","Multi");
+                break;
+            case 4:
+                sprintf(temp_str,"%s","Encoding Issue");
+                break;
+            default:
+                break;
+            }
+            cJSON_AddStringToObject(tags, "Session Action", temp_str);          // 状态
+            cJSON_AddItemToObject(all_data_item, "extensionElements", tags);
+            add_flag ++;
+        }
+        //
+        out = cJSON_PrintUnformatted(all_data_item);
+        // ESP_LOGI(TAG, "HTTP JSON Pack data :\n%s", out);
+        
+        if (out != NULL)
+        {
+            strcpy(ret_data,out);
+            free(out);
+        }
+        if (add_flag)       // cJSON_AddItemToObject 之后不要释放子集
+        {
+            cJSON_Delete(all_data_item);
+        }
+        else
+        {
+            cJSON_Delete(tags);
+            cJSON_Delete(all_data_item);
+        }
+    }
+}
+
+char http_array[1024];
 void eps32_HTTPS_task (void *empty)
 {
     int times = 0;
@@ -453,7 +535,9 @@ void eps32_HTTPS_task (void *empty)
     https_request_Fun (2,body);
     ESP_LOGI(TAG, "way 3");
     https_request_Fun (3,body);
-    
+
+    JSON_DataToAtmajson (0,"1234","E2082734893739367282","SN-123123","urn:atma.io:loc:rovinj:rovinj:9018",2,4,http_array);
+    https_request_Fun (1,http_array);
     while (1)
     {
         times ++;

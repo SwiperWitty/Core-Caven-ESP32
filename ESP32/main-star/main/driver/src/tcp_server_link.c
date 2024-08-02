@@ -20,15 +20,50 @@
 #include <lwip/netdb.h>
 
 
-#define PORT                        8160
 #define KEEPALIVE_IDLE              20
 #define KEEPALIVE_INTERVAL          5
 #define KEEPALIVE_COUNT             3
-#define CONFIG_EXAMPLE_IPV4         1
 
 static const char *TAG = "TCP server";
 
 static int tcp_server_sock = 0;
+static char sock_port_str[10] = {0};
+
+/*
+    server 只能修改端口，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
+*/
+int tcp_server_link_ip_config (char *port_str,int enable)
+{
+    int retval = 0;
+    if (enable)
+    {
+        if (port_str == NULL )
+        {
+            retval = 1;
+            ESP_LOGE(TAG, "where are you IP ?");
+            return retval;
+        }
+        else
+        {
+            memset(sock_port_str,0,sizeof(sock_port_str));
+            strcpy(sock_port_str, port_str);
+            ESP_LOGW(TAG, "config link ip[xx.xx.xx.xx:%s]",sock_port_str);
+        }
+    }
+    else
+    {
+        if (tcp_server_sock > 0)
+        {
+            tcp_server_sock = 0;
+            ESP_LOGW(TAG, "close sock");
+        }
+    }
+    return retval;
+}
+
+/*
+    使用前确保网络通畅
+*/
 int tcp_server_send_data(uint8_t *data, int size)
 {
     int retval = 0;
@@ -72,7 +107,7 @@ static void do_retransmit(const int sock)
     char rx_buffer[128];
 
     do {
-        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);  //  这里是阻塞的，想退出此函数，得靠定时器监控来kill
         if (len < 0) {
             ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
             tcp_server_sock = 0;
@@ -104,12 +139,18 @@ void tcp_server_link_task(void *empty)
     int keepInterval = KEEPALIVE_INTERVAL;
     int keepCount = KEEPALIVE_COUNT;
     struct sockaddr_storage dest_addr;
-
+    int ip_port = 0;
+    int temp_num;
+    if (strlen(sock_port_str) == 0)
+    {
+        strcpy(sock_port_str,"8160");
+    }
+    ip_port = atoi(sock_port_str);
     if (addr_family == AF_INET) {
         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
         dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
         dest_addr_ip4->sin_family = AF_INET;
-        dest_addr_ip4->sin_port = htons(PORT);
+        dest_addr_ip4->sin_port = htons(ip_port);
         ip_protocol = IPPROTO_IP;
     }
 #ifdef CONFIG_EXAMPLE_IPV6
@@ -117,7 +158,7 @@ void tcp_server_link_task(void *empty)
         struct sockaddr_in6 *dest_addr_ip6 = (struct sockaddr_in6 *)&dest_addr;
         bzero(&dest_addr_ip6->sin6_addr.un, sizeof(dest_addr_ip6->sin6_addr.un));
         dest_addr_ip6->sin6_family = AF_INET6;
-        dest_addr_ip6->sin6_port = htons(PORT);
+        dest_addr_ip6->sin6_port = htons(ip_port);
         ip_protocol = IPPROTO_IPV6;
     }
 #endif
@@ -145,7 +186,7 @@ void tcp_server_link_task(void *empty)
         ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
         goto CLEAN_UP;
     }
-    ESP_LOGI(TAG, "Socket bound, port %d", PORT);
+    ESP_LOGI(TAG, "Socket bound, open port %d", ip_port);
 
     err = listen(listen_sock, 1);
     if (err != 0) {
@@ -153,10 +194,26 @@ void tcp_server_link_task(void *empty)
         goto CLEAN_UP;
     }
 
-    while (1) {
-
+    while (1) 
+    {
         ESP_LOGI(TAG, "Socket listening");
-
+        temp_num = 0;
+        do
+        {
+            if (eth_get_local_ip_status(NULL,NULL,NULL))
+            {
+                temp_num = 1;
+            }
+            if (wifi_get_local_ip_status(NULL,NULL,NULL))
+            {
+                temp_num += 2;
+            }
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        } while (temp_num == 0);        // 等待网络连接
+        if (temp_num)
+        {
+            ESP_LOGW(TAG, "get network ID [%d]",temp_num);
+        }
         struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
         socklen_t addr_len = sizeof(source_addr);
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
@@ -179,11 +236,11 @@ void tcp_server_link_task(void *empty)
             inet6_ntoa_r(((struct sockaddr_in6 *)&source_addr)->sin6_addr, addr_str, sizeof(addr_str) - 1);
         }
 #endif
-        ESP_LOGI(TAG, "Socket accepted ip address: %s", addr_str);
+        ESP_LOGI(TAG, "Socket accepted host ip address: %s", addr_str);
         ESP_LOGI(TAG, "Socket num: %d", sock);
         tcp_server_sock = sock;
         do_retransmit(sock);
-
+        ESP_LOGW(TAG, "loss sock");
         shutdown(sock, 0);
         close(sock);
         sock = 0;
@@ -195,21 +252,4 @@ CLEAN_UP:
     close(listen_sock);
     ESP_LOGW(TAG, "Socket kill");
     vTaskDelete(NULL);
-}
-
-/*
-    不需要初始化
-*/
-int tcp_server_link_init (int set)
-{
-    int retval = 0;
-    if (set)
-    {
-        /* code */
-    }
-    else
-    {
-
-    }
-    return retval;
 }

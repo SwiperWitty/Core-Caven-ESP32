@@ -2,7 +2,7 @@
 #define _HTTPS_H_
 
 #include "stdint.h"
-#include "string.h"
+#include "Network_manage.h"
 
 /*
 

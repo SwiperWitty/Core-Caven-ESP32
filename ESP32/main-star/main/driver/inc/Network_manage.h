@@ -2,15 +2,20 @@
 #define _NETWORK_MANAGE_H_
 
 #include "stdint.h"
+#include "stdlib.h"
 
 #define DEFAULT_WIFI_NAME "GX"    // GX Cavendish
 #define DEFAULT_WIFI_PASS "GX201909"    // GX201909 1234567890
 
-#define DEFAULT_RJ45_IP "192.168.1.168"
-#define DEFAULT_RJ45_PORT 8160 
-
+#ifndef CONFIG_EXAMPLE_IPV4
+#define CONFIG_EXAMPLE_IPV4         1
+#endif
+#ifndef CONFIG_EXAMPLE_USE_INTERNAL_ETHERNET
 #define CONFIG_EXAMPLE_USE_INTERNAL_ETHERNET 1
+#endif
+#ifndef CONFIG_EXAMPLE_ETH_PHY_RTL8201
 #define CONFIG_EXAMPLE_ETH_PHY_RTL8201 1
+#endif
 
 #define RTL8201_ETH_PHY_ADDR 1
 #define RTL8201_ETH_RST_GPIO GPIO_NUM_5
@@ -30,5 +35,8 @@ void Network_manage_get_mac (uint8_t *mac);
 
 int wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str);
 int eth_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str);
+
+int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str);
+int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str);
 
 #endif

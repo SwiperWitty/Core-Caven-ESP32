@@ -13,7 +13,8 @@
         "main.h": "c",
         "network_manage.h": "c",
         "https.h": "c",
-        "tcp_server_link.h": "c"
+        "tcp_server_link.h": "c",
+        "tcp_client_link.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"
