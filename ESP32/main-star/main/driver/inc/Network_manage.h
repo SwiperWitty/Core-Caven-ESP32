@@ -7,6 +7,9 @@
 #define DEFAULT_WIFI_NAME "GX"    // GX Cavendish
 #define DEFAULT_WIFI_PASS "GX201909"    // GX201909 1234567890
 
+#define DEFAULT_WIFI_NAME2 "TP-LINK-50D"    // GX Cavendish
+#define DEFAULT_WIFI_PASS2 "Hqsc1688"    // GX201909 1234567890
+
 #ifndef CONFIG_EXAMPLE_IPV4
 #define CONFIG_EXAMPLE_IPV4         1
 #endif

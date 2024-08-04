@@ -332,13 +332,13 @@ static void wifi_init(int set)
         esp_wifi_disconnect();
         return;
     }
-
-    ESP_LOGI(TAG, "WIFI Start --> \n");
     if (strlen(WIFI_name) == 0)
     {
-        memcpy(WIFI_name,DEFAULT_WIFI_NAME,strlen(DEFAULT_WIFI_NAME));
-        memcpy(WIFI_pass,DEFAULT_WIFI_PASS,strlen(DEFAULT_WIFI_PASS));
+        memset(WIFI_name,0,sizeof(WIFI_name));
+        memset(WIFI_pass,0,sizeof(WIFI_pass));
     }
+    
+    ESP_LOGI(TAG, "WIFI Start --> \n");
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -366,18 +366,43 @@ static void wifi_init(int set)
 
     ESP_LOGI(TAG, "Total APs ap_count[%d],wifi_ap_num[%d]", ap_count,wifi_ap_num);
     for (int i = 0; (i < wifi_ap_num) && (i < ap_count); i++) {
-        ESP_LOGI(TAG, "SSID \t\t%s", wifi_ap_info[i].ssid);
+        ESP_LOGI(TAG, "SSID \t\t%s,%d", wifi_ap_info[i].ssid,strlen((char *)wifi_ap_info[i].ssid));
         ESP_LOGI(TAG, "RSSI \t\t%d", wifi_ap_info[i].rssi);
-        if (wifi_ap_info[i].rssi > (-60))
+        if (wifi_ap_info[i].rssi > (-86))
         {
+            int temp_num = 0;
             print_auth_mode(wifi_ap_info[i].authmode);
             if (wifi_ap_info[i].authmode != WIFI_AUTH_WEP) {
                 print_cipher_type(wifi_ap_info[i].pairwise_cipher, wifi_ap_info[i].group_cipher);
+            }
+            temp_num = strlen((char *)wifi_ap_info[i].ssid);
+            if (temp_num == strlen(DEFAULT_WIFI_NAME))
+            {
+                if (memcmp((char *)wifi_ap_info[i].ssid,DEFAULT_WIFI_NAME,temp_num) == 0)
+                {
+                    memcpy(WIFI_name,DEFAULT_WIFI_NAME,strlen(DEFAULT_WIFI_NAME));
+                    memcpy(WIFI_pass,DEFAULT_WIFI_PASS,strlen(DEFAULT_WIFI_PASS));
+                    break;
+                }
+            }
+            else if (temp_num == strlen(DEFAULT_WIFI_NAME2))
+            {
+                if (memcmp((char *)wifi_ap_info[i].ssid,DEFAULT_WIFI_NAME2,temp_num) == 0)
+                {
+                    memcpy(WIFI_name,DEFAULT_WIFI_NAME2,strlen(DEFAULT_WIFI_NAME2));
+                    memcpy(WIFI_pass,DEFAULT_WIFI_PASS2,strlen(DEFAULT_WIFI_PASS2));
+                    break;
+                }
             }
         }
         ESP_LOGI(TAG, "Channel \t\t%d\n", wifi_ap_info[i].primary);
     }
     esp_wifi_stop();
+    if (strlen(WIFI_name) == 0)
+    {
+        memcpy(WIFI_name,DEFAULT_WIFI_NAME,strlen(DEFAULT_WIFI_NAME));
+        memcpy(WIFI_pass,DEFAULT_WIFI_PASS,strlen(DEFAULT_WIFI_PASS));
+    }
 
     // 注册事件
     esp_event_handler_instance_t instance_any_id;

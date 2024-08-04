@@ -121,11 +121,11 @@ void tcp_client_link_task(void *empty)
         temp_num = 0;
         do
         {
-            if (eth_get_local_ip_status(NULL,NULL,NULL))
+            if (wifi_get_local_ip_status(NULL,NULL,NULL))
             {
                 temp_num = 1;
             }
-            if (wifi_get_local_ip_status(NULL,NULL,NULL))
+            if (eth_get_local_ip_status(NULL,NULL,NULL))
             {
                 temp_num += 2;
             }
@@ -171,7 +171,7 @@ void tcp_client_link_task(void *empty)
             tcp_client_sock = 0;
             // break;
         }
-        ESP_LOGI(TAG, "Socket created, connecting to %s:%d", host_ip, ip_port);
+        ESP_LOGI(TAG, "Socket created,try connecting to %s:%d ...", host_ip, ip_port);
 
         int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in6));
         if (err != 0) {

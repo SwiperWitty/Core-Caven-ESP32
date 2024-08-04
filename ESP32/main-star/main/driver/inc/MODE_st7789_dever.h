@@ -4,7 +4,6 @@
 #include "stdint.h"
 #include "string.h"
 
-
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

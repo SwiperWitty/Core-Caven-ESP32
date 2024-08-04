@@ -194,17 +194,17 @@ void tcp_server_link_task(void *empty)
         goto CLEAN_UP;
     }
 
-    while (1) 
+    while (1)
     {
         ESP_LOGI(TAG, "Socket listening");
         temp_num = 0;
         do
         {
-            if (eth_get_local_ip_status(NULL,NULL,NULL))
+            if (wifi_get_local_ip_status(NULL,NULL,NULL))
             {
                 temp_num = 1;
             }
-            if (wifi_get_local_ip_status(NULL,NULL,NULL))
+            if (eth_get_local_ip_status(NULL,NULL,NULL))
             {
                 temp_num += 2;
             }

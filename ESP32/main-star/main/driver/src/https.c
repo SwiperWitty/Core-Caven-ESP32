@@ -527,7 +527,23 @@ void eps32_HTTPS_task (void *empty)
     https_request_add_header ("12345","67890");
 
     ESP_LOGI(TAG, " \n%s",https_head_str);
-    vTaskDelay(pdMS_TO_TICKS(3000));
+    int temp_num = 0;
+    do
+    {
+        if (wifi_get_local_ip_status(NULL,NULL,NULL))
+        {
+            temp_num = 1;
+        }
+        if (eth_get_local_ip_status(NULL,NULL,NULL))
+        {
+            temp_num += 2;
+        }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    } while (temp_num == 0);        // 等待网络连接
+    if (temp_num)
+    {
+        ESP_LOGW(TAG, "get network ID [%d]",temp_num);
+    }
 
     ESP_LOGI(TAG, "way 1");
     https_request_Fun (1,body);
