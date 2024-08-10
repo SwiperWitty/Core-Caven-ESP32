@@ -6,7 +6,7 @@
 #link_directories(driver/src)
 
 # 所有参与编译的 [*.c]文件
-set(srcs    
+set(srcs
     "User_app/main.c"           # [app_main] 程序入口所在
     # "driver/src/default.c"
     "driver/src/information.c"
@@ -19,9 +19,12 @@ set(srcs
     "driver/src/tcp_client_link.c"
     "driver/src/https.c"
     "driver/src/Custom_gpio.c"
+
+    "driver/src/Mode_RTC8564.c"
     "driver/src/MODE_st7789_dever.c"
     "driver/src/MODE_LCD.c"
     "driver/src/draw.c"
+    
 )
 
 file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")

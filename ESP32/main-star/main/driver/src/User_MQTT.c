@@ -126,7 +126,10 @@ void Z_Mqtt_Init(void){
 
     }
 }
- 
+
+/*
+    网络的应用层任务必须先确保底层网络是启动的，否则不应该启动这个任务
+*/
 void TCP_MQTT_task(void)
 {
     int temp_num = 0;

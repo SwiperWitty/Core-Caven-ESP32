@@ -29,7 +29,7 @@
 
 
 #ifdef Exist_RTC_Clock
-    #include"rtc_time.h"
+    #include "Mode_RTC8564.h"
 #endif 
 #ifdef Exist_GPIO
     #include"Custom_gpio.h"

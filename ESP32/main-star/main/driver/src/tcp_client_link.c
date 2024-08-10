@@ -108,6 +108,10 @@ void tcp_client_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
     tcp_client_Callback_Fun = Callback_pFun;
 }
 
+
+/*
+    网络的应用层任务必须先确保底层网络是启动的，否则不应该启动这个任务
+*/
 void tcp_client_link_task(void *empty)
 {
     char rx_buffer[128];

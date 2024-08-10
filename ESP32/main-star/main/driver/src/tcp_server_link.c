@@ -129,6 +129,9 @@ static void do_retransmit(const int sock)
     } while (len > 0);
 }
 
+/*
+    网络的应用层任务必须先确保底层网络是启动的，否则不应该启动这个任务
+*/
 void tcp_server_link_task(void *empty)
 {
     char addr_str[128];
@@ -140,7 +143,20 @@ void tcp_server_link_task(void *empty)
     int keepCount = KEEPALIVE_COUNT;
     struct sockaddr_storage dest_addr;
     int ip_port = 0;
-    int temp_num;
+    int temp_num = 0;
+    do
+    {
+        if (wifi_get_local_ip_status(NULL,NULL,NULL))
+        {
+            temp_num = 1;
+        }
+        if (eth_get_local_ip_status(NULL,NULL,NULL))
+        {
+            temp_num += 2;
+        }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    } while (temp_num == 0);        // 等待网络连接
+
     if (strlen(sock_port_str) == 0)
     {
         strcpy(sock_port_str,"8160");

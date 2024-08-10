@@ -519,6 +519,9 @@ void JSON_DataToAtmajson (int utc,char *epc,char *tid,char *sn,char *str,char nu
 }
 
 char http_array[1024];
+/*
+    网络的应用层任务必须先确保底层网络是启动的，否则不应该启动这个任务
+*/
 void eps32_HTTPS_task (void *empty)
 {
     int times = 0;

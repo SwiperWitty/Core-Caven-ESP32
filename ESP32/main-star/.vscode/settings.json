@@ -15,7 +15,9 @@
         "https.h": "c",
         "tcp_server_link.h": "c",
         "tcp_client_link.h": "c",
-        "mode_bmi088.h": "c"
+        "mode_bmi088.h": "c",
+        "lcdfont.h": "c",
+        "items.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"
