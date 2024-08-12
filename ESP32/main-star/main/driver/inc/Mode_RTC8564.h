@@ -12,7 +12,7 @@
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 
-    #define PIN_RTC_SDA    (16) 
+    #define PIN_RTC_SDA    (16)
     #define PIN_RTC_SCL    (17)
     #define RTC_I2C_MASTER_FREQ_HZ  1000
     #define RTC_I2C_MASTER_NUM      I2C_NUM_0
@@ -21,11 +21,11 @@
 #else
 #include "Base.h"
 #include "Caven_Type.h"
-    #define PIN_RTC_SDA    (16) 
+    #define PIN_RTC_SDA    (16)
     #define PIN_RTC_SCL    (17)
 #endif
 
-int MODE_RTC8564_Init (int Set);
+int MODE_RTC8564_Init (int set);
 int MODE_RTC8564_Write_time (uint32_t sec);
 int MODE_RTC8564_Read_time (uint32_t *sec);
 

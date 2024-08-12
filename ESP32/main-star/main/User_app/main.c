@@ -120,7 +120,8 @@ void Main_Init(void)
     eth_config_ip (1,"192.168.1.169","192.168.1.1","255.255.255.0");
     wifi_config_ip (0,NULL,NULL,NULL);  // 设置网络模式
     wifi_config_ip (2,"192.168.11.61","192.168.11.1","255.255.255.0");  // 配置静态模式ip
-    Network_manage_Init (0x00,1);
+    // Network_manage_Init (0x01,1);
+    // Network_manage_Init (0x02,1);
 
     tcp_client_link_ip_config ("192.168.1.128","9090",1);
     tcp_server_link_ip_config ("8160",1);

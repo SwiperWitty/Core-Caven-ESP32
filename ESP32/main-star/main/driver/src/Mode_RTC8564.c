@@ -82,8 +82,8 @@ char Base_IIC_Send_DATA(uint8_t addr,const uint8_t *Data,char ACK,int Length,int
 }
 
 /*
- * 返回的是是否成功ACK
- * 主机也是要回答的(IIC_ASK)
+ * 返回的是是否成功ACK(1)
+ * 主机也是要回答的,接收函数自动应答(IIC_ASK)
  */
 char Base_IIC_Receive_DATA(uint8_t addr,uint8_t *Data,char ACK,int Length,int Speed)
 {
@@ -139,7 +139,7 @@ int MODE_RTC8564_Init (int set)
     {
         retval = MODE_RTC8564_Read_time (&temp_time);
     #ifdef CONFIG_IDF_TARGET_ESP32
-        ESP_LOGI(TAG,"RTC get utc [%d]",temp_time);
+        ESP_LOGI(TAG,"RTC8564 Init get utc [%d]",temp_time);
     #endif
     }
 #endif

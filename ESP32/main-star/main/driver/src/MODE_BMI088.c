@@ -8,11 +8,6 @@
  * @note:	
  ****************************************************/
 
-// #define SPI1_ACC_Enable       {  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);}//PA4 PB0
-// #define SPI1_ACC_Disable       {  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);}//PA4 PB0
-// #define SPI1_GYRO_Enable     {  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);}//PA4 PB0
-// #define SPI1_GYRO_Disable     {  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);}//PA4 PB0
-
 int BMI088_Init_flag = 0;
 #define CS_GYRO  0
 #define CS_ACC   1

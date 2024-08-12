@@ -733,9 +733,12 @@ int Network_manage_Init (int mode,int set)
     case 2:
         rtl8201_init(set);
         break;
+    case 0xFE:
+        esp_wifi_stop();
+        wifi_flag = 0;
+        break;
     case 0xFF:
-        rtl8201_init(set);
-        wifi_init(set);
+        eth_flag = 0;
         break;
     default:
         esp_wifi_stop();
