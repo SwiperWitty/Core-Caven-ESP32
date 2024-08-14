@@ -2,12 +2,13 @@
 #include "time.h"
 
 struct tm timeinfo;
+static int RTC8564_Init_flag = 0;
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "esp_log.h"
-const char *TAG = "RTC_I2C";
-char iic_link_flag = 0;
-i2c_cmd_handle_t cmd;
+static const char *TAG = "RTC_IIC";
+static char iic_link_flag = 0;
+static i2c_cmd_handle_t cmd;
 
 int Base_IIC_Init (int set)
 {
@@ -113,7 +114,7 @@ char Base_IIC_Receive_DATA(uint8_t addr,uint8_t *Data,char ACK,int Length,int Sp
     return BK;
 }
 
-void SYS_Base_Delay(int time,int Speed)
+static void SYS_Base_Delay(int time,int Speed)
 {
     if (Speed)
     {
@@ -133,11 +134,18 @@ int MODE_RTC8564_Init (int set)
     int retval = 0;
 #ifdef Exist_RTC_Clock
     uint32_t temp_time;
-    Base_IIC_Init(set);
-    SYS_Base_Delay(100,1000);
+    RTC8564_Init_flag = 0;
     if(set)
     {
+        Base_IIC_Init(set);
+        SYS_Base_Delay(100,1000);
         retval = MODE_RTC8564_Read_time (&temp_time);
+        if (retval)
+        {
+            RTC8564_Init_flag = 1;
+            retval = 0;
+        }
+        
     #ifdef CONFIG_IDF_TARGET_ESP32
         ESP_LOGI(TAG,"RTC8564 Init get utc [%d]",temp_time);
     #endif
@@ -160,12 +168,18 @@ static uint8_t decTObcd(uint8_t val)
 }
 #endif
 
+// 正常返回 1
 int MODE_RTC8564_Read_time (uint32_t *sec)
 {
     int retval = 0;
 #ifdef Exist_RTC_Clock
     time_t temp_time = 0;
     uint8_t temp_array[10];
+    if (RTC8564_Init_flag == 0)
+    {
+        return retval;
+    }
+    
     temp_array[0] = 0x02;
     retval = Base_IIC_Send_DATA(RTC8564_ADDR,temp_array,1,1,1,1);
     memset(temp_array,0,sizeof(temp_array));
@@ -194,8 +208,7 @@ int MODE_RTC8564_Read_time (uint32_t *sec)
     return retval;
 }
 
-
-
+// 正常返回 1
 int MODE_RTC8564_Write_time (uint32_t sec)
 {
     int retval = 0;
@@ -203,6 +216,10 @@ int MODE_RTC8564_Write_time (uint32_t sec)
     int temp_run = 0;
     time_t temp_time = sec;
     uint8_t temp_array[10];
+    if (RTC8564_Init_flag == 0)
+    {
+        return retval;
+    }
     localtime_r(&temp_time, &timeinfo);
     if (timeinfo.tm_year >= 100)
     {

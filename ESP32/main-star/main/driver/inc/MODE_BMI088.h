@@ -1,9 +1,10 @@
-#ifndef _MODE_ST7789_DEVER_H_
-#define _MODE_ST7789_DEVER_H_
+#ifndef _MODE_BMI088_H_
+#define _MODE_BMI088_H_
 
 #include "stdint.h"
 #include "string.h"
-#include "sdkconfig.h"
+
+#define BMI088_ADDR    0x51
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "freertos/FreeRTOS.h"
@@ -11,16 +12,16 @@
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 
-    #define PIN_RTC_SDA    (16)
-    #define PIN_RTC_SCL    (17)
+    #define PIN_BMI088_SDA    (16)
+    #define PIN_BMI088_SCL    (17)
     #define RTC_I2C_MASTER_FREQ_HZ  1000
     #define RTC_I2C_MASTER_NUM      I2C_NUM_0
 
-    #define Exist_RTC_Clock 1
 #else
 #include "Base.h"
-
-
+#include "Caven_Type.h"
+    #define PIN_BMI088_SDA    (16)
+    #define PIN_BMI088_SCL    (17)
 #endif
 //
 
@@ -81,14 +82,6 @@
 #define BMI088_TEMP_FACTOR 0.125f
 #define BMI088_TEMP_OFFSET 23.0f
 
-/*!***************************************************
- * @file: BMI088.c
- * @brief: 用于BMI088传感器中的软件延时
- * @author:   
- * @date: 2022/05/31
- * @note:	
- ****************************************************/
-static void BMI088_Delay(int times);
 
 /*!***************************************************
  * @file: BMI088.c

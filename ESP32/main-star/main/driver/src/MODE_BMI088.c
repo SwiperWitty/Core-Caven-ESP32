@@ -8,10 +8,132 @@
  * @note:	
  ****************************************************/
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#include "esp_log.h"
+static const char *TAG = "BMI088_IIC";
+static char iic_link_flag = 0;
+static i2c_cmd_handle_t cmd;
+
+int Base_IIC_Init (int set)
+{
+    int retval = 0;
+    int i2c_master_port = RTC_I2C_MASTER_NUM;
+    if (set)
+    {
+        ESP_LOGW(TAG, "start ");
+        i2c_config_t conf = {
+            .mode = I2C_MODE_MASTER,
+            .sda_io_num = PIN_BMI088_SDA,
+            .sda_pullup_en = GPIO_PULLUP_ENABLE,
+            .scl_io_num = PIN_BMI088_SCL,
+            .scl_pullup_en = GPIO_PULLUP_ENABLE,
+            .master.clk_speed = RTC_I2C_MASTER_FREQ_HZ, /* 标准模式(100 kbit/s) */
+        };
+
+        i2c_param_config(i2c_master_port, &conf);
+        retval = i2c_driver_install(i2c_master_port, conf.mode, 0, 0, 0);
+    }
+    else
+    {
+
+    }
+    return retval;
+}
+
+/*
+ * 返回的是是否成功ACK
+ * ACK意味着快速跳过ACK(OLED这类只发不收的)
+ * continuous 参数为1意味着不发结束
+ */
+char Base_IIC_Send_DATA(uint8_t addr,const uint8_t *Data,char ACK,int Length,int Speed,char continuous)
+{
+    char BK = 0;
+
+    if (Data && Length)
+    {
+        if (iic_link_flag == 0)
+        {
+            cmd = i2c_cmd_link_create();
+            iic_link_flag = 1;
+        }
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write(cmd, (void *)Data, Length, true);
+
+        if (continuous == 0)
+        {
+            i2c_master_stop(cmd);
+            esp_err_t res = i2c_master_cmd_begin(RTC_I2C_MASTER_NUM, cmd, 1000 / portTICK_PERIOD_MS);
+            if (res != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Could not write to device [0x%02x at %d]: %d", addr, RTC_I2C_MASTER_NUM, res);
+            }
+            else
+            {
+                BK = 1;
+            }
+            if (iic_link_flag)
+            {
+                i2c_cmd_link_delete(cmd);
+                iic_link_flag = 0;
+            }
+        }
+        else
+        {
+            BK = 1;
+        }
+    }
+    return BK;
+}
+
+/*
+ * 返回的是是否成功ACK(1)
+ * 主机也是要回答的,接收函数自动应答(IIC_ASK)
+ */
+char Base_IIC_Receive_DATA(uint8_t addr,uint8_t *Data,char ACK,int Length,int Speed)
+{
+    char BK = 0;
+
+    if (Data && Length)
+    {
+        if (iic_link_flag == 0)
+        {
+            cmd = i2c_cmd_link_create();
+            iic_link_flag = 1;
+        }
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
+        i2c_master_read(cmd, Data, Length, I2C_MASTER_LAST_NACK);
+        i2c_master_stop(cmd);
+        esp_err_t res = i2c_master_cmd_begin(RTC_I2C_MASTER_NUM, cmd, 1000 / portTICK_PERIOD_MS);
+        if (res != ESP_OK)
+            ESP_LOGE(TAG, "Could not read from device [0x%02x at %d]: %d", addr, RTC_I2C_MASTER_NUM, res);
+        if (iic_link_flag)
+        {
+            i2c_cmd_link_delete(cmd);
+            iic_link_flag = 0;
+            BK = 1;
+        }
+    }
+    return BK;
+}
+
+static void SYS_Base_Delay(int time,int Speed)
+{
+    if (Speed)
+    {
+        vTaskDelay(pdMS_TO_TICKS(time));
+    }
+}
+
+#else
+
+#endif
+
 int BMI088_Init_flag = 0;
+
 #define CS_GYRO  0
 #define CS_ACC   1
-
 
 #define BOARD_IMU 0
 #define FLOAT_IMU 1
@@ -25,18 +147,6 @@ int BMI088_Init_flag = 0;
         BMI088_ACCEL_NS_H();                       \
     }
 
-/*!***************************************************
- * @file: BMI088.c
- * @brief: 用于BMI088传感器中的软件延时
- * @author:        
- * @date:2022/05/31
- * @note:	
- ****************************************************/
-static void BMI088_Delay(int times)
-{
-	// delay_ms(times);
-    vTaskDelay(pdMS_TO_TICKS(times));
-}
 
 // /*!***************************************************
 //  * @file: BMI088.c
@@ -137,50 +247,50 @@ static void BMI088_Delay(int times)
 //     while (BMI088.acc_id != ACC_CHIP_ID) //Rising edge ,turn to spi
 //     {
 
-//         BMI088_Delay(100);
+//         SYS_Base_Delay(100);
 //         BMI088.acc_id = BMI088_Read_ACC(0x00, BOARD_OR_FLOAT); //id:1E
 //     }
-//     BMI088_Delay(50);//> 1 ms ;
+//     SYS_Base_Delay(50);//> 1 ms ;
 //     ret = 0;
 //     while (ret != ACC_ON)
 //     {
 //         ret = BMI088_Read_ACC(ACC_PWR_CTRL, BOARD_OR_FLOAT);
 //         BMI088_Write_Reg(ACC_PWR_CTRL, ACC_ON, CS_ACC);
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 // 	**/* 可根据实际使用和加速度寄存器表修改加速度计测量范围 */**
 //     while (BMI088_Read_ACC(ACC_RANG, BOARD_OR_FLOAT) != Plus_Minus_24G)
 //     {
 //         BMI088_Write_Reg(ACC_RANG, Plus_Minus_24G, CS_ACC); //ACC Rang +- 24g;//
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_ACC(0x40, BOARD_OR_FLOAT) != 0xBC)
 //     {
 // 		/* 可根据实际使用和加速度寄存器表修改加速度计数据读取频率 */
 //         BMI088_Write_Reg(0x40, 0xBC, CS_ACC); //
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_ACC(0X53, BOARD_OR_FLOAT) != 0X08)
 //     {
 //         BMI088_Write_Reg(0X53, 0X08, CS_ACC); //0000 1000 INT1 OUTPUT PUSH-PULL  Active low
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_ACC(0X54, BOARD_OR_FLOAT) != 0X08)
 //     {
 //         BMI088_Write_Reg(0X54, 0X08, CS_ACC); //0000 1000 INT2 OUTPUT PUSH-PULL  Active low
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_ACC(0X58, BOARD_OR_FLOAT) != 0x44)
 //     {
 //         BMI088_Write_Reg(0X58, 0x44, CS_ACC); //0100 0100 data ready interrupt to INT1 and INT2
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 
-//     BMI088_Delay(20);//>1ms
+//     SYS_Base_Delay(20);//>1ms
 //     while (BMI088_Read_ACC(ACC_PWR_CONF, BOARD_OR_FLOAT) != ACC_ACTIVE)
 //     {
 //         BMI088_Write_Reg(ACC_PWR_CONF, ACC_ACTIVE, CS_ACC); //ACtive mode
-//         BMI088_Delay(600);//>50ms
+//         SYS_Base_Delay(600);//>50ms
 //     }
 //     return 0;
 // }
@@ -199,12 +309,12 @@ static void BMI088_Delay(int times)
 //     while (BMI088.gyro_id != GYRO_CHIP_ID)
 //     {
 //         BMI088.gyro_id = BMI088_Read_GYRO(0x00, BOARD_OR_FLOAT); //0x0f
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_GYRO(GYRO_RANG, BOARD_OR_FLOAT) != Plus_Minus_2000)
 //     {
 //         BMI088_Write_Reg(GYRO_RANG, Plus_Minus_2000, CS_GYRO);// rang +-2000
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     //bit #7 is Read Only
 		
@@ -214,22 +324,22 @@ static void BMI088_Delay(int times)
 //     while (BMI088_Read_GYRO(0X11, BOARD_OR_FLOAT) != 0x00)
 //     {
 //         BMI088_Write_Reg(0X11, 0x00, CS_GYRO);//normal
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_GYRO(0X15, BOARD_OR_FLOAT) != 0X80)
 //     {
 //         BMI088_Write_Reg(0X15, 0X80, CS_GYRO);// //interrupt
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_GYRO(0X16, BOARD_OR_FLOAT) != 0X00)
 //     {
 //         BMI088_Write_Reg(0X16, 0X00, CS_GYRO);//OUTPUT PUSH-PULL  Active low
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     while (BMI088_Read_GYRO(0X18, BOARD_OR_FLOAT) != 0X81)
 //     {
 //         BMI088_Write_Reg(0X18, 0X81, CS_GYRO);//data ready interrupt to INT1 and INT2
-//         BMI088_Delay(5);
+//         SYS_Base_Delay(5);
 //     }
 //     return 0;
 // }
@@ -375,25 +485,15 @@ static void BMI088_Delay(int times)
 
 int Mode_BMI088_Init (int set)
 {
-    int retval;
-    int i2c_master_port = 0x01;
-    i2c_config_t conf = {
-        .mode = I2C_MODE_MASTER,
-        .sda_io_num = IIC_SDA_IO,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_io_num = IIC_SCL_IO,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master.clk_speed = 10, /* 标准模式(100 kbit/s) */
-    };
+    int retval = 0;
+    BMI088_Init_flag = 0;
     if (set)
     {
-        i2c_param_config(i2c_master_port, &conf);
-        retval = i2c_driver_install(i2c_master_port, conf.mode, 10, 10, 0);
-        BMI088_Init_flag = 1;
-    }
-    else
-    {
-        BMI088_Init_flag = 0;
+        retval = Base_IIC_Init (set);
+        if (retval == 0)
+        {
+            BMI088_Init_flag = 1;
+        }
     }
     return retval;
 }
