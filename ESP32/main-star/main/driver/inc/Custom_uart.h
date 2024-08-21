@@ -16,25 +16,28 @@
 #include "driver/gpio.h"
 
 #ifdef Exist_UART
-    #if (BOARD_NAME == ESP32_CAVEND)
+    #if CONFIG_IDF_TARGET_ESP32
         
         #define CUSTOM_UART1
         #define ECHO_TXD1 (GPIO_NUM_15)
         #define ECHO_RXD1 (GPIO_NUM_34)
+        #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
+        #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
 
-    #elif (Board_Name == EY1001)
-        #include"Items.h"
-        #define CUSTOM_UART1
-        #define ECHO_TXD1 (GPIO_NUM_15)
-        #define ECHO_RXD1 (GPIO_NUM_35)
-
-        #define CUSTOM_UART2
-        #define ECHO_TXD2 (GPIO_NUM_4)
-        #define ECHO_RXD2 (GPIO_NUM_35)
+        #define ECHO_TXD2 (GPIO_NUM_15)
+        #define ECHO_RXD2 (GPIO_NUM_34)
     #endif
-    #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
-    #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
+
 #endif
+
+typedef void (*D_Callback_pFun) (void *data);   // 数据回调类型
+
+int custom_uart1_init(int baud_rate, int set);
+int custom_uart2_init(int baud_rate, int set);
+int custom_uart1_send_data(uint8_t *data, int size);
+int custom_uart2_send_data(uint8_t *data, int size);
+void custom_uart1_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun);
+void custom_uart2_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun);
 
 void custom_uart_task_Fun(void);
 

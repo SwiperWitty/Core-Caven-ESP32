@@ -11,14 +11,14 @@
 
 typedef enum {
     m_Protocol_CV = 0,
-    m_Protocol_GX ,
-    m_Protocol_HL ,
+    m_Protocol_1,
+    m_Protocol_2,
 
 } Protocol_mType;
 
 /*  [产品列表]    */
 #define ESP32_CAVEND        314
-#define EY1001              001
+
 
 #define BOARD_NAME      ESP32_CAVEND 
 #define PROTOCOL_FRAME  m_Protocol_CV 
@@ -38,13 +38,20 @@ typedef enum {
 /*-----------------------------------*/
 
 /*  [priority]    */
-#define LED_TASK_PRIORITY   1 
-#define SHOW_TASK_PRIORITY  1 
-#define OTA_TASK_PRIORITY   2
 
-#define UART1_TASK_PRIORITY 7 
-#define UART2_TASK_PRIORITY 8 
-#define WIFI_TASK_PRIORITY  8 
+#define OTA_TASK_PRIORITY   1
+#define GPIO_TASK_PRIORITY  2 
+#define SHOW_TASK_PRIORITY  3 
+
+#define UART1_TASK_PRIORITY 5 
+#define UART2_TASK_PRIORITY 6 
+#define TCP_SERVER_TASK_PRIORITY  7 
+#define TCP_CLIENT_TASK_PRIORITY  8 
+#define HTTPS_TASK_PRIORITY  9 
+#define HTTP_TASK_PRIORITY  10 
+#define MQTT_TASK_PRIORITY  11 
+#define UDP_TASK_PRIORITY  12 
+
 /*-----------------------------------*/
 
 /*  [timerID]     */

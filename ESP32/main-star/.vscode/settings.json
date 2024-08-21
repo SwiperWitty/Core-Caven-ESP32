@@ -18,7 +18,8 @@
         "mode_bmi088.h": "c",
         "lcdfont.h": "c",
         "items.h": "c",
-        "mode_rtc8564.h": "c"
+        "mode_rtc8564.h": "c",
+        "custom_uart.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"
