@@ -19,7 +19,8 @@
         "lcdfont.h": "c",
         "items.h": "c",
         "mode_rtc8564.h": "c",
-        "custom_uart.h": "c"
+        "custom_uart.h": "c",
+        "data_filesystem.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"

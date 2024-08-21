@@ -26,9 +26,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-
-extern void ESP_DEBUG_Hex_Fun (uint8_t *data,int data_length);
-
 static const char *TAG = "filesys";
 #define BASE_PATH "storage"
 #define MOUNT_PATH "/data"
@@ -49,8 +46,9 @@ static bool example_mount_fatfs(const char* partition_label);
 static void example_get_fatfs_usage(size_t* out_total_bytes, size_t* out_free_bytes);
 static void initialize_filesystem(void);
 
-char fat_file_str[100];
-char Start_str_len = 0;
+static char fat_file_str[100];
+static char Start_str_len = 0;
+static int title_a = 0,title_b = 0;
 
 void filesystem_save_title (int a,int b)
 {
@@ -71,10 +69,21 @@ void filesystem_save_title (int a,int b)
         fprintf(f, "ESP32 File system version %s ", esp_get_idf_version());      // 写入内容
         fprintf(f, "dataA:[%d] dataB:[%d]",a,b);
         fclose(f);
-        ESP_LOGI(TAG, "dataA:[%d] dataB:[%d]",a,b);
-        ESP_LOGI(TAG, "File written");
+        ESP_LOGI(TAG, "File written title,dataA:[%d] dataB:[%d]",a,b);
+        title_a = a;
+        title_b = b;
         Start_str_len = 1;
     }
+}
+
+void filesystem_load_title (int *a,int *b)
+{
+    if (a != NULL && b != NULL)
+    {
+        *a = title_a;
+        *b = title_b;
+    }
+    
 }
 
 void filesystem_init (void)
@@ -113,7 +122,7 @@ void filesystem_init (void)
                 str_len = strlen("dataA:[");
                 temp_num = atoi(str_pointer+str_len);   // 指针偏移
                 ESP_LOGI(TAG, "%s -> get dataA: %d",str_pointer+str_len,temp_num);
-
+                title_a = temp_num;
             }
             str_pointer = strstr(line,"dataB:[");
             if (str_pointer != NULL)
@@ -121,7 +130,7 @@ void filesystem_init (void)
                 str_len = strlen("dataB:[");
                 temp_num = atoi(str_pointer+str_len);
                 ESP_LOGI(TAG, "%s -> get dataB: %d",str_pointer+str_len,temp_num);
-
+                title_b = temp_num;
             }
         }
     }
@@ -215,6 +224,18 @@ int filesystem_read_mode (int set)
 }
 
 FILE *write_open_f = NULL;
+
+// 返回是否可写状态，0为可写
+int filesystem_get_write_mode_flag (void)
+{
+    int retval = 0;
+    if (write_open_f != NULL)
+    {
+        retval = 1;
+    }
+    return retval;
+}
+
 int filesystem_write_mode (int set)
 {
     int retval = 0;
@@ -248,7 +269,6 @@ int filesystem_write_mode (int set)
         {
             ESP_LOGE(TAG, "Failed to open file for reading");
         }
-
     }
 
     return retval;

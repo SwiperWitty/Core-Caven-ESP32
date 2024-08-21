@@ -155,7 +155,6 @@ void uart1_task(void *pvParam)
             case UART_BUFFER_FULL:
             {
                 counter = uart_read_bytes(UART_NUM_1, data, 512, 0);
-                // 这里需要区分是哪一个链接在通讯，串口连接则转发到串口，wifi则转发到wifi，蓝牙则转发到蓝牙，有线则转发到有线
                 if (counter > 0)
                 {
                     if (custom_uart1_Callback_Fun != NULL)
@@ -208,7 +207,6 @@ void uart2_task(void *pvParam)
             case UART_BUFFER_FULL:
             {
                 counter = uart_read_bytes(UART_NUM_2, data, 512, 0);
-                // 这里需要区分是哪一个链接在通讯，串口连接则转发到串口，wifi则转发到wifi，蓝牙则转发到蓝牙，有线则转发到有线
                 if (counter > 0)
                 {
                     if (custom_uart2_Callback_Fun != NULL)
