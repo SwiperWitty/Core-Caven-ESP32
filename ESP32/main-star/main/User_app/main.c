@@ -113,8 +113,8 @@ void Build_task(void)
     xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
     // xTaskCreate(refresh_lcd_task, "task-[LCD]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL);
     xTaskCreate(tcp_server_link_task, "tcp server task", 1024*4, NULL, TCP_SERVER_TASK_PRIORITY, NULL);
-    xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
-    xTaskCreate(eps32_HTTPS_task, "https get task", 1024*8, NULL, HTTPS_TASK_PRIORITY, NULL);
+    // xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
+    // xTaskCreate(eps32_HTTPS_task, "https get task", 1024*8, NULL, HTTPS_TASK_PRIORITY, NULL);
 
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
 
@@ -141,8 +141,8 @@ void Main_Init(void)
     eth_config_ip (1,"192.168.1.169","192.168.1.1","255.255.255.0");
     wifi_config_ip (0,NULL,NULL,NULL);  // 设置网络模式
     wifi_config_ip (2,"192.168.11.61","192.168.11.1","255.255.255.0");  // 配置静态模式ip
-    Network_manage_Init (0x01,1);
-    Network_manage_Init (0x02,1);
+    // Network_manage_Init (0x01,1);
+    // Network_manage_Init (0x02,1);
     //
     tcp_client_link_ip_config ("192.168.1.128","9090",1);
     tcp_server_link_ip_config ("8160",1);
@@ -152,18 +152,18 @@ void Main_Init(void)
     custom_uart1_init(115200, 1);
     custom_uart1_receive_State_Machine_Bind(uart1_get_fun);
     //
-    // LCD_Set_TargetModel(m_LCD_TYPE_1_28);
-    // LCD_Set_Horizontal(0);
-    LCD_Set_TargetModel(m_LCD_TYPE_1_69);
-    LCD_Set_Horizontal(1);
+    LCD_Set_TargetModel(m_LCD_TYPE_1_28);
+    LCD_Set_Horizontal(0);
+    // LCD_Set_TargetModel(m_LCD_TYPE_1_69);
+    // LCD_Set_Horizontal(1);
     MODE_LCD_Init(1);
     LCD_Show_Picture(0, 0, 240, 240, gImage_hongshu);
     ESP_LOGI("LCD Init","Model[%d],x:%d y:%d ",m_LCD_TYPE_1_69,LCD_W_Max,LCD_H_Max);
     //
     MODE_RTC8564_Init (1);
     vTaskDelay(pdMS_TO_TICKS(1000));
-    MODE_RTC8564_Read_time (&temp_rtc);
-    ESP_LOGI("RTC","get time [%d]",temp_rtc);
+    int a = MODE_RTC8564_Read_time (&temp_rtc);
+    ESP_LOGI("RTC","get time [%d] (%d)",temp_rtc,a);
     if (temp_rtc < 1723294126)
     {
         ESP_LOGI("RTC","SET time ");

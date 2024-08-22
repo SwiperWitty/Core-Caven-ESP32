@@ -137,6 +137,7 @@ int MODE_RTC8564_Init (int set)
     RTC8564_Init_flag = 0;
     if(set)
     {
+        RTC8564_Init_flag = -1;
         Base_IIC_Init(set);
         SYS_Base_Delay(100,1000);
         retval = MODE_RTC8564_Read_time (&temp_time);
@@ -145,9 +146,12 @@ int MODE_RTC8564_Init (int set)
             RTC8564_Init_flag = 1;
             retval = 0;
         }
-        
+        else
+        {
+            RTC8564_Init_flag = 0;
+        }
     #ifdef CONFIG_IDF_TARGET_ESP32
-        ESP_LOGI(TAG,"RTC8564 Init get utc [%d]",temp_time);
+        ESP_LOGI(TAG,"RTC8564 Init get utc [%d] (%d)",temp_time,RTC8564_Init_flag);
     #endif
     }
 #endif
@@ -172,8 +176,8 @@ static uint8_t decTObcd(uint8_t val)
 int MODE_RTC8564_Read_time (uint32_t *sec)
 {
     int retval = 0;
+    time_t temp_time = 123;
 #ifdef Exist_RTC_Clock
-    time_t temp_time = 0;
     uint8_t temp_array[10];
     if (RTC8564_Init_flag == 0)
     {
@@ -203,8 +207,8 @@ int MODE_RTC8564_Read_time (uint32_t *sec)
         timeinfo.tm_hour -= 8;
         temp_time = mktime(&timeinfo);
     }
-    *sec = temp_time;
 #endif
+    *sec = temp_time;
     return retval;
 }
 
@@ -235,7 +239,7 @@ int MODE_RTC8564_Write_time (uint32_t sec)
     temp_array[temp_run++] = decTObcd(timeinfo.tm_mon + 1);
     temp_array[temp_run++] = decTObcd(timeinfo.tm_year);
     retval = 1;
-    if(Base_IIC_Send_DATA(RTC8564_ADDR,temp_array,1,temp_run,1,0) != 0)
+    if(Base_IIC_Send_DATA(RTC8564_ADDR,temp_array,1,temp_run,1,0) == 0)
     {
         retval = 0;
     }
