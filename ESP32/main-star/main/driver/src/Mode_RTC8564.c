@@ -5,7 +5,6 @@ struct tm timeinfo;
 static int RTC8564_Init_flag = 0;
 
 #ifdef CONFIG_IDF_TARGET_ESP32
-#include "esp_log.h"
 static const char *TAG = "RTC_IIC";
 static char iic_link_flag = 0;
 static i2c_cmd_handle_t cmd;
@@ -63,6 +62,7 @@ char Base_IIC_Send_DATA(uint8_t addr,const uint8_t *Data,char ACK,int Length,int
             if (res != ESP_OK)
             {
                 ESP_LOGE(TAG, "Could not write to device [0x%02x at %d]: %d", addr, RTC_I2C_MASTER_NUM, res);
+                BK = 0;
             }
             else
             {
@@ -103,12 +103,18 @@ char Base_IIC_Receive_DATA(uint8_t addr,uint8_t *Data,char ACK,int Length,int Sp
         i2c_master_stop(cmd);
         esp_err_t res = i2c_master_cmd_begin(RTC_I2C_MASTER_NUM, cmd, 1000 / portTICK_PERIOD_MS);
         if (res != ESP_OK)
+        {
             ESP_LOGE(TAG, "Could not read from device [0x%02x at %d]: %d", addr, RTC_I2C_MASTER_NUM, res);
+            
+        }
+        else
+        {
+            BK = 1;
+        }
         if (iic_link_flag)
         {
             i2c_cmd_link_delete(cmd);
             iic_link_flag = 0;
-            BK = 1;
         }
     }
     return BK;
@@ -127,7 +133,7 @@ static void SYS_Base_Delay(int time,int Speed)
 #endif
 
 /*
- *
+ * 初始成功返回0
  */
 int MODE_RTC8564_Init (int set)
 {
@@ -149,6 +155,7 @@ int MODE_RTC8564_Init (int set)
         else
         {
             RTC8564_Init_flag = 0;
+            retval = 1;
         }
     #ifdef CONFIG_IDF_TARGET_ESP32
         ESP_LOGI(TAG,"RTC8564 Init get utc [%d] (%d)",temp_time,RTC8564_Init_flag);

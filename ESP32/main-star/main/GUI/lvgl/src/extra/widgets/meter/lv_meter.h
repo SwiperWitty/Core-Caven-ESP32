@@ -42,6 +42,7 @@ typedef struct {
     uint16_t tick_major_width;
 
     int16_t label_gap;
+    int16_t label_color;
 
     int32_t min;
     int32_t max;

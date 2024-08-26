@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
+#include "esp_log.h"
 
     #define PIN_BMI088_SDA    (16)
     #define PIN_BMI088_SCL    (17)

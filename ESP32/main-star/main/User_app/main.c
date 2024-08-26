@@ -71,13 +71,40 @@ void app_main(void)
     int run_time = xTaskGetTickCount();
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(10));
         run_time = xTaskGetTickCount();
+
+        //
+        if (wifi_get_local_ip_status(NULL,NULL,NULL))
+        {
+            uint8_t ip_str[10];
+            uint8_t gw_str[10];
+            uint8_t netmask_str[10];
+            wifi_get_local_ip_status(ip_str,gw_str,netmask_str);
+            
+            sprintf(temp_array,"WIFI: %03d.%03d.%03d.%03d",ip_str[0],ip_str[1],ip_str[2],ip_str[3]);
+            show_set_net_information (temp_array);
+        }
+        if (eth_get_local_ip_status(NULL,NULL,NULL))
+        {
+            uint8_t ip_str[10];
+            uint8_t gw_str[10];
+            uint8_t netmask_str[10];
+            eth_get_local_ip_status(ip_str,gw_str,netmask_str);
+            
+            sprintf(temp_array,"RJ45: %03d.%03d.%03d.%03d",ip_str[0],ip_str[1],ip_str[2],ip_str[3]);
+            show_set_net_information (temp_array);
+        }
+        //
         if (((run_time - get_time) > 50 && get_num) || get_num > 300)
         {
             temp_num = get_num;
             get_num = 0;
             tcp_server_send_data(get_buff, temp_num);
+            if (strlen((char *)get_buff))
+            {
+                show_txt_str_information ((char *)get_buff);
+                ESP_LOGI("debug","show sync");
+            }
             ESP_LOGI("debug","Collect server data updata,%d",temp_num);
         }
         if (((run_time - get2_time) > 50 && get2_num) || get2_num > 300)
@@ -94,6 +121,7 @@ void app_main(void)
             custom_uart1_send_data(get3_buff, temp_num);
             ESP_LOGI("debug","Collect uart1 data updata,%d",temp_num);
         }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
     free(temp_array);
 }
@@ -111,7 +139,7 @@ void Build_task(void)
 
     custom_uart_task_Fun();
     xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
-    // xTaskCreate(refresh_lcd_task, "task-[LCD]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL);
+    xTaskCreate(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL);
     xTaskCreate(tcp_server_link_task, "tcp server task", 1024*4, NULL, TCP_SERVER_TASK_PRIORITY, NULL);
     // xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
     // xTaskCreate(eps32_HTTPS_task, "https get task", 1024*8, NULL, HTTPS_TASK_PRIORITY, NULL);
@@ -126,22 +154,20 @@ void Build_task(void)
     }
 }
 
-#include "hongshu.h"	// 图库
-
 void Main_Init(void)
 {
     // Allow other core to finish initialization
     uint32_t temp_rtc = 0;
     vTaskDelay(pdMS_TO_TICKS(100));
-
+    //
     information_init(); // 打印初始化信息
     draw_coordinate_line_handle(0, 0, 18, 18);
     draw_coordinate_show(26, 26);
     //
     eth_config_ip (1,"192.168.1.169","192.168.1.1","255.255.255.0");
     wifi_config_ip (0,NULL,NULL,NULL);  // 设置网络模式
-    wifi_config_ip (2,"192.168.11.61","192.168.11.1","255.255.255.0");  // 配置静态模式ip
-    // Network_manage_Init (0x01,1);
+    wifi_config_ip (2,"192.168.11.61","192.168.11.1","255.255.255.0");  // 配置静态模式下的ip
+    Network_manage_Init (0x01,1);
     // Network_manage_Init (0x02,1);
     //
     tcp_client_link_ip_config ("192.168.1.128","9090",1);
@@ -151,14 +177,6 @@ void Main_Init(void)
     //
     custom_uart1_init(115200, 1);
     custom_uart1_receive_State_Machine_Bind(uart1_get_fun);
-    //
-    LCD_Set_TargetModel(m_LCD_TYPE_1_28);
-    LCD_Set_Horizontal(0);
-    // LCD_Set_TargetModel(m_LCD_TYPE_1_69);
-    // LCD_Set_Horizontal(1);
-    MODE_LCD_Init(1);
-    LCD_Show_Picture(0, 0, 240, 240, gImage_hongshu);
-    ESP_LOGI("LCD Init","Model[%d],x:%d y:%d ",m_LCD_TYPE_1_69,LCD_W_Max,LCD_H_Max);
     //
     MODE_RTC8564_Init (1);
     vTaskDelay(pdMS_TO_TICKS(1000));

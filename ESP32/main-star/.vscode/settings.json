@@ -20,7 +20,13 @@
         "items.h": "c",
         "mode_rtc8564.h": "c",
         "custom_uart.h": "c",
-        "data_filesystem.h": "c"
+        "data_filesystem.h": "c",
+        "mode_oled.h": "c",
+        "show_app.h": "c",
+        "hongshu.h": "c",
+        "draw.h": "c",
+        "ui.h": "c",
+        "lv_obj.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"

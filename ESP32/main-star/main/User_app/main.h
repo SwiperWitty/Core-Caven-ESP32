@@ -45,9 +45,8 @@
 #include "tcp_server_link.h"
 #include "tcp_client_link.h"
 #include "https.h"
-#include "MODE_LCD.h"
 #include"draw.h"
-
+#include "show_app.h"
 
 #define CORE_ZERO   0
 #define CORE_ONE    1

@@ -2,7 +2,6 @@
 #define _MODE_LCD_H_
 
 #include "MODE_st7789_dever.h"
-#include "Caven_Type.h"
 
 /*
     m_LCD_TYPE_1_69 验证使用完成    2024.07.27

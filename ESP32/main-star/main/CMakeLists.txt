@@ -7,7 +7,6 @@
 
 # 所有参与编译的 [*.c]文件
 set(srcs
-    "User_app/main.c"           # [app_main] 程序入口所在
     # "driver/src/default.c"
     "driver/src/information.c"
     "driver/src/info_frame_handle.c"
@@ -24,7 +23,9 @@ set(srcs
     "driver/src/MODE_LCD.c"
     "driver/src/MODE_BMI088.c"
     "driver/src/draw.c"
-    
+
+    "User_app/main.c"           # [app_main] 程序入口所在
+    "User_app/show_app.c"
 )
 
 file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")

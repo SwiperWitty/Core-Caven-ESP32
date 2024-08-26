@@ -9,6 +9,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
+#include "esp_log.h"
 
     #define PIN_LCD_MOSI    (13) 
     #define PIN_LCD_MISO    (12)
