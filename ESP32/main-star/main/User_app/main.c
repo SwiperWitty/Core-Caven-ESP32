@@ -50,15 +50,18 @@ int get3_time = 0;
 void uart1_get_fun (void *data)
 {
     uint8_t rec = *(uint8_t *)data;
+
     get3_buff[get3_num] = rec;
     get3_num ++;
-    get3_time = xTaskGetTickCount();
     if (get3_num > sizeof(get3_buff) - 1)
     {
         get3_num = sizeof(get3_buff) - 1;
+        ESP_LOGI("debug","get3_num over");
     }
+    get3_time = xTaskGetTickCount();
 }
 
+uint8_t send_buff[0x1024];
 void app_main(void)
 {
     Main_Init();
@@ -66,9 +69,9 @@ void app_main(void)
     printf("app_main run to Core %d \n \n", xPortGetCoreID());
     char *temp_array;
     int temp_num = 0;
-    temp_array = malloc(300);
-
     int run_time;
+
+    temp_array = malloc(300);
     while (1)
     {
         run_time = xTaskGetTickCount();
@@ -98,28 +101,38 @@ void app_main(void)
         if (((run_time - get_time) > 50 && get_num) || get_num > 300)
         {
             temp_num = get_num;
+            memcpy(send_buff,get_buff,temp_num);
             get_num = 0;
-            tcp_server_send_data(get_buff, temp_num);
-            if (strlen((char *)get_buff))
+            if (0)
             {
-                show_txt_str_information ((char *)get_buff);
-                ESP_LOGI("debug","show sync");
+                tcp_server_send_data(send_buff, temp_num);
+                if (strlen((char *)send_buff))
+                {
+                    show_txt_str_information ((char *)send_buff);
+                    ESP_LOGI("debug","show sync");
+                }
+                ESP_LOGI("debug","Collect server data updata,%d",temp_num);
             }
-            ESP_LOGI("debug","Collect server data updata,%d",temp_num);
+            else
+            {
+                custom_uart1_send_data(send_buff, temp_num);
+            }
         }
         if (((run_time - get2_time) > 50 && get2_num) || get2_num > 300)
         {
             temp_num = get2_num;
+            memcpy(send_buff,get2_buff,temp_num);
             get2_num = 0;
-            tcp_client_send_data(get2_buff, temp_num);
+            tcp_client_send_data(send_buff, temp_num);
             ESP_LOGI("debug","Collect client data updata,%d",temp_num);
         }
-        if (((run_time - get3_time) > 50 && get3_num) || get3_num > 300)
+
+        if(((run_time - get3_time) > 50 && get3_num) || get3_num > 300)
         {
             temp_num = get3_num;
+            memcpy(send_buff,get3_buff,temp_num);
             get3_num = 0;
-            custom_uart1_send_data(get3_buff, temp_num);
-            ESP_LOGI("debug","Collect uart1 data updata,%d",temp_num);
+            tcp_server_send_data(send_buff, temp_num);
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }
@@ -138,7 +151,7 @@ void Build_task(void)
     lcd_taskhanlde = NULL;
 
     custom_uart_task_Fun();
-    xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
+    // xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
     xTaskCreate(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL);
     xTaskCreate(tcp_server_link_task, "tcp server task", 1024*4, NULL, TCP_SERVER_TASK_PRIORITY, NULL);
     // xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
