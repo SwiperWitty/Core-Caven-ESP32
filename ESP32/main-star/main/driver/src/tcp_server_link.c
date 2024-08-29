@@ -290,9 +290,13 @@ void tcp_server_link_task(void *empty)
                     }
                 }
             }
+            if (eth_get_local_ip_status(NULL,NULL,NULL) == 0)
+            {
+                sock_flag = 1;
+            }
             if (sock_flag == 0)
             {
-                ESP_LOGW(TAG, "rj45 network socket link");
+                ESP_LOGW(TAG, "maybe rj45 network socket link");
             }
             else
             {
