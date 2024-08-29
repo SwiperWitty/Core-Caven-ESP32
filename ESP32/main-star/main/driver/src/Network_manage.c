@@ -26,13 +26,13 @@ uint8_t lwip_task_idle_timer_counter;                //!!!!
 uint8_t port_8160_using;
 static const char *TAG = "Network_manage";
 
-static int esp_netif_init_flag = 0;
-static int wifi_flag = 0;
-static int eth_flag = 0;
+static int esp_netif_init_flag = 0;     // 1:初始化
+static int wifi_flag = 0;               // 1:wifi建立连接
+static int eth_flag = 0;                // 1:rj45建立连接
 // 静态的ip
 static uint8_t SYS_MAC_addr[6] = {0xc8,0x2e,0x18,0x6b,0x83,0x00};
-static char eth_mode = 0;
-static char wifi_mode = 0;
+static char eth_mode = 0;       // 0:dhcp   1:static
+static char wifi_mode = 0;      // 0:dhcp   1:static
 static char eth_ip[30];
 static char eth_gw[30];
 static char eth_netmask[30];
@@ -156,6 +156,9 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
             break;
         }
         wifi_flag = 0;
+        memset(s_WIFI_ip,0,sizeof(s_WIFI_ip));
+        memset(s_WIFI_netmask,0,sizeof(s_WIFI_netmask));
+        memset(s_WIFI_gateway,0,sizeof(s_WIFI_gateway));
     }
     if(event_base == IP_EVENT)                  // IP相关事件
     {
@@ -556,6 +559,9 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,int32_t eve
             break;
         }
         eth_flag = 0;
+        memset(s_RJ45_ip,0,sizeof(s_RJ45_ip));
+        memset(s_RJ45_netmask,0,sizeof(s_RJ45_netmask));
+        memset(s_RJ45_gateway,0,sizeof(s_RJ45_gateway));
     }
     
     if (event_base == IP_EVENT)
@@ -689,7 +695,6 @@ int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_s
     int retval = 0;
     if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
     {
-        retval = wifi_flag;
     }
     else
     {
@@ -697,6 +702,7 @@ int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_s
         memcpy(gw_str,s_WIFI_gateway,4);
         memcpy(netmask_str,s_WIFI_netmask,4);
     }
+    retval = wifi_flag;
     return retval;
 }
 /*
@@ -709,7 +715,6 @@ int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_st
     int retval = 0;
     if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
     {
-        retval = eth_flag;
     }
     else
     {
@@ -717,6 +722,7 @@ int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_st
         memcpy(gw_str,s_RJ45_gateway,4);
         memcpy(netmask_str,s_RJ45_netmask,4);
     }
+    retval = eth_flag;
     return retval;
 }
 

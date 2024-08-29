@@ -68,7 +68,7 @@ void app_main(void)
     int temp_num = 0;
     temp_array = malloc(300);
 
-    int run_time = xTaskGetTickCount();
+    int run_time;
     while (1)
     {
         run_time = xTaskGetTickCount();
@@ -84,7 +84,7 @@ void app_main(void)
             sprintf(temp_array,"WIFI: %03d.%03d.%03d.%03d",ip_str[0],ip_str[1],ip_str[2],ip_str[3]);
             show_set_net_information (temp_array);
         }
-        if (eth_get_local_ip_status(NULL,NULL,NULL))
+        else if (eth_get_local_ip_status(NULL,NULL,NULL))
         {
             uint8_t ip_str[10];
             uint8_t gw_str[10];

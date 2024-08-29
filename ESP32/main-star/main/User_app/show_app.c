@@ -70,12 +70,14 @@ void show_set_net_information (char *str)
     }
 }
 
-char txt_str[300];
+char txt_str[100];
 void show_txt_str_information (char *str)
 {
-    if (str != NULL && strlen(str) && s_gui_flag)
+    int temp_num = 0;
+    temp_num = strlen(str);
+    if (str != NULL && temp_num && s_gui_flag)
     {
-        if (strcmp(txt_str,str) != 0)
+        if (strcmp(txt_str,str) != 0 && temp_num < 50)
         {
             strcpy(txt_str,str);
             lv_textarea_set_text(ui_TextArea2, txt_str);

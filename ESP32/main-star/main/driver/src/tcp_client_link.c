@@ -33,6 +33,7 @@ static const char *TAG = "TCP client";
 static int tcp_client_sock = 0;
 static char sock_ip_str[50] = {0};
 static char sock_port_str[10] = {0};
+static char sock_flag = 0;      // 1是wifi的sock
 
 /*
     server 只能修改端口，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
@@ -139,6 +140,7 @@ void tcp_client_link_task(void *empty)
         {
             ESP_LOGW(TAG, "get network ID [%d]",temp_num);
         }
+        sock_flag = 0;
         
         if (strlen(sock_ip_str) == 0)
         {

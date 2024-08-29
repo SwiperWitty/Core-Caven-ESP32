@@ -28,6 +28,7 @@ static const char *TAG = "TCP server";
 
 static int tcp_server_sock = 0;
 static char sock_port_str[10] = {0};
+static char sock_flag = 0;      // 1是wifi的sock
 
 /*
     server 只能修改端口，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
@@ -144,6 +145,9 @@ void tcp_server_link_task(void *empty)
     struct sockaddr_storage dest_addr;
     int ip_port = 0;
     int temp_num = 0;
+    uint8_t wifi_ip_str[10];
+    uint8_t wifi_gw_str[10];
+    uint8_t wifi_netmask_str[10];
     do
     {
         if (wifi_get_local_ip_status(NULL,NULL,NULL))
@@ -155,8 +159,8 @@ void tcp_server_link_task(void *empty)
             temp_num += 2;
         }
         vTaskDelay(100 / portTICK_PERIOD_MS);
-    } while (temp_num == 0);        // 等待网络连接
-
+    } while (temp_num == 0);        // 等待网络连接,否则不开启服务器
+    // start
     if (strlen(sock_port_str) == 0)
     {
         strcpy(sock_port_str,"8160");
@@ -202,8 +206,8 @@ void tcp_server_link_task(void *empty)
         ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
         goto CLEAN_UP;
     }
+    ESP_LOGI(TAG, "Network link, Socket start");
     ESP_LOGI(TAG, "Socket bound, open port %d", ip_port);
-
     err = listen(listen_sock, 1);
     if (err != 0) {
         ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
@@ -237,7 +241,6 @@ void tcp_server_link_task(void *empty)
             ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
             break;
         }
-
         // Set tcp keepalive option
         setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, sizeof(int));
         setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(int));
@@ -254,8 +257,51 @@ void tcp_server_link_task(void *empty)
 #endif
         ESP_LOGI(TAG, "Socket accepted host ip address: %s", addr_str);
         ESP_LOGI(TAG, "Socket num: %d", sock);
+        if (wifi_get_local_ip_status(wifi_ip_str,wifi_gw_str,wifi_netmask_str) && strlen(addr_str))
+        {
+            uint8_t ip_temp_a,ip_temp_b,ip_temp_num = 0;
+            uint8_t ip_temp_array[6];
+            struct in_addr s;
+            uint32_t ip4_addr_32;
+            inet_pton(AF_INET, addr_str, (void *) &s);
+            ip4_addr_32 = s.s_addr;
+            ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (0 * 8)) & 0xff;
+            ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (1 * 8)) & 0xff;
+            ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (2 * 8)) & 0xff;
+            ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (3 * 8)) & 0xff;
+            ESP_LOGI(TAG,"wifi gateway ip %d.%d.%d.%d", wifi_gw_str[0],wifi_gw_str[1],wifi_gw_str[2],wifi_gw_str[3]);
+            sock_flag = 0;
+            ip_temp_num = 0;
+            ip_temp_a = wifi_gw_str[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+            ip_temp_b = ip_temp_array[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+            if (ip_temp_a == ip_temp_b && ip_temp_a != 0)
+            {
+                ip_temp_num ++;
+                ip_temp_a = wifi_gw_str[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+                ip_temp_b = ip_temp_array[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+                if (ip_temp_a == ip_temp_b)
+                {
+                    ip_temp_num ++;
+                    ip_temp_a = wifi_gw_str[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+                    ip_temp_b = ip_temp_array[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+                    if (ip_temp_a == ip_temp_b)
+                    {
+                        sock_flag = 1;    // wifi
+                    }
+                }
+            }
+            if (sock_flag == 0)
+            {
+                ESP_LOGW(TAG, "rj45 network socket link");
+            }
+            else
+            {
+                ESP_LOGW(TAG, "wifi network socket link");
+            }
+        }
+
         tcp_server_sock = sock;
-        do_retransmit(sock);
+        do_retransmit(sock);        // !!!!
         ESP_LOGW(TAG, "loss sock");
         shutdown(sock, 0);
         close(sock);
