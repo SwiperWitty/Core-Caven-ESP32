@@ -116,6 +116,23 @@ void app_main(void)
             else
             {
                 custom_uart1_send_data(send_buff, temp_num);
+                if (memcmp(send_buff,"{off server sock}",strlen("{off server sock}")) == 0)
+                {
+                    tcp_server_link_config ("8160",0);
+                }
+                else if (memcmp(send_buff,"{off client sock}",strlen("{off client sock}")) == 0)
+                {
+                    tcp_client_link_config ("192.168.11.57","9090",2);
+                }
+                //
+                if (memcmp(send_buff,"{off client}",strlen("{off client}")) == 0)
+                {
+                    tcp_client_link_config ("192.168.11.57","9090",0);
+                }
+                else if (memcmp(send_buff,"{on client}",strlen("{on client}")) == 0)
+                {
+                    tcp_client_link_config ("192.168.11.57","9090",1);
+                }
             }
         }
         if (((run_time - get2_time) > 50 && get2_num) || get2_num > 300)
@@ -123,10 +140,16 @@ void app_main(void)
             temp_num = get2_num;
             memcpy(send_buff,get2_buff,temp_num);
             get2_num = 0;
-            tcp_client_send_data(send_buff, temp_num);
-            ESP_LOGI("debug","Collect client data updata,%d",temp_num);
+            if (0)
+            {
+                tcp_client_send_data(send_buff, temp_num);
+                ESP_LOGI("debug","Collect client data updata,%d",temp_num);
+            }
+            else
+            {
+                custom_uart1_send_data(send_buff, temp_num);
+            }
         }
-
         if(((run_time - get3_time) > 50 && get3_num) || get3_num > 300)
         {
             temp_num = get3_num;
@@ -154,7 +177,7 @@ void Build_task(void)
     // xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 4096, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
     xTaskCreate(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL);
     xTaskCreate(tcp_server_link_task, "tcp server task", 1024*4, NULL, TCP_SERVER_TASK_PRIORITY, NULL);
-    // xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
+    xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
     // xTaskCreate(eps32_HTTPS_task, "https get task", 1024*8, NULL, HTTPS_TASK_PRIORITY, NULL);
 
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
@@ -183,8 +206,8 @@ void Main_Init(void)
     Network_manage_Init (0x01,1);
     // Network_manage_Init (0x02,1);
     //
-    tcp_client_link_ip_config ("192.168.1.128","9090",1);
-    tcp_server_link_ip_config ("8160",1);
+    tcp_client_link_config ("192.168.11.57","9090",0);
+    tcp_server_link_config ("8160",1);
     tcp_server_receive_State_Machine_Bind (rj45_get_fun);
     tcp_client_receive_State_Machine_Bind (rj45_get2_fun);
     //

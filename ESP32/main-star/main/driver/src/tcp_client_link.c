@@ -35,15 +35,18 @@ static char sock_ip_str[50] = {0};
 static char sock_port_str[10] = {0};
 static char sock_flag = 0;      // 1是wifi的sock
 
+
 /*
-    server 只能修改端口，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
+    enable = 0,关闭client_link,并清除ip_str
+    enable = 1,打开client_link,并重置ip_str
+    enable = 2,关闭client sock,相当于重连
 */
-int tcp_client_link_ip_config (char *ip_str,char *port_str,int enable)
+int tcp_client_link_config (char *ip_str,char *port_str,int enable)
 {
     int retval = 0;
     if (enable)
     {
-        if (ip_str == NULL || port_str == NULL )
+        if (ip_str == NULL || port_str == NULL)
         {
             retval = 1;
             ESP_LOGE(TAG, "where are you IP ?");
@@ -57,15 +60,30 @@ int tcp_client_link_ip_config (char *ip_str,char *port_str,int enable)
             strcpy(sock_port_str, port_str);
             ESP_LOGW(TAG, "config link ip[%s:%s]",sock_ip_str,sock_port_str);
         }
+        if (enable == 2)
+        {
+            if (tcp_client_sock > 0)
+            {
+                ESP_LOGW(TAG, "config close sock <-- \n");
+                shutdown(tcp_client_sock, 0);
+                close(tcp_client_sock);
+                tcp_client_sock = 0;
+            }
+        }
     }
     else
     {
+        memset(sock_ip_str,0,sizeof(sock_ip_str));
         if (tcp_client_sock > 0)
         {
+            ESP_LOGW(TAG, "config client ");
+            ESP_LOGW(TAG, "config close sock <-- \n");
+            shutdown(tcp_client_sock, 0);
+            close(tcp_client_sock);
             tcp_client_sock = 0;
-            ESP_LOGW(TAG, "close sock");
         }
     }
+    retval = tcp_client_sock;
     return retval;
 }
 
@@ -136,20 +154,21 @@ void tcp_client_link_task(void *empty)
             }
             vTaskDelay(100 / portTICK_PERIOD_MS);
         } while (temp_num == 0);        // 等待网络连接
+        do
+        {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        } while (strlen(sock_ip_str) == 0);
+        
         if (temp_num)
         {
             ESP_LOGW(TAG, "get network ID [%d]",temp_num);
-        }
-        sock_flag = 0;
-        
-        if (strlen(sock_ip_str) == 0)
-        {
-            strcpy(sock_ip_str,HOST_IP_ADDR);
         }
         if (strlen(sock_port_str) == 0)
         {
             strcpy(sock_port_str,"9090");
         }
+
+        sock_flag = 0;
         ip_port = atoi(sock_port_str);
         strcpy(host_ip,sock_ip_str);
 #if defined(CONFIG_EXAMPLE_IPV4)
@@ -220,7 +239,7 @@ void tcp_client_link_task(void *empty)
             sock = 0;
             tcp_client_sock = 0;
         }
-        if (sock > 1)
+        if (sock > 0)
         {
             shutdown(sock, 0);
             close(sock);

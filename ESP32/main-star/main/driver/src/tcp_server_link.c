@@ -30,15 +30,17 @@ static int tcp_server_sock = 0;
 static char sock_port_str[10] = {0};
 static char sock_flag = 0;      // 1是wifi的sock
 
+
 /*
     server 只能修改端口，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
+    enable 0 会关闭当前sock，没有则不生效
 */
-int tcp_server_link_ip_config (char *port_str,int enable)
+int tcp_server_link_config (char *port_str,int enable)
 {
     int retval = 0;
     if (enable)
     {
-        if (port_str == NULL )
+        if (port_str == NULL)
         {
             retval = 1;
             ESP_LOGE(TAG, "where are you IP ?");
@@ -55,10 +57,13 @@ int tcp_server_link_ip_config (char *port_str,int enable)
     {
         if (tcp_server_sock > 0)
         {
+            ESP_LOGW(TAG, "config close sock <-- \n");
+            shutdown(tcp_server_sock, 0);
+            close(tcp_server_sock);
             tcp_server_sock = 0;
-            ESP_LOGW(TAG, "close sock");
         }
     }
+    retval = tcp_server_sock;
     return retval;
 }
 
@@ -303,14 +308,18 @@ void tcp_server_link_task(void *empty)
                 ESP_LOGW(TAG, "wifi network socket link");
             }
         }
+        tcp_server_sock = sock;
 
-        tcp_server_sock = sock;
         do_retransmit(sock);        // !!!!
+        if (sock != 0)
+        {
+            shutdown(sock, 0);
+            close(sock);
+            sock = 0;
+            tcp_server_sock = 0;
+        }
         ESP_LOGW(TAG, "loss sock");
-        shutdown(sock, 0);
-        close(sock);
-        sock = 0;
-        tcp_server_sock = sock;
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
 CLEAN_UP:
