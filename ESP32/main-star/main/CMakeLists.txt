@@ -18,7 +18,7 @@ set(srcs
     "driver/src/https.c"
     "driver/src/Custom_gpio.c"
 
-    "driver/src/Mode_RTC8564.c"
+    "driver/src/MODE_RTC8564.c"
     "driver/src/MODE_st7789_dever.c"
     "driver/src/MODE_LCD.c"
     "driver/src/MODE_BMI088.c"
