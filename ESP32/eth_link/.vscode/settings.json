@@ -1,0 +1,33 @@
+{
+    "idf.adapterTargetName": "esp32",
+    "files.associations": {
+        "lcd_st7789.h": "c",
+        "gxwl_lg.h": "c",
+        "custom_gpio.h": "c",
+        "mode_st7789_dever.h": "c",
+        "base.h": "c",
+        "custom_bluetooth.h": "c",
+        "caven_type.h": "c",
+        "mode_lcd.h": "c",
+        "sys_typedef.h": "c",
+        "main.h": "c",
+        "network_manage.h": "c",
+        "https.h": "c",
+        "tcp_server_link.h": "c",
+        "tcp_client_link.h": "c",
+        "mode_bmi088.h": "c",
+        "lcdfont.h": "c",
+        "items.h": "c",
+        "mode_rtc8564.h": "c",
+        "custom_uart.h": "c",
+        "data_filesystem.h": "c",
+        "mode_oled.h": "c",
+        "show_app.h": "c",
+        "hongshu.h": "c",
+        "draw.h": "c",
+        "ui.h": "c",
+        "lv_obj.h": "c"
+    },
+    "idf.portWin": "COM62",
+    "idf.flashType": "UART"
+}
