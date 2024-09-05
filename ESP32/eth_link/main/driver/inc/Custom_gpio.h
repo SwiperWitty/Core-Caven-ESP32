@@ -8,7 +8,6 @@
     2023.9.13   
 */
 #include "Items.h"
-#include "sys_typedef.h"
 #include "Caven_Type.h"
 
 #include "driver/gpio.h"
@@ -16,8 +15,8 @@
     #if (BOARD_NAME == ESP32_CAVEND)
         #define LED_T_IO    GPIO_NUM_2
         #define LCD_POW_IO  GPIO_NUM_2
-        #define POW_KILL_IO GPIO_NUM_4
-        #define KEY_IO      GPIO_NUM_34
+        #define POW_KILL_IO GPIO_NUM_32
+        #define KEY_IO      GPIO_NUM_36
         #define LED_T    1
     #elif (BOARD_NAME == EY1001)
 

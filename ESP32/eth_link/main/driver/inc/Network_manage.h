@@ -4,6 +4,8 @@
 #include "stdint.h"
 #include "stdlib.h"
 
+#include "Items.h"
+
 #define DEFAULT_WIFI_NAME "GX"    // GX Cavendish
 #define DEFAULT_WIFI_PASS "GX201909"    // GX201909 1234567890
 

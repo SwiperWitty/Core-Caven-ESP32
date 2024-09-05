@@ -49,9 +49,31 @@
 // #define Exist_Steering_Engine        //舵机
 
 #define Exist_RTC_Clock              //外部硬件RTC时钟
-
+/*-----------------------------------*/
 
 /*  进一步的逻辑关系    */
 
+/*-----------------------------------*/
 
+/*  [priority]    */
+#define OTA_TASK_PRIORITY   1
+#define GPIO_TASK_PRIORITY  2 
+#define SHOW_TASK_PRIORITY  3 
+
+#define UART1_TASK_PRIORITY 5 
+#define UART2_TASK_PRIORITY 6 
+#define TCP_SERVER_TASK_PRIORITY  7 
+#define TCP_CLIENT_TASK_PRIORITY  8 
+#define UDP_TASK_PRIORITY   9 
+#define HTTP_TASK_PRIORITY  10 
+#define MQTT_TASK_PRIORITY  11 
+
+#define MESSAGE_INFO_TASK_PRIORITY  11 
+
+/*-----------------------------------*/
+
+/*  [timerID]     */
+#define TEST_TIMERID        (void *)0 
+#define CHECK_TIMERID       (void *)1 
+/*-----------------------------------*/
 #endif

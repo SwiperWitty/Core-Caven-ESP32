@@ -1,5 +1,5 @@
 #include "Custom_gpio.h"
-
+#include "string.h"
 /*
     ESP_LOGE - 错误（最低）0
     ESP_LOGW - 警告
@@ -191,7 +191,8 @@ void test_led_task(void *pvParam)
             }
         }
         
-        vTaskDelay(pdMS_TO_TICKS(absolute_Time));
+        vTaskDelay(pdMS_TO_TICKS(absolute_Time*10));
+        gpio_set_level(LED_T_IO, temp_num%2);
     }
     vTaskDelete(NULL); /*  基本不用退出 */
 }

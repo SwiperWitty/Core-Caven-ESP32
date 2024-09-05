@@ -6,12 +6,12 @@
 
     2023.9.13   
 */
+
+#include "stdint.h"
 #include "Items.h"
-#include "sys_typedef.h"
-#include "Caven_Type.h"
 
-#include "info_frame_handle.h"
-
+#include "esp_event.h"
+#include "esp_log.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
 
@@ -19,13 +19,13 @@
     #if CONFIG_IDF_TARGET_ESP32
         
         #define CUSTOM_UART1
-        #define ECHO_TXD1 (GPIO_NUM_15)
-        #define ECHO_RXD1 (GPIO_NUM_34)
+        #define ECHO_TXD1 (15)
+        #define ECHO_RXD1 (34)
         #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
         #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
 
-        #define ECHO_TXD2 (GPIO_NUM_15)
-        #define ECHO_RXD2 (GPIO_NUM_34)
+        #define ECHO_TXD2 (4)
+        #define ECHO_RXD2 (35)
     #endif
 
 #endif

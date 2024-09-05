@@ -26,7 +26,13 @@
         "hongshu.h": "c",
         "draw.h": "c",
         "ui.h": "c",
-        "lv_obj.h": "c"
+        "lv_obj.h": "c",
+        "user_mqtt.h": "c",
+        "info_frame_handle.h": "c",
+        "information.h": "c",
+        "system_app.h": "c",
+        "message_info_app.h": "c",
+        "caven_at_info_frame.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"

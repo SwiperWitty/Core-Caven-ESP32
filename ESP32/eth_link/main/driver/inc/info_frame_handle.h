@@ -8,7 +8,6 @@
 */
 
 #include "Items.h"
-#include "sys_typedef.h"
 #include "Caven_Type.h"
 
 

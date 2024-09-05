@@ -7,7 +7,6 @@
     2023.9.13   
 */
 #include "Items.h"
-#include "sys_typedef.h"
 #include "Caven_Type.h"
 
 

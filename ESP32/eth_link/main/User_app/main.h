@@ -7,10 +7,9 @@
 
     2023.9.12   
 */
-#include"sys_typedef.h"
-
-#include "nvs_flash.h"
-#include "driver/gpio.h"
+#include"system_app.h"
+#include "show_app.h"
+#include "Message_info_app.h"
 
 // #include "esp_bt.h"
 // #include "esp_gap_ble_api.h"
@@ -19,6 +18,7 @@
 // #include "esp_bt_main.h"
 // #include "ble50_sec_gatts_demo.h"
 
+#include"draw.h"
 #include "information.h"
 
 #if (BOARD_NAME == ESP32_CAVEND)
@@ -26,27 +26,6 @@
 #elif (BOARD_NAME == EY1001)
     #include"Items.h"
 #endif
-
-
-#ifdef Exist_RTC_Clock
-    #include "MODE_RTC8564.h"
-#endif 
-#ifdef Exist_GPIO
-    #include"Custom_gpio.h"
-#endif 
-#ifdef Exist_UART 
-    #include"Custom_uart.h" 
-#endif 
-#ifdef Exist_LCD
-    #include "MODE_LCD.h"
-#endif 
-
-#include "Network_manage.h"
-#include "tcp_server_link.h"
-#include "tcp_client_link.h"
-#include "https.h"
-#include"draw.h"
-#include "show_app.h"
 
 #define CORE_ZERO   0
 #define CORE_ONE    1

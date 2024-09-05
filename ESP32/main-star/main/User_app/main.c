@@ -194,7 +194,7 @@ void Main_Init(void)
 {
     // Allow other core to finish initialization
     uint32_t temp_rtc = 0;
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
     //
     information_init(); // 打印初始化信息
     draw_coordinate_line_handle(0, 0, 18, 18);
@@ -223,6 +223,5 @@ void Main_Init(void)
         ESP_LOGI("RTC","SET time ");
         MODE_RTC8564_Write_time (1723294126 + 60);
     }
-    
 }
 

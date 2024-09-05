@@ -1,5 +1,5 @@
 #include "Custom_uart.h"
-
+#include "string.h"
 /*
     ESP_LOGE - 错误（最低）0
     ESP_LOGW - 警告
@@ -139,7 +139,7 @@ void uart1_task(void *pvParam)
     uint8_t data[512];
     if (custom_uart1_init_flag == 0)
     {
-        custom_uart1_init(115200, ENABLE);
+        custom_uart1_init(115200, 1);
     }
     memset(data, 0, sizeof(data));
     while (1)
@@ -191,7 +191,7 @@ void uart2_task(void *pvParam)
     uint8_t data[512];
     if (custom_uart2_init_flag == 0)
     {
-        custom_uart2_init(115200, ENABLE);
+        custom_uart2_init(115200, 1);
     }
     memset(data, 0, sizeof(data));
     while (1)

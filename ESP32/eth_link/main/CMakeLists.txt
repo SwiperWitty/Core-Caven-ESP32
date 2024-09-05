@@ -26,6 +26,9 @@ set(srcs
 
     "User_app/main.c"           # [app_main] 程序入口所在
     "User_app/show_app.c"
+    "User_app/system_app.c"
+    "User_app/Message_info_app.c"
+    "User_app/caven_at_info_frame.c"
 )
 
 file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")

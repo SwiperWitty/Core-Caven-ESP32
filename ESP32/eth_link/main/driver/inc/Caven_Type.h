@@ -2,22 +2,22 @@
 #define _CAVEN_TYPE__H_
 
 /*
-    这是一个【纯C】的【.h】文件，是各个底层【.h】的 “共同语言”，上层管理函数的【.h】不需要包含
-    仅用于32位系统
-    #include "Caven_Type.h"
+ * Caven_Type.h file
+ * 这是一个纯C的.h文件，是各个底层.h的 “共同语言”，上层管理函数的.h不需要包含
+ *
 */
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 #include "stdint.h"
-#include "stdbool.h"
+#include "math.h"
 
 /*
-    SDK->Items->GPIO(Exist_GPIO)->BASE->
-                                         \\
-                                          -->[XXX]->MODE
-                                         //
-                    C(Lib)->Caven->API->
+ *          SDK->Items
+ *                      \\
+ *                      -->Base     -->Mode
+ *                      //          //
+ *  C(Lib)->Caven_Type->        API
 */
 
 #ifndef U8
@@ -31,10 +31,11 @@
 
 #endif 
 
-
 #ifndef ENABLE
+    #if (!defined (STM32F10X_HD) && !defined (STM32F10X_MD) && !defined (STM32F40X_MD))
     #define DISABLE 0
     #define ENABLE (!DISABLE)
+    #endif
 #endif
 
 #ifndef MAX
@@ -42,57 +43,87 @@
     #define MIN(a,b)    ((a)<(b))?(a):(b)               // 比较函数返回最小值，防止过大
 #endif
 
-#define Destroy(X,N) memset((X),0,(N))                  // 销毁 的地址 (X)  长度 (N)
+#define DESTROY_DATA(X,N) memset((X),0,(N))             // 销毁 的地址 (X)  长度 (N)
+
+#define BUFF_MAX 360
 
 
-#define Buff_Length 300
-
-
-// 日期
-typedef struct Caven_Date
+/*
+	SYS_Day 是系统总天数 
+*/
+typedef struct
 {
-    int year;
+    U16 year;
     U8 month;
     U8 day;
-    U8 week;
+    U32 SYS_Day;
 }Caven_Date_Type;
 
-// 时间
-typedef struct Caven_Watch
+/*
+	[SYS_Sec]组合[time_us],就是系统主时钟 
+*/
+typedef struct
 {
     U8 hour;
     U8 minutes;
     U8 second;
-    U32 time_us;          // 这里 1000 000为1S （us）
+    U32 time_us;            // 这里最大 1000 000
+    U32 SYS_Sec;            // UTC
 }Caven_Watch_Type;
 
-// 颜色
-typedef struct Caven_Color
+
+// 颜色 4byte
+typedef struct
 {
     U8 REG;
     U8 GREEN;
     U8 BULE;
 }Caven_Color_Type;
 
-/*
-**DATA
-**让 Run_num 去追 Length，如果 (Length - Run_num)为0，且过了很长的时间，那么这个数据就该结束了
-**将不在这个DATA存放数据，因为MCU内存不一样，规划的空间也不同，所以空间占用大小应该由MCU文件决定，而不是Caven文件。
-*/
-typedef struct Caven_Data           //这个数据是动态的
-{
-    U16 Length;                     //目前接收到的数据长度
-    volatile U16 Run_num;           //目前运行/处理到的数据个数
-
-    char index;                     //哪个指针会存放数据
-    U8 *Poit_U8;
-    U16 *Poit_U16;
-    int *Poit_U32;
-}Caven_Data_Type;
-
 
 // Function
-typedef void (*D_pFun) (uint8_t data);
+/*
+	无传参函数指针
+*/
+typedef void (*V_pFun) (void);
+/*
+	有传参函数指针
+*/
+typedef void (*D_pFun) (void *data);
+/*
+	带数量传数据函数指针
+*/
+typedef void (*Send_pFun) (U8 *data,int length);
 
+/*
+	这个是给APP做的管理结构体
+1)app_ID 任务ID;layer当前的app的界面;cursor当前界面的光标坐落的选项
+2)str_switch 是否需要更新str;string的主体,是初始化时提供的内存。
+3)p_Data 绑定一个地址，地址内容是需要传给当前APP的数据
+4)Watch 给app传递系统时间
+*/
+typedef struct
+{
+    int app_ID;             // APP任务
+    char layer;             // 层级
+    char cursor;            // 光标位置
+    char str_switch;
+	char *string;           // 输出字符
+    void *p_Data;           // 输入指针
+    Caven_Watch_Type Watch; // 时间(里面有utc)
+}Caven_App_Type;
+
+/*
+	x,y 是输入量
+	botton 是按键量
+	value 是其他数据输入 
+*/
+typedef struct
+{
+    int Control_x;
+    int Control_y;
+    int Control_botton;
+    void *Control_value;
+}Caven_Control_Type;
 
 #endif
