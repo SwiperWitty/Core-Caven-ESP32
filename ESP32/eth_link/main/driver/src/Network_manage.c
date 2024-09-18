@@ -28,7 +28,7 @@ static int esp_netif_init_flag = 0;     // 1:初始化
 static int wifi_flag = 0;               // 1:wifi建立连接
 static int eth_flag = 0;                // 1:rj45建立连接
 // 静态的ip
-static uint8_t SYS_MAC_addr[6] = {0xc8,0x2e,0x18,0x6b,0x83,0x00};
+static uint8_t SYS_MAC_addr[6] = {0};
 static char eth_mode = 0;       // 0:dhcp   1:static
 static char wifi_mode = 0;      // 0:dhcp   1:static
 static char eth_ip[30];
@@ -329,7 +329,7 @@ static void wifi_init(int set)
     uint16_t ap_count = 0;
     if (set == 0)
     {
-        ESP_LOGI(TAG, "WIFI exit <-- \n");
+        ESP_LOGW(TAG, "WIFI exit <-- \n");
         esp_wifi_disconnect();
         return;
     }
@@ -339,7 +339,7 @@ static void wifi_init(int set)
         memset(WIFI_pass,0,sizeof(WIFI_pass));
     }
     
-    ESP_LOGI(TAG, "WIFI Start --> \n");
+    ESP_LOGW(TAG, "WIFI Start --> \n");
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -528,7 +528,7 @@ static void eth_Link_UP_handle (void *event_data)
     }
     memset(mac_addr,0,sizeof(mac_addr));
     esp_eth_ioctl(eth_handle, ETH_CMD_G_MAC_ADDR, mac_addr);
-    ESP_LOGI(TAG, "Ethernet HW MAC Addr %02x:%02x:%02x:%02x:%02x:%02x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    ESP_LOGI(TAG, "Ethernet HW MAC Addr %02X:%02X:%02X:%02X:%02X:%02X", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
     // rj45_tcp_client_task_init();
 }
@@ -599,18 +599,24 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,int32_t eve
 static void rtl8201_init(int set)
 {
 #if 1
-    uint8_t mac_addr[6] = {0xc8,0x2e,0x18,0x6b,0x83,0x00};
+    uint8_t mac_addr[6];
+    int temp_num = 0;
     if (set == 0)
     {
-        ESP_LOGI(TAG, "RJ45 exit <-- \n");
+        ESP_LOGW(TAG, "RJ45 exit <-- \n");
         return;
     }
+    
+    ESP_LOGW(TAG, "RJ45 Start --> \n");
     if (SYS_MAC_addr[0] + SYS_MAC_addr[1] + SYS_MAC_addr[3] + SYS_MAC_addr[4])
     {
         memcpy(mac_addr,SYS_MAC_addr,sizeof(mac_addr));
     }
-    
-    ESP_LOGI(TAG, "RJ45 Start --> \n");
+    else
+    {
+        ESP_LOGW(TAG, "RJ45 no mac addr");
+        // 随机mac模式
+    }
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -638,7 +644,7 @@ static void rtl8201_init(int set)
     mac_config.smi_mdc_gpio_num = RTL8201_ETH_MDC_GPIO;
     mac_config.smi_mdio_gpio_num = RTL8201_ETH_MDIO_GPIO;
     phy_config.reset_gpio_num = RTL8201_ETH_RST_GPIO;
-    phy_config.phy_addr = 0;
+    phy_config.phy_addr = RTL8201_ETH_PHY_ADDR;
     esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&mac_config);
 
     #if CONFIG_EXAMPLE_ETH_PHY_IP101
@@ -658,7 +664,7 @@ static void rtl8201_init(int set)
     esp_eth_handle_t eth_handle = NULL;
     ESP_ERROR_CHECK(esp_eth_driver_install(&config, &eth_handle));
     esp_eth_ioctl(eth_handle, ETH_CMD_S_MAC_ADDR, mac_addr);
-    ESP_LOGI(TAG, "IP mac add : %02x:%02x:%02x:%02x:%02x:%02x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    ESP_LOGW(TAG, "IP mac addr : %02X:%02X:%02X:%02X:%02X:%02X", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
     /* attach Ethernet driver to TCP/IP stack */
     ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handle)));
@@ -673,6 +679,7 @@ void Network_manage_set_mac (uint8_t *mac)
     if (mac != NULL)
     {
         memcpy(SYS_MAC_addr,mac,6);
+        ESP_LOGI(TAG, "set mac: %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     }
 }
 
@@ -727,8 +734,7 @@ int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_st
 int Network_manage_Init (int mode,int set)
 {
     int retval = 0;
-    ESP_LOGW(TAG, "SYS mac add : %02x:%02x:%02x:%02x:%02x:%02x", 
-    SYS_MAC_addr[0], SYS_MAC_addr[1], SYS_MAC_addr[2], SYS_MAC_addr[3], SYS_MAC_addr[4], SYS_MAC_addr[5]);
+
     switch (mode)
     {
     case 1:

@@ -325,7 +325,7 @@ int https_request_config_init (char *way_str,char *Host_str,char *URL_str,char *
         {
             memset(https_port_str,0,sizeof(https_port_str));
             memcpy(https_port_str,port_str,temp_num);
-            ESP_LOGI(TAG, "port:%s",port_str);
+            ESP_LOGI(TAG, "port:[%s]",port_str);
         }
     }
     if (retval == 0)

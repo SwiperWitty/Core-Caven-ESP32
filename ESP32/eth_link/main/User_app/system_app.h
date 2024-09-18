@@ -25,18 +25,29 @@
 #include "https.h"
 
 
-/*  log     *//* 
+/* 
 -试一下
 2023.11.8
 
-*//*-----------------------------------*/
+*/
 
 typedef enum {
     m_Protocol_CV = 0,
-    m_Protocol_1,
+    m_Protocol_AT,
     m_Protocol_2,
-
 } Protocol_mType;
+
+typedef enum {
+    m_Connect_SYS = 0,
+    m_Connect_Server,
+    m_Connect_Client,
+    m_Connect_UDP,
+    m_Connect_BLE,
+    m_Connect_4G,
+    m_Connect_RS232,
+    m_Connect_RS485,
+    m_Connect_USB,
+} Connect_mType;
 
 /*  [产品列表]    */
 #define ESP32_CAVEND        314
@@ -144,6 +155,7 @@ typedef struct
     int RS232_Baud;
     int RS485_Baud;
     int SYS_Baud;
+    int AT4G_Baud;
     int RS485_Addr;         //
 
     char RFID_Mode;          // 0透传\外挂模式
@@ -152,14 +164,14 @@ typedef struct
 
     char RJ45_enable;
     char WIFI_enable;
-    char Server_enable;
-    char Client_enable;
-    char HTTP_enable;
-    char MQTT_enable;
     char AT4G_enable;
+    char Server_Switch;
+    char Client_Switch;
+    char HTTP_Switch;
+    char MQTT_Switch;
 
-    char RJ45_Mode;
-    char WIFI_Mode;
+    char RJ45_work_Mode;
+    char WIFI_work_Mode;    // dhcp = 0
     char RJ45_static_ip[30];
     char RJ45_static_gw[30];
     char RJ45_static_netmask[30];
@@ -168,24 +180,33 @@ typedef struct
     char WIFI_static_netmask[30];
     char MAC_addr[20];
 
-    char Server_port[10];
-    char Client_ip[30];
-    char Client_port[10];
+    char Net_Server_port[10];
+    char Net_Client_ip[30];
+    char Net_Client_port[10];
     char AT4G_Client_ip[30];
     char AT4G_Client_port[10];
 
-    uint8_t HTTP_url[100];
-    uint8_t MQTT_url[100];
+    char HTTP_url[100];
+    char MQTT_url[100];
     
     char Device_version[50];
     char SYS_version[50];
     char Device_version_len;
     char SYS_version_len;
-    
+
+    // 设备动态管理
     char SYS_Rst;
+    uint32_t SYS_utc_s;
+    uint32_t SYS_utc_ms;
+
+    char RJ45_online;
+    char WIFI_online;
+    char AT4G_online;
+    char SYS_online;
+
+    int Connect_passage;    // 当前连接
     int SYS_Run_Mode;
     int SYS_Run_Status;
-    int Connect_passage;    // 连接管理
     int Heartbeat_Run;
     int Heartbeat_MAX;
     
@@ -195,7 +216,7 @@ extern SYS_cfg_Type g_SYS_Config;
 /*-----------------------------------*/
 
 
-
 void system_app_init(void);
+void system_rst(void);
 
 #endif

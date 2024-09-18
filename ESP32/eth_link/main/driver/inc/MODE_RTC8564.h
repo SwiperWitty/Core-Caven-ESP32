@@ -13,12 +13,12 @@
 #include "driver/i2c.h"
 #include "esp_log.h"
 
+#include"Items.h"
+
     #define PIN_RTC_SDA    (16)
     #define PIN_RTC_SCL    (17)
     #define RTC_I2C_MASTER_FREQ_HZ  1000
     #define RTC_I2C_MASTER_NUM      I2C_NUM_0
-
-    #define Exist_RTC_Clock 1
 #else
 #include "Base.h"
 #include "Caven_Type.h"

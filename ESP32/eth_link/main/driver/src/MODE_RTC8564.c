@@ -1,8 +1,11 @@
 #include "MODE_RTC8564.h"
 #include "time.h"
 
+#ifdef Exist_RTC_Clock
 struct tm timeinfo;
 static int RTC8564_Init_flag = 0;
+#endif
+
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 static const char *TAG = "RTC_IIC";

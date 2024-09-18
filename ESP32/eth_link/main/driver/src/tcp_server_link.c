@@ -112,18 +112,18 @@ static void do_retransmit(const int sock)
     int len;
     char rx_buffer[128];
 
-    do {
-        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);  //  这里是阻塞的，想退出此函数，得靠定时器监控来kill
-        if (len < 0) {
-            ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
+    while (sock > 0) 
+    {
+        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);  //  这里是阻塞的，想退出此函数kill&sock失效
+        // Error occurred during receiving
+        if (len < 0 || len == 0) {
+            ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d]????\n", errno,len);
             tcp_server_sock = 0;
-        } else if (len == 0) {
-            ESP_LOGW(TAG, "Connection closed");
-        } else 
-        {
-            rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
-            // ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
-            // tcp_server_send_data((uint8_t *)rx_buffer, len);
+            break;
+        }
+        // Data received
+        else {
+            rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
             if (tcp_server_Callback_Fun != NULL)
             {
                 for (int i = 0; i < len; i++)
@@ -132,7 +132,11 @@ static void do_retransmit(const int sock)
                 }
             }
         }
-    } while (len > 0);
+        if (tcp_server_sock == 0)
+        {
+            break;
+        }
+    };
 }
 
 /*
@@ -212,7 +216,7 @@ void tcp_server_link_task(void *empty)
         goto CLEAN_UP;
     }
     ESP_LOGI(TAG, "Network link, Socket start");
-    ESP_LOGI(TAG, "Socket bound, open port %d", ip_port);
+    ESP_LOGI(TAG, "Socket bound, open port:[%d]", ip_port);
     err = listen(listen_sock, 1);
     if (err != 0) {
         ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
@@ -261,7 +265,7 @@ void tcp_server_link_task(void *empty)
         }
 #endif
         ESP_LOGI(TAG, "Socket accepted host ip address: %s", addr_str);
-        ESP_LOGI(TAG, "Socket num: %d", sock);
+        ESP_LOGI(TAG, "Socket num: [%d]", sock);
         if (wifi_get_local_ip_status(wifi_ip_str,wifi_gw_str,wifi_netmask_str) && strlen(addr_str))
         {
             uint8_t ip_temp_a,ip_temp_b,ip_temp_num = 0;
@@ -305,7 +309,7 @@ void tcp_server_link_task(void *empty)
             }
             else
             {
-                ESP_LOGW(TAG, "wifi network socket link");
+                ESP_LOGW(TAG, "maybe wifi network socket link");
             }
         }
         tcp_server_sock = sock;
@@ -318,7 +322,7 @@ void tcp_server_link_task(void *empty)
             sock = 0;
             tcp_server_sock = 0;
         }
-        ESP_LOGW(TAG, "loss sock");
+        ESP_LOGW(TAG, "loss sock <--\n");
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 

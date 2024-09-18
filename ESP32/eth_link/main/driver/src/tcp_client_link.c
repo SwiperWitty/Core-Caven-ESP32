@@ -190,29 +190,31 @@ void tcp_client_link_task(void *empty)
         struct sockaddr_storage dest_addr = { 0 };
         ESP_ERROR_CHECK(get_addr_from_stdin(ip_port, SOCK_STREAM, &ip_protocol, &addr_family, &dest_addr));
 #endif
+        tcp_client_sock = 1;
+        ESP_LOGI(TAG, "Socket created,try connecting to %s:%d ...", host_ip, ip_port);
         int sock =  socket(addr_family, SOCK_STREAM, ip_protocol);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
             tcp_client_sock = 0;
-            // break;
         }
-        ESP_LOGI(TAG, "Socket created,try connecting to %s:%d ...", host_ip, ip_port);
-
         int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in6));
         if (err != 0) {
             ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
             tcp_client_sock = 0;
-            // break;
+        }
+        if (tcp_client_sock == 0)
+        {
+            goto CLEAN_UP;
         }
         ESP_LOGI(TAG, "Successfully connected");
-        ESP_LOGI(TAG, "Socket num: %d", sock);
+        ESP_LOGI(TAG, "Socket num: [%d]", sock);
         tcp_client_sock = sock;
         while (sock > 0) 
         {
             int len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
             // Error occurred during receiving
-            if (len < 0) {
-                ESP_LOGE(TAG, "recv failed: errno %d", errno);
+            if (len < 0 || len == 0) {
+                ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d]????\n", errno,len);
                 tcp_client_sock = 0;
                 break;
             }
@@ -232,6 +234,7 @@ void tcp_client_link_task(void *empty)
                 break;
             }
         }
+CLEAN_UP :
         if (sock != -1) {
             ESP_LOGE(TAG, "Shutting down socket and restarting...");
             shutdown(sock, 0);
@@ -246,7 +249,7 @@ void tcp_client_link_task(void *empty)
             sock = 0;
             tcp_client_sock = 0;
         }
-        ESP_LOGW(TAG, "loss sock");
+        ESP_LOGW(TAG, "loss sock <--\n");
         vTaskDelay(3000 / portTICK_PERIOD_MS);
     }
     tcp_client_sock = 0;

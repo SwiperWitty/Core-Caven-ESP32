@@ -124,9 +124,23 @@ int caven_at_info_Make_packet_Fun(caven_at_info_packet_Type const standard, cave
 int caven_at_info_Split_packet_Fun(caven_at_info_packet_Type const target, void *data)
 {
     int retval = 0;
+    int temp_len = 0;
     if (data != NULL)
     {
-        
+        temp_len = strlen(data);
+        memset(data,0,temp_len);
+        strcat(data,"AT");
+        retval += 2;
+        if (target.dSize)
+        {
+            memcpy(&data[retval],target.p_Data,target.dSize);
+            retval += target.dSize;
+        }
+        if (memcmp(&data[retval-2],"\r\n",2) != 0)
+        {
+            memcpy(&data[retval],"\r\n",2);
+            retval += 2;
+        }
     }
     return retval;
 }

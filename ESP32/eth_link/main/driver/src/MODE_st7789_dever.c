@@ -2,7 +2,7 @@
 
 static char LCD_Horizontal = 0;
 static char LCD_Target_Model = 0;
-int flag_dc = 0;
+static char flag_dc = 0;
 
 #ifdef Exist_LCD
 void st7789_dever_gpio_init(int set)
@@ -168,7 +168,7 @@ void set_flag_dc(int n)
 {
     flag_dc = n;
 #ifndef CONFIG_IDF_TARGET_ESP32
-    MODE_st7789_dever_GPIO_DC(n); // 写命令
+    MODE_st7789_dever_GPIO_DC(flag_dc); // 写命令
 #endif
 }
 
@@ -178,15 +178,17 @@ void set_flag_dc(int n)
 void MODE_st7789_dever_CS(uint8_t data)
 {
 #ifdef Exist_LCD
+	#if (PIN_LCD_CS != (-1))
     switch (LCD_Target_Model)
     {
     case 11:
-        // MODE_st7789_dever_GPIO_CS(data);
+        MODE_st7789_dever_GPIO_CS(data);
         break;
     default:
-        // MODE_st7789_dever_GPIO_CS(data);
+        MODE_st7789_dever_GPIO_CS(data);
         break;
     }
+	#endif
 #endif
 }
 
@@ -583,7 +585,7 @@ void MODE_st7789_dever_Set_Address(uint16_t x1, uint16_t y1, uint16_t x2, uint16
     break;
     case 14: // 1.69
     {
-        if (LCD_Horizontal == 0 || LCD_Horizontal == 1)
+        if (LCD_Horizontal == 1)
         {
             x_sta = (x1);
             x_end = (x2);
@@ -643,10 +645,10 @@ int MODE_st7789_dever_Init(int set)
 {
     int retval = 0;
 #ifdef Exist_LCD
-    if (LCD_Target_Model == 0)
+    if (LCD_Target_Model == 0 && set)
     {
-        retval = 1;
-        return retval;
+		retval = 1;
+		return retval;
     }
 
     st7789_dever_gpio_init(set);
@@ -660,9 +662,9 @@ int MODE_st7789_dever_Init(int set)
     // st7789_dever_gpio_init(set);
     MODE_st7789_dever_Writ_Bus(0x00);
 
-    st7789_dever_delay(200);
-    MODE_st7789_dever_RST(1);
     st7789_dever_delay(100);
+    MODE_st7789_dever_RST(1);
+    st7789_dever_delay(50);
 
     //************* Start Initial Sequence **********//
     if (LCD_Target_Model == 12)
