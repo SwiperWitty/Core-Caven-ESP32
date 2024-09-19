@@ -130,6 +130,7 @@ void custom_uart2_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
 }
 
 // 
+int uart1_task_num = 0;
 void uart1_task(void *pvParam)
 {
     EventBits_t r_event;
@@ -145,7 +146,7 @@ void uart1_task(void *pvParam)
     while (1)
     {
         // Waiting for UART event.
-        if (xQueueReceive(uart1_event_queue, (void *)&event, 1))
+        if (xQueueReceive(uart1_event_queue, (void *)&event, 10))
         {
             switch (event.type)
             {
@@ -157,6 +158,7 @@ void uart1_task(void *pvParam)
                 counter = uart_read_bytes(UART_NUM_1, data, 512, 0);
                 if (counter > 0)
                 {
+                    uart1_task_num += counter;
                     if (custom_uart1_Callback_Fun != NULL)
                     {
                         for (int i = 0; i < counter; i++)
@@ -182,6 +184,7 @@ void uart1_task(void *pvParam)
 }
 
 //
+int uart2_task_num = 0;
 void uart2_task(void *pvParam)
 {
     EventBits_t r_event;
@@ -197,7 +200,7 @@ void uart2_task(void *pvParam)
     while (1)
     {
         // Waiting for UART event.
-        if (xQueueReceive(uart2_event_queue, (void *)&event, 1))
+        if (xQueueReceive(uart2_event_queue, (void *)&event, 10))
         {
             switch (event.type)
             {
@@ -209,6 +212,7 @@ void uart2_task(void *pvParam)
                 counter = uart_read_bytes(UART_NUM_2, data, 512, 0);
                 if (counter > 0)
                 {
+                    uart2_task_num += counter;
                     if (custom_uart2_Callback_Fun != NULL)
                     {
                         for (int i = 0; i < counter; i++)

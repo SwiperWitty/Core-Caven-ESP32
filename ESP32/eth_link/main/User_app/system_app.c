@@ -17,7 +17,7 @@ SYS_cfg_Type g_SYS_Config = {
     .RJ45_enable = 1,
     .AT4G_enable = 0,
     .Server_Switch = 1,
-    .Client_Switch = 0,
+    .Client_Switch = 1,
     .HTTP_Switch = 0,
     .MQTT_Switch = 0,
 

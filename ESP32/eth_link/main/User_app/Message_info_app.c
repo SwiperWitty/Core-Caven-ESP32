@@ -21,82 +21,115 @@ caven_at_info_packet_Type caven_at_info_standard = {
 //
 static uint8_t send_buff[0x1024];
 
-static uint8_t get_buff[0x1024];
-static int get_num = 0;
-static int get_time = 0;
-static void rj45_get_fun (void *data)
+static uint8_t server_buff[0x1024];
+static int server_num = 0;
+static int server_time = 0;
+static void rj45_server_get_fun (void *data)
 {
     uint8_t rec = *(uint8_t *)data;
     int retval = 0;
-    get_time = xTaskGetTickCount();
+    server_time = xTaskGetTickCount();
     if (Message_info.app_ID == TRANSPOND_INFO)
     {
         retval = caven_at_info_Make_packet_Fun(caven_at_info_standard, &caven_at_info_data, rec);
-        ESP_LOGI(TAG,"debug [%x]",retval);
+        // ESP_LOGI(TAG,"debug [%x]",retval);
         if (retval == 0xff)
         {
             caven_at_info_data.Comm_way = m_Connect_Server;
+            server_num = 0;
         }
-        else if ((get_num < sizeof(get_buff)) && retval == 0)
+        else if (retval == 0)
         {
-            get_buff[get_num++] = rec;
+            if (server_num < sizeof(server_buff))
+            {
+                server_buff[server_num++] = rec;
+            }
+            else
+            {
+                ESP_LOGI(TAG,"server over len");
+            }
         }
     }
     else
     {
-
+        
     }
 }
 
-static uint8_t get2_buff[0x1024];
-static int get2_num = 0;
-static int get2_time = 0;
-static void rj45_get2_fun (void *data)
+static uint8_t client_buff[0x1024];
+static int client_num = 0;
+static int client_time = 0;
+static void rj45_client_get_fun (void *data)
 {
     uint8_t rec = *(uint8_t *)data;
     int retval = 0;
-    get2_time = xTaskGetTickCount();
+    client_time = xTaskGetTickCount();
     if (Message_info.app_ID == TRANSPOND_INFO)
     {
         retval = caven_at_info_Make_packet_Fun(caven_at_info_standard, &caven_at_info_data, rec);
         if (retval == 0xff)
         {
             caven_at_info_data.Comm_way = m_Connect_Client;
+            client_num = 0;
         }
-        else if ((get2_num < sizeof(get2_buff)) && retval == 0)
+        else if (retval == 0)
         {
-            get2_buff[get2_num++] = rec;
+            if (client_num < sizeof(client_buff))
+            {
+                client_buff[client_num++] = rec;
+            }
+            else
+            {
+                ESP_LOGI(TAG,"client over len");
+            }
         }
     }
     else
     {
-
     }
 }
 
-static uint8_t get3_buff[0x1024];
-static int get3_num = 0;
-static int get3_time = 0;
+int debug_num = 0;
+static char standby_flag = 0;
+static uint8_t uart2_buff[0x1024];
+static int uart2_num = 0;
+static uint8_t uart2_buff_s[0x1024];
+static int uart2_num_s = 0;
+static int uart2_time = 0;
 static void uart2_get_fun (void *data)
 {
     uint8_t rec = *(uint8_t *)data;
     int retval = 0;
-    get3_time = xTaskGetTickCount();
+    uart2_time = xTaskGetTickCount();
+    
     if (Message_info.app_ID == TRANSPOND_INFO)
     {
-        retval = caven_at_info_Make_packet_Fun(caven_at_info_standard, &caven_at_info_data, rec);
+        // retval = caven_at_info_Make_packet_Fun(caven_at_info_standard, &caven_at_info_data, rec);
         if (retval == 0xff)
         {
             caven_at_info_data.Comm_way = m_Connect_SYS;
+            uart2_num = 0;
         }
-        else if ((get3_num < sizeof(get3_buff)) && retval == 0)
+        else if (retval == 0)
         {
-            get3_buff[get3_num++] = rec;
+            if ((uart2_num < sizeof(uart2_buff)) && standby_flag == 0)
+            {
+                uart2_buff[uart2_num++] = rec;
+                debug_num ++;
+            }
+            else if ((uart2_num_s < sizeof(uart2_buff_s)) && standby_flag)
+            {
+                uart2_buff_s[uart2_num_s++] = rec;
+                debug_num ++;
+            }
+            else
+            {
+                ESP_LOGI(TAG,"uart2 over len");
+            }
         }
     }
     else
     {
-
     }
 }
 
@@ -155,6 +188,8 @@ static void Message_info_send_result_fun (char *data,int way)
     }
 }
 
+extern int uart1_task_num;
+extern int uart2_task_num;
 static int Message_info_transpond (Caven_App_Type *message)
 {
     int retval = 0;
@@ -172,6 +207,10 @@ static int Message_info_transpond (Caven_App_Type *message)
         if((strcmp(p_temp_str,"\r\n") == 0) && temp_len == 2)
         {
             Message_info_send_result_fun(at_succ,caven_at_info_data.Comm_way);
+            ESP_LOGI(TAG,"uart1[%d],uart2[%d],get[%d]",uart1_task_num,uart2_task_num,debug_num);
+            uart1_task_num = 0;
+            uart2_task_num = 0;
+            debug_num = 0;
         }
         else if (p_temp_str[0] == '+')
         {
@@ -188,31 +227,47 @@ static int Message_info_transpond (Caven_App_Type *message)
         caven_at_info_packet_clean_Fun(&caven_at_info_data);
     }
 
-    if (((temp_time - get_time) > 50 && get_num) || get_num > 300)
+    if (((temp_time - server_time) > 50 && server_num) || server_num > 300)
     {
-        temp_num = get_num;
-        memcpy(send_buff,get_buff,temp_num);
-        ESP_LOGI(TAG,"server transpond");
-        get_num = 0;
+        temp_num = server_num;
+        memcpy(send_buff,server_buff,temp_num);
+        // ESP_LOGI(TAG,"server transpond");
+        server_num = 0;
         custom_uart1_send_data(send_buff, temp_num);
         custom_uart2_send_data(send_buff, temp_num);
     }
-    if (((temp_time - get2_time) > 50 && get2_num) || get2_num > 300)
+    if (((temp_time - client_time) > 50 && client_num) || client_num > 300)
     {
-        temp_num = get2_num;
-        memcpy(send_buff,get2_buff,temp_num);
+        temp_num = client_num;
+        memcpy(send_buff,client_buff,temp_num);
         ESP_LOGI(TAG,"client transpond");
-        get2_num = 0;
+        client_num = 0;
         custom_uart1_send_data(send_buff, temp_num);
         custom_uart2_send_data(send_buff, temp_num);
     }
-    if(((temp_time - get3_time) > 10 && get3_num) || get3_num > 300)
+    if (standby_flag == 0)
     {
-        temp_num = get3_num;
-        memcpy(send_buff,get3_buff,temp_num);
-        get3_num = 0;
-        tcp_server_send_data(send_buff, temp_num);
+        if(((temp_time - uart2_time) > 10 && uart2_num) || uart2_num > 1024)
+        {
+            standby_flag = 1;
+            temp_num = uart2_num;
+            memcpy(send_buff,uart2_buff,temp_num);
+            uart2_num = 0;
+            tcp_server_send_data(send_buff, temp_num);
+        }
     }
+    else
+    {
+        if(((temp_time - uart2_time) > 10 && uart2_num_s) || uart2_num_s > 1024)
+        {
+            standby_flag = 0;
+            temp_num = uart2_num_s;
+            memcpy(send_buff,uart2_buff_s,temp_num);
+            uart2_num_s = 0;
+            tcp_server_send_data(send_buff, temp_num);
+        }
+    }
+
     return retval;
 }
 
@@ -233,8 +288,8 @@ void Message_info_task (void * empty)
     int retval = 0;
 
     Message_info.app_ID = g_SYS_Config.SYS_Run_Mode;
-    tcp_server_receive_State_Machine_Bind (rj45_get_fun);
-    tcp_client_receive_State_Machine_Bind (rj45_get2_fun);
+    tcp_server_receive_State_Machine_Bind (rj45_server_get_fun);
+    tcp_client_receive_State_Machine_Bind (rj45_client_get_fun);
     custom_uart1_receive_State_Machine_Bind (uart2_get_fun);
     custom_uart2_receive_State_Machine_Bind (uart2_get_fun);
 
@@ -269,7 +324,7 @@ void Message_info_task (void * empty)
             vTaskDelay(pdMS_TO_TICKS(100));
             esp_restart();
         }
-        vTaskDelay(pdMS_TO_TICKS(1));
+        vTaskDelay(pdMS_TO_TICKS(3));
     }
 }
 
