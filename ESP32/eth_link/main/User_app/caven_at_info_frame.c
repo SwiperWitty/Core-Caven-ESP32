@@ -110,13 +110,13 @@ int caven_at_info_Make_packet_Fun(caven_at_info_packet_Type const standard, cave
     else if ((temp_packet.Result & 0xF0) == standard.Result)    // 收到完整帧
     {
         temp_packet.Run_status = 0xFF;
-        memcpy(target,&temp_packet,sizeof(temp_packet));
         retval = temp_packet.Run_status;
+        memcpy(target,&temp_packet,sizeof(temp_packet));
     }
     else    // 接收过程
     {
+        retval = 0;
         memcpy(target,&temp_packet,sizeof(temp_packet));
-        retval = temp_packet.Run_status;
     }
     return retval;
 }
