@@ -82,11 +82,12 @@ typedef struct
     unsigned char *p_Data;  // 
 
     unsigned char Result;   //1
-    int Run_status;
-    int Get_num;
+
     unsigned short Add_crc; //2
     unsigned short End_crc; //2
 
+    int Get_num;
+    int Run_status;
     unsigned char Comm_way;
 }Caven_info_frame_Type; 
 Caven_info_frame_Type Caven_standard = {
@@ -113,7 +114,7 @@ int Caven_info_Make_packet_Fun(Caven_info_frame_Type const standard, Caven_info_
         retval -= standard.Result + 1;
         return retval;
     }
-    if (temp_packet.Run_status > 0 && temp_packet.Run_status < 8)   // 跳过头帧和crc校验帧
+    if (temp_packet.Run_status > 0 && temp_packet.Run_status < 9)   // 跳过头帧和crc校验帧
     {
         temp_packet.Add_crc = ModBusCRC16(temp_packet.Add_crc,&data,1);
     }
@@ -193,13 +194,18 @@ int Caven_info_Make_packet_Fun(Caven_info_frame_Type const standard, Caven_info_
             temp_packet.Run_status++;
         }
         break;
-    case 8: /* End_crc */
+    case 8: /* Result */
+        tepm_pData[temp_packet.Get_num++] = data;
+        temp_packet.Result |= data;
+        temp_packet.Run_status++;
+        break;
+    case 9: /* End_crc */
         tepm_pData[temp_packet.Get_num++] = data;
         temp_packet.End_crc <<= 8;
         temp_packet.End_crc |= data;
         temp = sizeof(temp_packet.Head) + sizeof(temp_packet.Versions) + sizeof(temp_packet.Type) + 
         sizeof(temp_packet.Addr) + sizeof(temp_packet.Cmd) + sizeof(temp_packet.Cmd_sub) + sizeof(temp_packet.dSize) + temp_packet.dSize + 
-        sizeof(temp_packet.End_crc);
+        sizeof(temp_packet.Result) + sizeof(temp_packet.End_crc);
         if (temp_packet.Get_num >= temp)
         {
             if (temp_packet.End_crc == temp_packet.Add_crc)
@@ -517,10 +523,8 @@ static int Message_info_handle (Caven_App_Type *message)
         Caven_info_pack.p_Data = caven_buff;
     }
     
-    if (Caven_info_pack.Result == Caven_standard.Result)
+    if (Caven_info_pack.Result & Caven_standard.Result)
     {
-        Caven_info_pack.Result = 0;
-        Caven_info_pack.Run_status = 0;
         ESP_LOGW(TAG,"get Caven_info_pack");
         ESP_LOGI(TAG,"Caven_info_pack Head[%X]",Caven_info_pack.Head);
         ESP_LOGI(TAG,"Caven_info_pack Type[%X]",Caven_info_pack.Type);
@@ -528,6 +532,7 @@ static int Message_info_handle (Caven_App_Type *message)
         ESP_LOGI(TAG,"Caven_info_pack CMD[%X]",Caven_info_pack.Cmd);
         ESP_LOGI(TAG,"Caven_info_pack CMD_SUB[%X]",Caven_info_pack.Cmd_sub);
         ESP_LOGI(TAG,"Caven_info_pack len[%X]",Caven_info_pack.dSize);
+        ESP_LOGI(TAG,"Caven_info_pack Result[%X]",Caven_info_pack.Result & 0x80);
         memcpy(temp_array,&Caven_info_pack.p_Data[9],Caven_info_pack.dSize);
         for (int i = 0; i < Caven_info_pack.dSize; i++)
         {
@@ -535,6 +540,8 @@ static int Message_info_handle (Caven_App_Type *message)
         }
         printf("\r\n");
         ESP_LOGI(TAG,"Caven_info_pack end \n");
+        Caven_info_pack.Result = 0;
+        Caven_info_pack.Run_status = 0;
     }
     
     return retval;
