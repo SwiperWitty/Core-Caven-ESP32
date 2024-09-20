@@ -90,17 +90,28 @@ static void rj45_client_get_fun (void *data)
 }
 
 int debug_num = 0;
-static char standby_flag = 0;
 static uint8_t uart2_buff[0x1024];
-static int uart2_num = 0;
 static uint8_t uart2_buff_s[0x1024];
-static int uart2_num_s = 0;
-static int uart2_time = 0;
+Caven_cache_Type uart2_cache = {0};
 static void uart2_get_fun (void *data)
 {
     uint8_t rec = *(uint8_t *)data;
     int retval = 0;
-    uart2_time = xTaskGetTickCount();
+    uart2_cache.time = xTaskGetTickCount();
+    if (uart2_cache.cache_max == 0)
+    {
+        uart2_cache.p_buff_a = uart2_buff;
+        uart2_cache.p_buff_b = uart2_buff_s;
+        uart2_cache.len_a = 0;
+        uart2_cache.len_b = 0;
+        uart2_cache.cache_max = 1024;
+        uart2_cache.time_out = 10;
+        uart2_cache.len_max = sizeof(uart2_buff);
+        if (uart2_cache.cache_max > uart2_cache.len_max)
+        {
+            uart2_cache.cache_max = uart2_cache.len_max;
+        }
+    }
     
     if (Message_info.app_ID == TRANSPOND_INFO)
     {
@@ -108,18 +119,17 @@ static void uart2_get_fun (void *data)
         if (retval == 0xff)
         {
             caven_at_info_data.Comm_way = m_Connect_SYS;
-            uart2_num = 0;
         }
         else if (retval == 0)
         {
-            if ((uart2_num < sizeof(uart2_buff)) && standby_flag == 0)
+            if ((uart2_cache.len_a < uart2_cache.len_max) && uart2_cache.flag == 0)
             {
-                uart2_buff[uart2_num++] = rec;
+                *((uint8_t *)uart2_cache.p_buff_a + (uart2_cache.len_a++)) = rec;
                 debug_num ++;
             }
-            else if ((uart2_num_s < sizeof(uart2_buff_s)) && standby_flag)
+            else if ((uart2_cache.len_b < uart2_cache.len_max) && uart2_cache.flag)
             {
-                uart2_buff_s[uart2_num_s++] = rec;
+                *((uint8_t *)uart2_cache.p_buff_b + (uart2_cache.len_b++)) = rec;
                 debug_num ++;
             }
             else
@@ -245,25 +255,31 @@ static int Message_info_transpond (Caven_App_Type *message)
         custom_uart1_send_data(send_buff, temp_num);
         custom_uart2_send_data(send_buff, temp_num);
     }
-    if (standby_flag == 0)
+    if (uart2_cache.flag == 0)
     {
-        if(((temp_time - uart2_time) > 10 && uart2_num) || uart2_num > 1024)
+        if(((temp_time - uart2_cache.time) > uart2_cache.time_out && uart2_cache.len_a) || uart2_cache.len_a > uart2_cache.cache_max)
         {
-            standby_flag = 1;
-            temp_num = uart2_num;
-            memcpy(send_buff,uart2_buff,temp_num);
-            uart2_num = 0;
+            uart2_cache.flag = 1;
+            temp_num = uart2_cache.len_a;
+            if (uart2_cache.p_buff_a != NULL)
+            {
+                memcpy(send_buff,uart2_cache.p_buff_a,temp_num);
+            }
+            uart2_cache.len_a = 0;
             tcp_server_send_data(send_buff, temp_num);
         }
     }
     else
     {
-        if(((temp_time - uart2_time) > 10 && uart2_num_s) || uart2_num_s > 1024)
+        if(((temp_time - uart2_cache.time) > uart2_cache.time_out && uart2_cache.len_b) || uart2_cache.len_b > uart2_cache.cache_max)
         {
-            standby_flag = 0;
-            temp_num = uart2_num_s;
-            memcpy(send_buff,uart2_buff_s,temp_num);
-            uart2_num_s = 0;
+            uart2_cache.flag = 0;
+            temp_num = uart2_cache.len_b;
+            if (uart2_cache.p_buff_b != NULL)
+            {
+                memcpy(send_buff,uart2_cache.p_buff_b,temp_num);
+            }
+            uart2_cache.len_b = 0;
             tcp_server_send_data(send_buff, temp_num);
         }
     }
