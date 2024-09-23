@@ -7,10 +7,10 @@
  *  3) data 数据
  *  4) retval 是当前步骤，如果为[-0x40]数据没处理不能装填数据，[-0x4F]数据缓冲地址无效，[-0x50]数据量超过内存长度，[0x4x]接收完成
 */
-int caven_at_info_Make_packet_Fun(caven_at_info_packet_Type const standard, caven_at_info_packet_Type *target, uint8_t data)
+int caven_at_info_Make_packet_Fun(Caven_at_info_packet_Type const standard, Caven_at_info_packet_Type *target, uint8_t data)
 {
     int retval = 0;
-    caven_at_info_packet_Type temp_packet = *target;
+    Caven_at_info_packet_Type temp_packet = *target;
     if (temp_packet.Result == standard.Result)
     {
         retval = (-0x40);
@@ -121,7 +121,7 @@ int caven_at_info_Make_packet_Fun(caven_at_info_packet_Type const standard, cave
     return retval;
 }
 
-int caven_at_info_Split_packet_Fun(caven_at_info_packet_Type const target, void *data)
+int caven_at_info_Split_packet_Fun(Caven_at_info_packet_Type const target, void *data)
 {
     int retval = 0;
     int temp_len = 0;
@@ -145,7 +145,7 @@ int caven_at_info_Split_packet_Fun(caven_at_info_packet_Type const target, void 
     return retval;
 }
 
-int caven_at_info_packet_index_Fun(caven_at_info_packet_Type *target, uint8_t *data)
+int caven_at_info_packet_index_Fun(Caven_at_info_packet_Type *target, uint8_t *data)
 {
     int retval = 0;
     if (target != NULL)
@@ -155,7 +155,7 @@ int caven_at_info_packet_index_Fun(caven_at_info_packet_Type *target, uint8_t *d
     return retval;
 }
 
-int caven_at_info_packet_clean_Fun(caven_at_info_packet_Type *target)
+int caven_at_info_packet_clean_Fun(Caven_at_info_packet_Type *target)
 {
     int retval = 0;
     if (target != NULL)
@@ -175,7 +175,7 @@ int caven_at_info_packet_clean_Fun(caven_at_info_packet_Type *target)
     return retval;
 }
 
-int caven_at_info_packet_fast_clean_Fun(caven_at_info_packet_Type *target)
+int caven_at_info_packet_fast_clean_Fun(Caven_at_info_packet_Type *target)
 {
     int retval = 0;
     if (target != NULL)

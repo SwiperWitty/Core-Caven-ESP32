@@ -16,8 +16,8 @@ static Caven_App_Type Message_info = {
     .string = NULL,
     .p_Data = NULL,
 };
-static caven_at_info_packet_Type caven_at_info_data;
-caven_at_info_packet_Type caven_at_info_standard = {
+static Caven_at_info_packet_Type Caven_at_info_data;
+Caven_at_info_packet_Type Caven_at_info_standard = {
     .Head = 0x4154,
     .End = 0x0D0A,
     .dSize = 300,
@@ -258,10 +258,10 @@ static void rj45_server_get_fun (void *data)
     server_time = xTaskGetTickCount();
     if (Message_info.app_ID == TRANSPOND_INFO)
     {
-        retval = caven_at_info_Make_packet_Fun(caven_at_info_standard, &caven_at_info_data, rec);
+        retval = caven_at_info_Make_packet_Fun(Caven_at_info_standard, &Caven_at_info_data, rec);
         if (retval == 0xff)
         {
-            caven_at_info_data.Comm_way = m_Connect_Server;
+            Caven_at_info_data.Comm_way = m_Connect_Server;
             server_num = 0;
         }
     }
@@ -298,10 +298,10 @@ static void rj45_client_get_fun (void *data)
     client_time = xTaskGetTickCount();
     if (Message_info.app_ID == TRANSPOND_INFO)
     {
-        retval = caven_at_info_Make_packet_Fun(caven_at_info_standard, &caven_at_info_data, rec);
+        retval = caven_at_info_Make_packet_Fun(Caven_at_info_standard, &Caven_at_info_data, rec);
         if (retval == 0xff)
         {
-            caven_at_info_data.Comm_way = m_Connect_Client;
+            Caven_at_info_data.Comm_way = m_Connect_Client;
             client_num = 0;
         }
     }
@@ -370,7 +370,7 @@ static void uart2_get_fun (void *data)
 }
 
 // 发送at指令消息
-static void Message_info_send_packet_fun (caven_at_info_packet_Type data)
+static void Message_info_send_packet_fun (Caven_at_info_packet_Type data)
 {
     int temp_len;
     uint8_t temp_str[512];
@@ -432,17 +432,17 @@ static int Message_info_transpond (Caven_App_Type *message)
     int temp_time = xTaskGetTickCount();
     int temp_num;
 
-    if ((caven_at_info_data.Result & 0xF0) == caven_at_info_standard.Result)
+    if ((Caven_at_info_data.Result & 0xF0) == Caven_at_info_standard.Result)
     {
-        char *p_temp_str = (char *)caven_at_info_data.p_Data;
+        char *p_temp_str = (char *)Caven_at_info_data.p_Data;
         int temp_len = strlen(p_temp_str);
 
-        ESP_LOGI(TAG,"get at cmd");
-        Message_info_send_packet_fun (caven_at_info_data);
+        ESP_LOGI(TAG,"get at cmd,from [%d]",Caven_at_info_data.Comm_way);
+        Message_info_send_packet_fun (Caven_at_info_data);
 
         if((strcmp(p_temp_str,"\r\n") == 0) && temp_len == 2)
         {
-            Message_info_send_result_fun(at_succ,caven_at_info_data.Comm_way);
+            Message_info_send_result_fun(at_succ,Caven_at_info_data.Comm_way);
             ESP_LOGI(TAG,"uart1[%d],uart2[%d],get[%d]",uart1_task_num,uart2_task_num,debug_num);
             uart1_task_num = 0;
             uart2_task_num = 0;
@@ -450,17 +450,17 @@ static int Message_info_transpond (Caven_App_Type *message)
         }
         else if (p_temp_str[0] == '+')
         {
-            Message_info_send_result_fun(at_succ,caven_at_info_data.Comm_way);
+            Message_info_send_result_fun(at_succ,Caven_at_info_data.Comm_way);
         }
         else if (p_temp_str[0] == 'E')
         {
-            Message_info_send_result_fun(at_fail,caven_at_info_data.Comm_way);
+            Message_info_send_result_fun(at_fail,Caven_at_info_data.Comm_way);
         }
         else
         {
-            Message_info_send_result_fun(at_Invalid,caven_at_info_data.Comm_way);
+            Message_info_send_result_fun(at_Invalid,Caven_at_info_data.Comm_way);
         }
-        caven_at_info_packet_clean_Fun(&caven_at_info_data);
+        caven_at_info_packet_clean_Fun(&Caven_at_info_data);
     }
 
     if (((temp_time - server_time) > 50 && server_num) || server_num > 300)
@@ -525,7 +525,7 @@ static int Message_info_handle (Caven_App_Type *message)
     
     if (Caven_info_pack.Result & Caven_standard.Result)
     {
-        ESP_LOGW(TAG,"get Caven_info_pack");
+        ESP_LOGW(TAG,"get Caven_info_pack,from [%d]",Caven_info_pack.Comm_way);
         ESP_LOGI(TAG,"Caven_info_pack Head[%X]",Caven_info_pack.Head);
         ESP_LOGI(TAG,"Caven_info_pack Type[%X]",Caven_info_pack.Type);
         ESP_LOGI(TAG,"Caven_info_pack Addr[%X]",Caven_info_pack.Addr);
@@ -560,8 +560,8 @@ void Message_info_task (void * empty)
     custom_uart1_receive_State_Machine_Bind (uart2_get_fun);
     custom_uart2_receive_State_Machine_Bind (uart2_get_fun);
 
-    caven_at_info_packet_clean_Fun(&caven_at_info_data);
-    caven_at_info_packet_index_Fun(&caven_at_info_data,at_info_data_buff[1]);
+    caven_at_info_packet_clean_Fun(&Caven_at_info_data);
+    caven_at_info_packet_index_Fun(&Caven_at_info_data,at_info_data_buff[1]);
     
     while (1)
     {

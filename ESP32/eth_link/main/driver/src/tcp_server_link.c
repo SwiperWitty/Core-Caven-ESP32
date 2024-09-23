@@ -136,7 +136,7 @@ static void do_retransmit(const int sock)
         {
             break;
         }
-    };
+    }
 }
 
 /*

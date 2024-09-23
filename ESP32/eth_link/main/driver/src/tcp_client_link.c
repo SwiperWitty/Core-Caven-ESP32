@@ -127,13 +127,43 @@ void tcp_client_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
     tcp_client_Callback_Fun = Callback_pFun;
 }
 
+static void do_retransmit(const int sock)
+{
+    int len;
+    char rx_buffer[128];
+
+    while (sock > 0) 
+    {
+        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+        // Error occurred during receiving
+        if (len < 0 || len == 0) {
+            ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d]????\n", errno,len);
+            tcp_client_sock = 0;
+            break;
+        }
+        // Data received
+        else {
+            rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+            if (tcp_client_Callback_Fun != NULL)
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    tcp_client_Callback_Fun(rx_buffer + i);
+                }
+            }
+        }
+        if (tcp_client_sock == 0)
+        {
+            break;
+        }
+    }
+}
 
 /*
     网络的应用层任务必须先确保底层网络是启动的，否则不应该启动这个任务
 */
 void tcp_client_link_task(void *empty)
 {
-    char rx_buffer[128];
     char host_ip[50];
     int addr_family = 0;
     int ip_protocol = 0;
@@ -209,31 +239,8 @@ void tcp_client_link_task(void *empty)
         ESP_LOGI(TAG, "Successfully connected");
         ESP_LOGI(TAG, "Socket num: [%d]", sock);
         tcp_client_sock = sock;
-        while (sock > 0) 
-        {
-            int len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-            // Error occurred during receiving
-            if (len < 0 || len == 0) {
-                ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d]????\n", errno,len);
-                tcp_client_sock = 0;
-                break;
-            }
-            // Data received
-            else {
-                rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-                if (tcp_client_Callback_Fun != NULL)
-                {
-                    for (int i = 0; i < len; i++)
-                    {
-                        tcp_client_Callback_Fun(rx_buffer + i);
-                    }
-                }
-            }
-            if (tcp_client_sock == 0)
-            {
-                break;
-            }
-        }
+
+        do_retransmit(sock);
 CLEAN_UP :
         if (sock != -1) {
             ESP_LOGE(TAG, "Shutting down socket and restarting...");
