@@ -4,7 +4,9 @@
         "caven_type.h": "c",
         "mode_st7789_dever.h": "c",
         "mode_rtc8564.h": "c",
-        "mode_bmi088.h": "c"
+        "mode_bmi088.h": "c",
+        "network_manage.h": "c",
+        "tcp_server_link.h": "c"
     },
     "cmake.sourceDirectory": "E:/WORK/COM/Core-Caven-ESP32/ESP32/ble_spp_server"
 }

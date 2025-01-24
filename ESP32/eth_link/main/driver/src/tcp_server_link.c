@@ -32,17 +32,27 @@ static char sock_flag = 0;      // 1是wifi的sock
 
 
 /*
-    server 只能修改端口，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
+    server 只能修改端口并断开连接，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
     enable 0 会关闭当前sock，没有则不生效
 */
 int tcp_server_link_config (char *port_str,int enable)
 {
     int retval = 0;
-    if (enable)
+    if (enable == 0)
+    {
+        if (tcp_server_sock > 0)
+        {
+            ESP_LOGW(TAG, "config close sock <-- \n");
+            shutdown(tcp_server_sock, 0);
+            close(tcp_server_sock);
+            tcp_server_sock = 0;
+        }
+    }
+    else
     {
         if (port_str == NULL)
         {
-            retval = 1;
+            retval = tcp_server_sock;
             ESP_LOGE(TAG, "where are you IP ?");
             return retval;
         }
@@ -51,16 +61,12 @@ int tcp_server_link_config (char *port_str,int enable)
             memset(sock_port_str,0,sizeof(sock_port_str));
             strcpy(sock_port_str, port_str);
             ESP_LOGW(TAG, "config link ip[xx.xx.xx.xx:%s]",sock_port_str);
-        }
-    }
-    else
-    {
-        if (tcp_server_sock > 0)
-        {
-            ESP_LOGW(TAG, "config close sock <-- \n");
-            shutdown(tcp_server_sock, 0);
-            close(tcp_server_sock);
-            tcp_server_sock = 0;
+            if (tcp_server_sock > 0)
+            {
+                shutdown(tcp_server_sock, 0);
+                close(tcp_server_sock);
+                tcp_server_sock = 0;
+            }
         }
     }
     retval = tcp_server_sock;
@@ -170,6 +176,10 @@ void tcp_server_link_task(void *empty)
         vTaskDelay(100 / portTICK_PERIOD_MS);
     } while (temp_num == 0);        // 等待网络连接,否则不开启服务器
     // start
+    if (temp_num)
+    {
+        ESP_LOGW(TAG, "get network rj45[1]/wifi[2] ID [%d]",temp_num);
+    }
     if (strlen(sock_port_str) == 0)
     {
         strcpy(sock_port_str,"8160");

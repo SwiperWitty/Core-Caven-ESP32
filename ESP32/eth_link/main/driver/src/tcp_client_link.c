@@ -37,18 +37,29 @@ static char sock_flag = 0;      // 1是wifi的sock
 
 
 /*
-    enable = 0,关闭client_link,并清除ip_str
-    enable = 1,打开client_link,并重置ip_str
-    enable = 2,关闭client sock,相当于重连
+    enable = 0,关闭client_link
+    enable = 1,打开client_link,并重置str,此时str为NULL，理解为询问tcp_client_sock
 */
 int tcp_client_link_config (char *ip_str,char *port_str,int enable)
 {
     int retval = 0;
-    if (enable)
+    if (enable == 0)
+    {
+        memset(sock_ip_str,0,sizeof(sock_ip_str));
+        if (tcp_client_sock > 0)
+        {
+            ESP_LOGW(TAG, "config client ");
+            ESP_LOGW(TAG, "config close sock <-- \n");
+            shutdown(tcp_client_sock, 0);
+            close(tcp_client_sock);
+            tcp_client_sock = 0;
+        }
+    }
+    else
     {
         if (ip_str == NULL || port_str == NULL)
         {
-            retval = 1;
+            retval = tcp_client_sock;
             ESP_LOGE(TAG, "where are you IP ?");
             return retval;
         }
@@ -59,9 +70,6 @@ int tcp_client_link_config (char *ip_str,char *port_str,int enable)
             strcpy(sock_ip_str, ip_str);
             strcpy(sock_port_str, port_str);
             ESP_LOGW(TAG, "config link ip[%s:%s]",sock_ip_str,sock_port_str);
-        }
-        if (enable == 2)
-        {
             if (tcp_client_sock > 0)
             {
                 ESP_LOGW(TAG, "config close sock <-- \n");
@@ -69,18 +77,6 @@ int tcp_client_link_config (char *ip_str,char *port_str,int enable)
                 close(tcp_client_sock);
                 tcp_client_sock = 0;
             }
-        }
-    }
-    else
-    {
-        memset(sock_ip_str,0,sizeof(sock_ip_str));
-        if (tcp_client_sock > 0)
-        {
-            ESP_LOGW(TAG, "config client ");
-            ESP_LOGW(TAG, "config close sock <-- \n");
-            shutdown(tcp_client_sock, 0);
-            close(tcp_client_sock);
-            tcp_client_sock = 0;
         }
     }
     retval = tcp_client_sock;
@@ -186,12 +182,13 @@ void tcp_client_link_task(void *empty)
         } while (temp_num == 0);        // 等待网络连接
         do
         {
-            vTaskDelay(100 / portTICK_PERIOD_MS);
+            ESP_LOGW(TAG, "target ip null,wait...");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         } while (strlen(sock_ip_str) == 0);
         
         if (temp_num)
         {
-            ESP_LOGW(TAG, "get network ID [%d]",temp_num);
+            ESP_LOGW(TAG, "get network rj45[1]/wifi[2] ID [%d]",temp_num);
         }
         if (strlen(sock_port_str) == 0)
         {
