@@ -26,6 +26,7 @@
 
 static const char *TAG = "TCP server";
 
+static int tcp_server_enable = 0;
 static int tcp_server_sock = 0;
 static char sock_port_str[10] = {0};
 static char sock_flag = 0;      // 1是wifi的sock
@@ -38,6 +39,7 @@ static char sock_flag = 0;      // 1是wifi的sock
 int tcp_server_link_config (char *port_str,int enable)
 {
     int retval = 0;
+    tcp_server_enable = enable;
     if (enable)
     {
         if (port_str == NULL)
@@ -234,7 +236,7 @@ void tcp_server_link_task(void *empty)
                 temp_num += 2;
             }
             vTaskDelay(100 / portTICK_PERIOD_MS);
-        } while (temp_num == 0);        // 等待网络连接
+        } while (temp_num == 0 || tcp_server_enable == 0);        // 等待网络连接
         if (temp_num)
         {
             ESP_LOGW(TAG, "get network ID [%d]",temp_num);

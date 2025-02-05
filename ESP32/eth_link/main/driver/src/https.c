@@ -1,11 +1,6 @@
 #include "https.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#include "nvs_flash.h"
 #include "esp_event.h"
-#include "esp_log.h"
 #include "esp_system.h"
 #include "esp_netif.h"
 #include "esp_tls.h"
@@ -19,20 +14,13 @@
 
 #include "cJSON.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
 #include "esp_crt_bundle.h"
 #endif
 
 
 //Constants that aren't configurable in menuconfig
-#define WEB_SERVER "https://open-sandbox.atma.io"
-#define WEB_PORT "443"
-#define WEB_URL "https://open-sandbox.atma.io/trace/track-and-trace/api/v1/rovinj/events?tenant=rovinj"
-
+//
 #define body   "{\"eventType\":\"ObjectEvent\",\"action\":\"OBSERVE\",\"eventTime\":\"2024-04-11T10:47:29.066Z\",\"identifiers\":[\"303431711C5B07C000002714\"],\"readPoint\":\"SN-123123\",\"businessLocation\":\"urn:atma.io:loc:rovinj:rovinj:9018\",\"businessStep\":\"urn:epcglobal:cbv:bizstep:inspecting\",\"disposition\":\"urn:epcglobal:cbv:disp:conformant\",\"extensionElements\":{\"TID\":\"E2082734893739367282\",\"Session Scan\":\"1\",\"Session Action\":\"Normal\"}}"
 /*
 static const char HOWSMYSSL_REQUEST[1024] = "POST " WEB_URL " HTTP/1.1\r\n"
@@ -60,13 +48,31 @@ static const char LOCAL_SRV_REQUEST[] = "GET " CONFIG_EXAMPLE_LOCAL_SERVER_URL "
 
 static const char *TAG = "https";
 
+static int https_enable = 0;
+
 static char https_Host_str[100] = {0};
 static char https_url_str[100] = {0};
 static char https_port_str[10] = {"443"};
 
 static char https_head_str[300];
 static int https_head_len = 0;
+
+static char https_post_buff[1024*4];
+static int https_post_len = 0;
+
 static char https_send_buff[1024];
+
+/*
+    接收回调函数执行指针
+*/
+static D_Callback_pFun https_Callback_Fun = NULL;
+/*
+    接收回调函数绑定
+*/
+void https_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
+{
+    https_Callback_Fun = Callback_pFun;
+}
 
 /* Root cert for howsmyssl.com, taken from server_root_cert.pem
 
@@ -162,12 +168,13 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
         /* Print response directly to stdout as it is read */
         if (len)
         {
-            succ_flag = strstr(buf, succ_str);
-            ESP_LOGI(TAG, "%d bytes read", len);
-            for (int i = 0; i < len; i++) {
-                putchar(buf[i]);
+            ESP_LOGI(TAG,"POST: len[%d]byte \n%s\n",len,buf);
+            if (https_Callback_Fun != NULL)
+            {
+                https_Callback_Fun(buf);
             }
-            putchar('\n'); // JSON output doesn't have a newline at end
+            succ_flag = strstr(buf, succ_str);
+            // JSON output doesn't have a newline at end
         }
         if (succ_flag != NULL)
         {
@@ -255,12 +262,16 @@ static void https_get_request_using_already_saved_session(const char *url)
 }
 #endif
 
-int https_request_config_init (char *way_str,char *Host_str,char *URL_str,char *port_str)
+/*
+    初始化函数，应该在任务前面
+*/
+int https_request_config_init (char *way_str,char *Host_str,char *URL_str,char *port_str,int enable)
 {
     int retval = 0;
     int temp_num = 0;
     int temp_run = 0;
     char temp_str[300];
+    https_enable = enable;
     if (way_str == NULL || Host_str == NULL || URL_str == NULL)
     {
         retval = 1;
@@ -384,12 +395,13 @@ int https_request_add_header (char *type,char *data)
     给body加上末尾
     按照type发送
 */
-int https_request_Fun (char type,char *data_str)
+int https_request_data_Fun (char type,char *data)
 {
     int retval = 1;
     int temp_run = 0;
     int temp_num = 0;
     char temp_str[20];
+
     if (https_head_len == 0)
     {
         ESP_LOGE(TAG, "where are you header ?");
@@ -400,19 +412,37 @@ int https_request_Fun (char type,char *data_str)
         ESP_LOGE(TAG, "where are you url ?");
         return retval;
     }
-    else if (data_str == NULL)
+    else if (data == NULL)
     {
-        ESP_LOGE(TAG, "where are you data_str ?");
+        ESP_LOGE(TAG, "where are you data ?");
         return retval;
     }
-    temp_num = strlen(data_str);
+    do
+    {
+        if (wifi_get_local_ip_status(NULL,NULL,NULL))
+        {
+            temp_num = 1;
+        }
+        if (eth_get_local_ip_status(NULL,NULL,NULL))
+        {
+            temp_num += 2;
+        }
+        if (temp_num == 0)
+        {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    } while (temp_num == 0);        // 等待网络连接
+    if (temp_num)
+    {
+        ESP_LOGW(TAG, "get network ID [%d]",temp_num);
+    }
+    retval = https_head_len;
+    temp_num = strlen(data);
     if (temp_num == 0 || temp_num > 800)
     {
-        ESP_LOGE(TAG, "data_str len error");
+        ESP_LOGE(TAG, "data len error");
         return retval;
     }
-    
-    retval = https_head_len;
     memset(temp_str,0,sizeof(temp_str));
     sprintf(temp_str,"%d",temp_num);
     https_request_add_header ("Content-Length",temp_str);
@@ -420,7 +450,7 @@ int https_request_Fun (char type,char *data_str)
     https_head_len = retval;        // 还原https_head_len，不能将Content算入头长度中，否则下次头长度会叠加
     
     memcpy(&https_send_buff[0],https_head_str,temp_run);    // 将头载入
-    memcpy(&https_send_buff[temp_run],data_str,temp_num);   // 将body载入
+    memcpy(&https_send_buff[temp_run],data,temp_num);       // 将body载入
     temp_run += temp_num;
     temp_num = strlen("\r\n");
     memcpy(&https_send_buff[temp_run],"\r\n",temp_num);     // 数据结束
@@ -446,6 +476,9 @@ int https_request_Fun (char type,char *data_str)
     return retval;
 }
 
+/*
+    这个函数是user级函数(自定义内容的，本质是咋写都行)
+*/
 void JSON_DataToAtmajson (int utc,char *epc,char *tid,char *sn,char *str,char num,char state,char *ret_data)
 {
     char temp_str[30];
@@ -518,52 +551,75 @@ void JSON_DataToAtmajson (int utc,char *epc,char *tid,char *sn,char *str,char nu
     }
 }
 
-char http_array[1024];
+char https_type = 0;
+/*
+    一般使用这个，配合[https_cache_port_State_machine]使用
+*/
+void https_cache_request_data_Fun (char type,char *data)
+{
+    if (data != NULL && https_enable)
+    {
+        https_type = type;
+        int temp_num = strlen(data);
+        if ((temp_num + https_post_len) < sizeof(https_post_buff))
+        {
+            memcpy(&https_post_buff[https_post_len],data,temp_num);
+            https_post_len += temp_num;
+        }
+    }
+}
+
+void https_cache_clean (void)
+{
+    memset(https_post_buff,0,sizeof(https_post_buff));
+    https_post_len = 0;
+}
+
+void https_cache_request_State_machine (void *empty)
+{
+    if (https_post_len && https_enable)
+    {
+        https_request_data_Fun (https_type,https_post_buff);
+        https_cache_clean();
+    }
+}
 /*
     网络的应用层任务必须先确保底层网络是启动的，否则不应该启动这个任务
+    HTTPS的逻辑：
+    先对框架进行设置和搭建添加报头[https_request_config_init],[https_request_add_header]
+    然后把要发送的东西给[JSON_DataToAtmajson]自动生成user格式,由[https_request_data_Fun]自动发送出去(使用这个任务就是为了减少发送次数，缓存发送)
+    数据的返回在[esp_tls_conn_read]这个位置实现
+    HTTPS是无法在本地模拟的，只能去服务器看，但是想要debug看发送内容，直接在[JSON_DataToAtmajson]中打印即可。
 */
 void eps32_HTTPS_task (void *empty)
 {
     int times = 0;
-    https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL);
+    int temp_num = 0;
+    char http_array[1024];
+    
     https_request_add_header ("Subscription-Key","d31b82fdd20d4d019dc0f014447384f8");
     https_request_add_header ("12345","67890");
 
-    ESP_LOGI(TAG, " \n%s",https_head_str);
-    int temp_num = 0;
-    do
-    {
-        if (wifi_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num = 1;
-        }
-        if (eth_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num += 2;
-        }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    } while (temp_num == 0);        // 等待网络连接
-    if (temp_num)
-    {
-        ESP_LOGW(TAG, "get network ID [%d]",temp_num);
-    }
+    ESP_LOGI(TAG, "https_head \n[%s]",https_head_str);
 
-    ESP_LOGI(TAG, "way 1");
-    https_request_Fun (1,body);
-    ESP_LOGI(TAG, "way 2");
-    https_request_Fun (2,body);
-    ESP_LOGI(TAG, "way 3");
-    https_request_Fun (3,body);
+    // ESP_LOGI(TAG, "way 1");
+    // https_request_data_Fun (1,body);
+    // ESP_LOGI(TAG, "way 2");
+    // https_request_data_Fun (2,body);
+    // ESP_LOGI(TAG, "way 3");
+    // https_request_data_Fun (3,body);
 
-    JSON_DataToAtmajson (0,"1234","E2082734893739367282","SN-123123","urn:atma.io:loc:rovinj:rovinj:9018",2,4,http_array);
-    https_request_Fun (1,http_array);
+    JSON_DataToAtmajson (0,"9966","E2082734893739367282","SN-123123","urn:atma.io:loc:rovinj:rovinj:9018",2,4,http_array);
+    https_cache_request_data_Fun (1,http_array);
     while (1)
     {
+        if (https_enable)
+        {
+            https_cache_request_State_machine (NULL);
+        }
+        http_cache_port_State_machine (NULL);   // 暂时把http放在https里面 
+
         times ++;
-        // printf("Minimum free heap size: %d bytes,times [%d]\n", esp_get_minimum_free_heap_size(),times);
-        // https_request_Fun (1,body);
         vTaskDelay(pdMS_TO_TICKS(200));
-        
     }
-    
 }

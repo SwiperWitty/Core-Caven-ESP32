@@ -16,15 +16,15 @@ SYS_cfg_Type g_SYS_Config = {
     .WIFI_enable = 1,
     .RJ45_enable = 1,
     .AT4G_enable = 0,
-    .Server_Switch = 1,
-    .Client_Switch = 1,
+    .Server_Switch = 0,
+    .Client_Switch = 0,
     .HTTP_Switch = 0,
     .MQTT_Switch = 0,
 
     .RJ45_work_Mode = 1,
     .WIFI_work_Mode = 0,
-    .RJ45_static_ip = "192.168.1.200",
-    .RJ45_static_gw = "192.168.1.1",
+    .RJ45_static_ip = "192.168.0.200",
+    .RJ45_static_gw = "192.168.0.1",
     .RJ45_static_netmask = "255.255.255.0",
 
     .Net_Server_port = "8160",
@@ -88,6 +88,10 @@ void system_app_init(void)
     //
     tcp_client_link_config (g_SYS_Config.Net_Client_ip,g_SYS_Config.Net_Client_port,g_SYS_Config.Client_Switch);
     tcp_server_link_config (g_SYS_Config.Net_Server_port,g_SYS_Config.Server_Switch);
+    //
+    http_client_config_init ("http://192.168.0.128:9010/post","9010",1);
+    //
+    https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL,1);
     //
     custom_uart1_init(g_SYS_Config.AT4G_Baud, 1);
     custom_uart2_init(g_SYS_Config.SYS_Baud, 1);

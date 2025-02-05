@@ -15,6 +15,7 @@ set(srcs
     "driver/src/Network_manage.c"
     "driver/src/tcp_server_link.c"
     "driver/src/tcp_client_link.c"
+    "driver/src/http.c"
     "driver/src/https.c"
     "driver/src/Custom_gpio.c"
 

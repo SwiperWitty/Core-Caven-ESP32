@@ -547,13 +547,14 @@ static int Message_info_handle (Caven_App_Type *message)
     return retval;
 }
 
-uint8_t at_info_data_buff[5][500];
+
 
 void Message_info_task (void * empty)
 {
     int temp_time;
     int retval = 0;
-
+    uint8_t at_info_data_buff[5][500];
+    
     Message_info.app_ID = TRANSPOND_INFO;
     tcp_server_receive_State_Machine_Bind (rj45_server_get_fun);
     tcp_client_receive_State_Machine_Bind (rj45_client_get_fun);

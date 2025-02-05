@@ -20,7 +20,7 @@ void app_main(void)
     char *temp_array;
     int run_time;
     int ram_size = esp_get_free_heap_size();
-    ESP_LOGI("ram log","free_heap_size = %d \r\n", ram_size);
+    ESP_LOGI("ram log 2","free_heap_size = %d \r\n",ram_size);
     temp_array = malloc(300);
     while (1)
     {
@@ -50,10 +50,12 @@ void app_main(void)
         ram_size = esp_get_free_heap_size();
         if (ram_size < 4096*10)
         {
-            ESP_LOGE("ram log","free_heap_size = %d \r\n\r\n", ram_size);
+            ESP_LOGE("ram log","error free_heap_size = %d \r\n\r\n", ram_size);
             system_rst();
         }
-        vTaskDelay(pdMS_TO_TICKS(3));
+        http_cache_port_data_Fun ("{\"deviceSerial\":\"N6801FFFF241116A0040\",\"heartbeatTime\":\"1738749813000\",\"upTime\":\"1209126\"}");
+
+        vTaskDelay(pdMS_TO_TICKS(3000));
     }
     free(temp_array);
 }
@@ -69,14 +71,14 @@ void Build_task(void)
     led_taskhanlde = NULL;
     lcd_taskhanlde = NULL;
     int ram_size = esp_get_free_heap_size();
-    ESP_LOGI("ram log","free_heap_size = %d \r\n",ram_size);
+    ESP_LOGI("ram log 1","free_heap_size = %d \r\n",ram_size);
     custom_uart_task_Fun();
     xTaskCreatePinnedToCore(test_led_task, "task-[LED]", 1024*2, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde, CORE_ZERO);
     // xTaskCreate(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL);
     xTaskCreate(tcp_server_link_task, "tcp server task", 1024*4, NULL, TCP_SERVER_TASK_PRIORITY, NULL);
     xTaskCreate(tcp_client_link_task, "tcp client task", 1024*4, NULL, TCP_CLIENT_TASK_PRIORITY, NULL);
-    // xTaskCreate(eps32_HTTPS_task, "https get task", 1024*8, NULL, HTTP_TASK_PRIORITY, NULL);
-    xTaskCreate(Message_info_task, "tcp client task", 1024*4, NULL, MESSAGE_INFO_TASK_PRIORITY, NULL);
+    xTaskCreate(eps32_HTTPS_task, "https get task", 1024*8, NULL, HTTP_TASK_PRIORITY, NULL);
+    // xTaskCreate(Message_info_task, "tcp Message Main task", 1024*4, NULL, MESSAGE_INFO_TASK_PRIORITY, NULL);
 
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
 
@@ -96,8 +98,7 @@ void Main_Init(void)
     information_init(); // 打印初始化信息
     draw_coordinate_line_handle(0, 0, 18, 18);
     draw_coordinate_show(26, 26);
-    //
+    // net + uart
     system_app_init();
-
 }
 

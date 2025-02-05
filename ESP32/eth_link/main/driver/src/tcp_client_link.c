@@ -30,6 +30,7 @@
 
 static const char *TAG = "TCP client";
 
+static int tcp_client_enable = 0;
 static int tcp_client_sock = 0;
 static char sock_ip_str[50] = {0};
 static char sock_port_str[10] = {0};
@@ -43,6 +44,7 @@ static char sock_flag = 0;      // 1是wifi的sock
 int tcp_client_link_config (char *ip_str,char *port_str,int enable)
 {
     int retval = 0;
+    tcp_client_enable = enable;
     if (enable == 0)
     {
         memset(sock_ip_str,0,sizeof(sock_ip_str));
@@ -179,7 +181,7 @@ void tcp_client_link_task(void *empty)
                 temp_num += 2;
             }
             vTaskDelay(100 / portTICK_PERIOD_MS);
-        } while (temp_num == 0);        // 等待网络连接
+        } while (temp_num == 0 || tcp_client_enable == 0);        // 等待网络连接
         do
         {
             ESP_LOGW(TAG, "target ip null,wait...");

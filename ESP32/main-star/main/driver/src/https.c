@@ -525,7 +525,7 @@ char http_array[1024];
 void eps32_HTTPS_task (void *empty)
 {
     int times = 0;
-    https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL);
+    // https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL,1);
     https_request_add_header ("Subscription-Key","d31b82fdd20d4d019dc0f014447384f8");
     https_request_add_header ("12345","67890");
 

@@ -6,7 +6,12 @@
         "mode_rtc8564.h": "c",
         "mode_bmi088.h": "c",
         "network_manage.h": "c",
-        "tcp_server_link.h": "c"
+        "tcp_server_link.h": "c",
+        "https.h": "c",
+        "items.h": "c",
+        "http.h": "c",
+        "message_info_app.h": "c",
+        "main.h": "c"
     },
     "cmake.sourceDirectory": "E:/WORK/COM/Core-Caven-ESP32/ESP32/ble_spp_server"
 }
