@@ -131,22 +131,22 @@ static void uart2_get_fun (void *data)
 
 }
 
-// 发送at指令消息
-static void Message_info_send_packet_fun (Caven_at_info_packet_Type data)
+// 发送caven消息
+static void Message_info_send_Caven_packet_fun (Caven_info_packet_Type data)
 {
     int temp_len;
-    uint8_t temp_str[512];
-    temp_len = caven_at_info_Split_packet_Fun(data, temp_str);
+    uint8_t temp_data[512];
+    temp_len = Caven_info_Split_packet_Fun(data, temp_data);
     switch (data.Comm_way)
     {
     case m_Connect_SYS:
-        custom_uart2_send_data(temp_str, temp_len);
+        custom_uart2_send_data(temp_data, temp_len);
         break;
     case m_Connect_Server:
-        tcp_server_send_data(temp_str, temp_len);
+        tcp_server_send_data(temp_data, temp_len);
         break;
     case m_Connect_Client:
-        tcp_client_send_data(temp_str, temp_len);
+        tcp_client_send_data(temp_data, temp_len);
         break;
     case m_Connect_BLE:
         break;
@@ -155,8 +155,32 @@ static void Message_info_send_packet_fun (Caven_at_info_packet_Type data)
     }
 }
 
-// 发送at指令结果
-static void Message_info_send_result_fun (char *data,int way)
+// 发送at pack
+static void Message_info_send_AT_packet_fun (Caven_at_info_packet_Type data)
+{
+    int temp_len;
+    uint8_t temp_data[512];
+    temp_len = caven_at_info_Split_packet_Fun(data, temp_data);
+    switch (data.Comm_way)
+    {
+    case m_Connect_SYS:
+        custom_uart2_send_data(temp_data, temp_len);
+        break;
+    case m_Connect_Server:
+        tcp_server_send_data(temp_data, temp_len);
+        break;
+    case m_Connect_Client:
+        tcp_client_send_data(temp_data, temp_len);
+        break;
+    case m_Connect_BLE:
+        break;
+    default:
+        break;
+    }
+}
+
+// 发送at指令
+static void Message_info_send_AT_CMD_fun (char *data,int way)
 {
     int temp_len = 0;
     uint8_t temp_str[512];
@@ -201,11 +225,11 @@ static int Message_info_transpond (Caven_App_Type *message)
         int temp_len = strlen(p_temp_str);
 
         ESP_LOGI(TAG,"get at cmd,from [%d]",Caven_at_info_data.Comm_way);
-        Message_info_send_packet_fun (Caven_at_info_data);
+        Message_info_send_AT_packet_fun (Caven_at_info_data);
 
         if((strcmp(p_temp_str,"\r\n") == 0) && temp_len == 2)
         {
-            Message_info_send_result_fun(at_succ,Caven_at_info_data.Comm_way);
+            Message_info_send_AT_CMD_fun(at_succ,Caven_at_info_data.Comm_way);
             ESP_LOGI(TAG,"uart1[%d],uart2[%d],get[%d]",uart1_task_num,uart2_task_num,debug_num);
             uart1_task_num = 0;
             uart2_task_num = 0;
@@ -213,15 +237,15 @@ static int Message_info_transpond (Caven_App_Type *message)
         }
         else if (p_temp_str[0] == '+')
         {
-            Message_info_send_result_fun(at_succ,Caven_at_info_data.Comm_way);
+            Message_info_send_AT_CMD_fun(at_succ,Caven_at_info_data.Comm_way);
         }
         else if (p_temp_str[0] == 'E')
         {
-            Message_info_send_result_fun(at_fail,Caven_at_info_data.Comm_way);
+            Message_info_send_AT_CMD_fun(at_fail,Caven_at_info_data.Comm_way);
         }
         else
         {
-            Message_info_send_result_fun(at_Invalid,Caven_at_info_data.Comm_way);
+            Message_info_send_AT_CMD_fun(at_Invalid,Caven_at_info_data.Comm_way);
         }
         caven_at_info_packet_clean_Fun(&Caven_at_info_data);
     }
@@ -256,6 +280,7 @@ static int Message_info_handle (Caven_App_Type *message)
     
     if (temp_pack.Result & Caven_standard.Result)
     {
+    #if 1
         ESP_LOGW(TAG,"get Caven_info_pack,from [%d]",temp_pack.Comm_way);
         ESP_LOGI(TAG,"Caven_info_pack Head[%X]",temp_pack.Head);
         ESP_LOGI(TAG,"Caven_info_pack Type[%X]",temp_pack.Type);
@@ -273,7 +298,8 @@ static int Message_info_handle (Caven_App_Type *message)
         printf("\r\n");
         ESP_LOGI(TAG,"Caven_info_pack all_data[%p] p_Data[%p]",temp_pack.p_AllData,temp_pack.p_Data);
         ESP_LOGI(TAG,"Caven_info_pack end \n");
-
+    #endif
+        Message_info_send_Caven_packet_fun (temp_pack);
         Caven_info_packet_fast_clean_Fun((Caven_info_packet_Type *)message->p_Data);
     }
     
@@ -325,7 +351,7 @@ void Message_info_task (void * empty)
             vTaskDelay(pdMS_TO_TICKS(100));
             esp_restart();
         }
-        vTaskDelay(pdMS_TO_TICKS(3));
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 

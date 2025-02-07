@@ -265,7 +265,7 @@ void tcp_server_link_task(void *empty)
         }
         struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
         socklen_t addr_len = sizeof(source_addr);
-        ESP_LOGI(TAG,"wait link ...\n");
+        ESP_LOGI(TAG,"server wait link ... port[%d]\n",ip_port);
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
