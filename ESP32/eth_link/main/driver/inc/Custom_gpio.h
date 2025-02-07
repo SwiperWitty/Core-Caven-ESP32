@@ -23,12 +23,9 @@
     #endif
 #endif
 
-int custom_gpio_init (int set);    // 示例 
+void User_GPIO_config(int gpiox,int pin,int set);
+void User_GPIO_set(int gpiox,int pin,int set);
+char User_GPIO_get(int gpiox,int pin);
 
-void LCD_POW_Set (int set);
-void POW_KILL_Set (int set);
-int LED_Set (char n,int set);
-
-void test_led_task (void *pvParam);
 
 #endif

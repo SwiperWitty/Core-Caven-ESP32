@@ -10,7 +10,7 @@
 
 int http_client_config_init (char *url_str,char *port_str,int enable);
 
-void http_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun);
+void http_receive_Callback_Bind (D_Callback_pFun Callback_pFun);
 int http_port_data_Fun (char *data);
 void http_cache_port_data_Fun (char *data);
 void http_cache_clean (void);

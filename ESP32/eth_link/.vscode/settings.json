@@ -32,7 +32,10 @@
         "information.h": "c",
         "system_app.h": "c",
         "message_info_app.h": "c",
-        "caven_at_info_frame.h": "c"
+        "caven_at_info_frame.h": "c",
+        "http.h": "c",
+        "encrypt_crc.h": "c",
+        "caven_info_frame.h": "c"
     },
     "idf.portWin": "COM62",
     "idf.flashType": "UART"

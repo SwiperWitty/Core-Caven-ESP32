@@ -80,32 +80,6 @@ typedef struct
     U8 BULE;
 }Caven_Color_Type;
 
-/*
-	x,y 是输入量
-	botton 是按键量
-	value 是其他数据输入 
-*/
-typedef struct
-{
-    int Control_x;
-    int Control_y;
-    int Control_botton;
-    void *Control_value;
-}Caven_Control_Type;
-
-typedef struct
-{
-    char flag;
-    int len_max;
-    int cache_max;
-    int len_a;
-    int len_b;
-    void *p_buff_a;
-    void *p_buff_b;
-    int time;           // ms
-    int time_out;
-}Caven_cache_Type;
-
 
 // Function
 /*
@@ -139,5 +113,17 @@ typedef struct
     Caven_Watch_Type Watch; // 时间(里面有utc)
 }Caven_App_Type;
 
+/*
+	x,y 是输入量
+	botton 是按键量
+	value 是其他数据输入 
+*/
+typedef struct
+{
+    int Control_x;
+    int Control_y;
+    int Control_botton;
+    void *Control_value;
+}Caven_Control_Type;
 
 #endif

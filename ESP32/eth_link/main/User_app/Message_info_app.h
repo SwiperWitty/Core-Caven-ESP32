@@ -2,8 +2,8 @@
 #define _MESSAGE_INFO_APP__H_
 
 #include"system_app.h"
-#include"Caven_Type.h"
 
+#include "Caven_info_frame.h"
 #include "caven_at_info_frame.h"
 
 

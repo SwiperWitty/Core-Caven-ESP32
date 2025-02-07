@@ -69,7 +69,7 @@ static D_Callback_pFun https_Callback_Fun = NULL;
 /*
     接收回调函数绑定
 */
-void https_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
+void https_receive_Callback_Bind (D_Callback_pFun Callback_pFun)
 {
     https_Callback_Fun = Callback_pFun;
 }

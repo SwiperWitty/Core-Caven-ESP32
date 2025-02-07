@@ -25,11 +25,15 @@ set(srcs
     "driver/src/MODE_BMI088.c"
     "driver/src/draw.c"
 
+    "API/Encrypt_crc.c"
+    "API/Caven_info_frame.c"
+    "API/caven_at_info_frame.c"
+
     "User_app/main.c"           # [app_main] 程序入口所在
     "User_app/show_app.c"
     "User_app/system_app.c"
     "User_app/Message_info_app.c"
-    "User_app/caven_at_info_frame.c"
+    
 )
 
 file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")
@@ -39,6 +43,7 @@ list(APPEND srcs ${SOURCE_FILE2})
 idf_component_register(SRCS  
     "${srcs}"
     INCLUDE_DIRS "User_app"		#头文件
+    INCLUDE_DIRS "API"	        #头文件
     INCLUDE_DIRS "driver/inc"	#头文件
     
     INCLUDE_DIRS "GUI"		    #头文件

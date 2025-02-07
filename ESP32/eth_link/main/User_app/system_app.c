@@ -16,9 +16,10 @@ SYS_cfg_Type g_SYS_Config = {
     .WIFI_enable = 1,
     .RJ45_enable = 1,
     .AT4G_enable = 0,
-    .Server_Switch = 0,
-    .Client_Switch = 0,
-    .HTTP_Switch = 0,
+    .Server_Switch = 1,
+    .Client_Switch = 1,
+    .HTTP_Switch = 1,
+    .HTTPS_Switch = 1,
     .MQTT_Switch = 0,
 
     .RJ45_work_Mode = 1,
@@ -27,18 +28,20 @@ SYS_cfg_Type g_SYS_Config = {
     .RJ45_static_gw = "192.168.0.1",
     .RJ45_static_netmask = "255.255.255.0",
 
-    .Net_Server_port = "8160",
-    .Net_Client_ip = "192.168.1.128",
-    .Net_Client_port = "9090",
+    .Net_Server_port = "8160",          //
+    .Net_Client_ip = "192.168.0.128",
+    .Net_Client_port = "9090",          //
     .AT4G_Client_ip = "192.168.1.128",
-    .AT4G_Client_port = "8080",
+    .AT4G_Client_port = "8080",         //
     
+    .HTTP_url = "http://192.168.0.128:9010/post",
+
     .Device_version_len = 0,
     .SYS_version_len = 0,
     
     .SYS_Rst = 0,
-    .SYS_utc_s = 0,
-    .SYS_utc_ms = 0,
+    .time.SYS_Sec = 0,
+    .time.time_us = 0,
     //
     .RJ45_online = 0,
     .WIFI_online = 0,
@@ -89,7 +92,7 @@ void system_app_init(void)
     tcp_client_link_config (g_SYS_Config.Net_Client_ip,g_SYS_Config.Net_Client_port,g_SYS_Config.Client_Switch);
     tcp_server_link_config (g_SYS_Config.Net_Server_port,g_SYS_Config.Server_Switch);
     //
-    http_client_config_init ("http://192.168.0.128:9010/post","9010",1);
+    http_client_config_init (g_SYS_Config.HTTP_url,"20",g_SYS_Config.HTTP_Switch);
     //
     https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL,1);
     //
@@ -108,8 +111,8 @@ void system_app_init(void)
     }
     else
     {
-        g_SYS_Config.SYS_utc_s = temp_rtc;
-        g_SYS_Config.SYS_utc_ms = xTaskGetTickCount() % 1000;
+        g_SYS_Config.time.SYS_Sec = temp_rtc;
+        g_SYS_Config.time.time_us = xTaskGetTickCount() % 1000;
     }
     ESP_LOGI(TAG, "init <--\n");
 }
@@ -117,4 +120,132 @@ void system_app_init(void)
 void system_rst(void)
 {
     esp_restart();
+}
+
+int custom_gpio_init(int set)
+{
+    int retval = 0;
+#ifdef Exist_GPIO
+
+#if (BOARD_NAME == ESP32_CAVEND)
+    if (set)
+    {
+        User_GPIO_config(0,LED_T_IO,1);
+        User_GPIO_config(0,KEY_IO,0);
+        User_GPIO_config(0,POW_KILL_IO,1);
+
+        LCD_POW_Set (1);
+        POW_KILL_Set (0);
+    }
+    else
+    {
+        gpio_pad_select_gpio(LED_T_IO);
+        gpio_set_direction(LED_T_IO, GPIO_MODE_INPUT_OUTPUT_OD);
+    }
+    retval = ESP_OK;
+#elif (BOARD_NAME == EY1001)
+
+#endif
+
+    ESP_LOGI(TAG, "init (%d) ", retval);
+#endif
+    return retval;
+}
+
+int LED_Set(char n, int set)
+{
+    int retval = ESP_OK;
+#ifdef Exist_GPIO
+    #if (BOARD_NAME == ESP32_CAVEND)
+    switch (n)
+    {
+    case 1:
+        if (set)
+        {
+            gpio_set_level(LED_T_IO, 1);        // high open 
+        }
+        else
+        {
+            gpio_set_level(LED_T_IO, 0);
+        }
+        break;
+    case 2:
+        if (set)
+        {
+        }
+        else
+        {
+        }
+        break;
+
+    default:
+        retval = -1;
+        break;
+    }
+    
+    #elif (BOARD_NAME == EY1001)
+
+    #endif
+
+#endif
+    return retval;
+}
+
+int KEY_Get (void)
+{
+    int retval = 0;
+    retval = gpio_get_level(KEY_IO);
+    return retval;
+}
+
+void LCD_POW_Set (int set)
+{
+    if (set)
+    {
+        gpio_set_level(LCD_POW_IO, 0);
+    }
+    else
+    {
+        gpio_set_level(LCD_POW_IO, 1);
+    }
+}
+
+void POW_KILL_Set (int set)
+{
+    User_GPIO_set(0,POW_KILL_IO,set);
+}
+
+void test_led_task(void *pvParam)
+{
+    int temp_num = 0;
+    custom_gpio_init(TURE); /* 简单的外设GPIO */
+    TickType_t xLast_Time = xTaskGetTickCount();
+    TickType_t absolute_Time = 100;
+    while (1)
+    {
+        temp_num++;
+        if (KEY_Get () == 0)
+        {
+            temp_num = 0;
+            xLast_Time = xTaskGetTickCount();
+            ESP_LOGI(TAG, "key get low");
+            do{
+                if ((xTaskGetTickCount() - xLast_Time) > 2000 && temp_num == 0)
+                {
+                    ESP_LOGI(TAG, "get off");
+                    temp_num = 1;
+                }
+                vTaskDelay(pdMS_TO_TICKS(absolute_Time));
+            }while (KEY_Get () == 0);
+            if (temp_num)
+            {
+                vTaskDelay(pdMS_TO_TICKS(absolute_Time));
+                POW_KILL_Set (1);
+            }
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(absolute_Time*10));
+        gpio_set_level(LED_T_IO, temp_num%2);
+    }
+    vTaskDelete(NULL); /*  基本不用退出 */
 }

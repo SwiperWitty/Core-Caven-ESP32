@@ -119,7 +119,7 @@ static D_Callback_pFun http_Callback_Fun = NULL;
 /*
     接收回调函数绑定
 */
-void http_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
+void http_receive_Callback_Bind (D_Callback_pFun Callback_pFun)
 {
     http_Callback_Fun = Callback_pFun;
 }

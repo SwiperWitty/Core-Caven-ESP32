@@ -26,18 +26,21 @@
 
 static const char *TAG = "TCP server";
 
+static int tcp_server_enable = 0;
 static int tcp_server_sock = 0;
 static char sock_port_str[10] = {0};
 static char sock_flag = 0;      // 1是wifi的sock
 
 
 /*
-    server 只能修改端口并断开连接，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
-    enable 0 会关闭当前sock，没有则不生效
+    enable 0,会关闭当前sock，没有则不生效
+    enable 1,打开server_link,并重置str,若此时str为NULL，理解为询问tcp_server_sock
+    server 只能修改端口(改完请重启)，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
 */
 int tcp_server_link_config (char *port_str,int enable)
 {
     int retval = 0;
+    tcp_server_enable = enable;
     if (enable == 0)
     {
         if (tcp_server_sock > 0)
@@ -53,7 +56,7 @@ int tcp_server_link_config (char *port_str,int enable)
         if (port_str == NULL)
         {
             retval = tcp_server_sock;
-            ESP_LOGE(TAG, "where are you IP ?");
+            ESP_LOGW(TAG, "where are you IP ?");
             return retval;
         }
         else
@@ -163,6 +166,7 @@ void tcp_server_link_task(void *empty)
     uint8_t wifi_ip_str[10];
     uint8_t wifi_gw_str[10];
     uint8_t wifi_netmask_str[10];
+    temp_num = 0;
     do
     {
         if (wifi_get_local_ip_status(NULL,NULL,NULL))
@@ -173,8 +177,11 @@ void tcp_server_link_task(void *empty)
         {
             temp_num += 2;
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    } while (temp_num == 0);        // 等待网络连接,否则不开启服务器
+        if (temp_num)
+        {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    } while (temp_num == 0 || tcp_server_enable == 0);        // 等待网络连接,否则不开启服务器
     // start
     if (temp_num)
     {
@@ -247,19 +254,25 @@ void tcp_server_link_task(void *empty)
             {
                 temp_num += 2;
             }
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-        } while (temp_num == 0);        // 等待网络连接
+            if (temp_num)
+            {
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+            }
+        } while (temp_num == 0 || tcp_server_enable == 0);        // 等待网络连接,否则不开启服务器
         if (temp_num)
         {
             ESP_LOGW(TAG, "get network ID [%d]",temp_num);
         }
         struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
         socklen_t addr_len = sizeof(source_addr);
+        ESP_LOGI(TAG,"wait link ...\n");
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
             break;
         }
+        tcp_server_sock = sock;
+
         // Set tcp keepalive option
         setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, sizeof(int));
         setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(int));
@@ -322,7 +335,6 @@ void tcp_server_link_task(void *empty)
                 ESP_LOGW(TAG, "maybe wifi network socket link");
             }
         }
-        tcp_server_sock = sock;
 
         do_retransmit(sock);        // !!!!
         if (sock != 0)

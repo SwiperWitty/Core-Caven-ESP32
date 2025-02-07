@@ -17,7 +17,7 @@ int https_request_config_init (char *way_str,char *Host_str,char *URL_str,char *
 
 int https_request_add_header (char *type,char *data);
 
-void https_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun);
+void https_receive_Callback_Bind (D_Callback_pFun Callback_pFun);
 int https_request_data_Fun (char type,char *data);
 void https_cache_request_data_Fun (char type,char *data);
 void https_cache_clean (void);

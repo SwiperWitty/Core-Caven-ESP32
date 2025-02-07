@@ -1,10 +1,8 @@
 #ifndef _SYSTEM_APP__H_
 #define _SYSTEM_APP__H_
 
-#include "nvs_flash.h"
-#include "driver/gpio.h"
-
 #include"Items.h"
+#include"API.h"
 
 #ifdef Exist_RTC_Clock
     #include "MODE_RTC8564.h"
@@ -23,7 +21,7 @@
 #include "tcp_server_link.h"
 #include "tcp_client_link.h"
 #include "https.h"
-
+#include "http.h"
 
 /* 
 -试一下
@@ -168,6 +166,7 @@ typedef struct
     char Server_Switch;
     char Client_Switch;
     char HTTP_Switch;
+    char HTTPS_Switch;
     char MQTT_Switch;
 
     char RJ45_work_Mode;
@@ -187,6 +186,9 @@ typedef struct
     char AT4G_Client_port[10];
 
     char HTTP_url[100];
+    char HTTPS_url[100];
+    char HTTPS_way[50];
+    char HTTPS_Host[50];
     char MQTT_url[100];
     
     char Device_version[50];
@@ -196,8 +198,7 @@ typedef struct
 
     // 设备动态管理
     char SYS_Rst;
-    uint32_t SYS_utc_s;
-    uint32_t SYS_utc_ms;
+    Caven_Watch_Type time;
 
     char RJ45_online;
     char WIFI_online;
@@ -218,5 +219,13 @@ extern SYS_cfg_Type g_SYS_Config;
 
 void system_app_init(void);
 void system_rst(void);
+
+int custom_gpio_init (int set);    // 示例 
+
+void LCD_POW_Set (int set);
+void POW_KILL_Set (int set);
+int LED_Set (char n,int set);
+
+void test_led_task (void *pvParam);
 
 #endif
