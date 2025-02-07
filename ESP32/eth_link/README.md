@@ -325,7 +325,6 @@ void *tcp_server_link_task(void *empty)
         goto GT_tcp_server_start;
 		// exit(EXIT_FAILURE);
 	}
-    printf("server port[%d]\n",8160);
     // 建立监听队列listen，成功返回0，出错返回-1
     if(listen(server_sockfd,20) == -1)
     {
@@ -363,7 +362,7 @@ void *tcp_server_link_task(void *empty)
                 sleep(1);
             }
         } while (temp_num == 0 || tcp_server_enable == 0);	// 等待网络连接,否则不开启服务器
-        printf("wait link ...\n");
+        printf("server wait link ... port[%d]\n",ip_port);
         // 等待客户端连接请求到达,成功返回非负描述字，出错返回-1
         int conn = accept(server_sockfd, (struct sockaddr*)&source_addr, &length);
         if(conn<0)
