@@ -43,5 +43,6 @@ int eth_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str);
 
 int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str);
 int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str);
+int Network_manage_get_status (void);
 
 #endif

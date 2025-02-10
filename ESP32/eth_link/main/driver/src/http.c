@@ -139,14 +139,7 @@ int http_port_data_Fun (char *data)
     }
     do
     {
-        if (wifi_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num = 1;
-        }
-        if (eth_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num += 2;
-        }
+        temp_num = Network_manage_get_status();
         if (temp_num == 0)
         {
             vTaskDelay(100 / portTICK_PERIOD_MS);

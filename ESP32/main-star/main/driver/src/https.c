@@ -533,14 +533,7 @@ void eps32_HTTPS_task (void *empty)
     int temp_num = 0;
     do
     {
-        if (wifi_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num = 1;
-        }
-        if (eth_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num += 2;
-        }
+        temp_num = Network_manage_get_status();
         vTaskDelay(100 / portTICK_PERIOD_MS);
     } while (temp_num == 0);        // 等待网络连接
     if (temp_num)

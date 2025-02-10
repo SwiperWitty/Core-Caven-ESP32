@@ -731,6 +731,30 @@ int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_st
     return retval;
 }
 
+/*
+    retval = 0,无网络
+    retval = 1,wifi连接
+    retval = 2,rj45连接
+    retval = 3,wifi+rj45
+    retval = 4,4g
+    retval = 5,wifi+4g
+    retval = 6,rj45+4g
+    retval = 7,wifi+rj45+4g
+*/
+int Network_manage_get_status (void)
+{
+    int retval = 0;
+    if (wifi_get_local_ip_status(NULL,NULL,NULL))
+    {
+        retval = 1;
+    }
+    if (eth_get_local_ip_status(NULL,NULL,NULL))
+    {
+        retval += 2;
+    }
+    return retval;
+}
+
 int Network_manage_Init (int mode,int set)
 {
     int retval = 0;

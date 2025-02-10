@@ -169,14 +169,7 @@ void tcp_server_link_task(void *empty)
     temp_num = 0;
     do
     {
-        if (wifi_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num = 1;
-        }
-        if (eth_get_local_ip_status(NULL,NULL,NULL))
-        {
-            temp_num += 2;
-        }
+        temp_num = Network_manage_get_status();
         if (temp_num)
         {
             vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -246,14 +239,7 @@ void tcp_server_link_task(void *empty)
         temp_num = 0;
         do
         {
-            if (wifi_get_local_ip_status(NULL,NULL,NULL))
-            {
-                temp_num = 1;
-            }
-            if (eth_get_local_ip_status(NULL,NULL,NULL))
-            {
-                temp_num += 2;
-            }
+            temp_num = Network_manage_get_status();
             if (temp_num)
             {
                 vTaskDelay(100 / portTICK_PERIOD_MS);
