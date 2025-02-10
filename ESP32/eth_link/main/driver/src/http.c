@@ -179,8 +179,8 @@ int http_port_data_Fun (char *data)
     esp_http_client_set_method(httpclient, HTTP_METHOD_POST);
     esp_http_client_set_url(httpclient, "/add/");
 */
-    esp_http_client_set_url(httpclient, http_url_str);
     esp_http_client_set_method(httpclient, HTTP_METHOD_POST);
+    esp_http_client_set_url(httpclient, http_url_str);
     // 设置请求头
     esp_http_client_set_header(httpclient, "Content-Type", "application/json");
     esp_http_client_set_header(httpclient, "User-Agent", "=ESP32 HTTP Client/1.0");
