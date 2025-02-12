@@ -114,6 +114,7 @@ void system_app_init(void)
         g_SYS_Config.time.SYS_Sec = temp_rtc;
         g_SYS_Config.time.time_us = xTaskGetTickCount() % 1000;
     }
+    
     ESP_LOGI(TAG, "init <--\n");
 }
 
@@ -246,6 +247,7 @@ void test_led_task(void *pvParam)
         
         vTaskDelay(pdMS_TO_TICKS(absolute_Time*10));
         gpio_set_level(LED_T_IO, temp_num%2);
+
     }
     vTaskDelete(NULL); /*  基本不用退出 */
 }

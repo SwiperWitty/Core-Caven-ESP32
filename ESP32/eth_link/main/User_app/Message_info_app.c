@@ -325,12 +325,13 @@ void Message_info_task (void * empty)
 
     Caven_info_packet_fast_clean_Fun(&Caven_info_pack);
     Caven_info_packet_index_Fun(&Caven_info_pack, at_info_data_buff[2]);
-
+    User_GPIO_config(0,2,1);
+    User_GPIO_set(0,2,0);
     ESP_LOGW(TAG,"work mode app_ID[%d]",Message_info.app_ID);
     while (1)
     {
         Message_info.Watch = g_SYS_Config.time;
-        
+        User_GPIO_set(0,2,(Message_info.Watch.SYS_Sec%2));
         switch (Message_info.app_ID)
         {
         case TRANSPOND_INFO:
@@ -344,7 +345,7 @@ void Message_info_task (void * empty)
         default:
             break;
         }
-
+        
         retval |= g_SYS_Config.SYS_Rst;
         if (retval)
         {
