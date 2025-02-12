@@ -24,17 +24,17 @@ SYS_cfg_Type g_SYS_Config = {
 
     .RJ45_work_Mode = 1,
     .WIFI_work_Mode = 0,
-    .RJ45_static_ip = "192.168.0.200",
-    .RJ45_static_gw = "192.168.0.1",
+    .RJ45_static_ip = "192.168.1.200",
+    .RJ45_static_gw = "192.168.1.1",
     .RJ45_static_netmask = "255.255.255.0",
 
     .Net_Server_port = "8160",          //
-    .Net_Client_ip = "192.168.0.128",
+    .Net_Client_ip = "192.168.1.128",
     .Net_Client_port = "9090",          //
     .AT4G_Client_ip = "192.168.1.128",
     .AT4G_Client_port = "8080",         //
     
-    .HTTP_url = "http://192.168.0.128:9010/post",
+    .HTTP_url = "http://192.168.1.128:9010/post",
 
     .Device_version_len = 0,
     .SYS_version_len = 0,

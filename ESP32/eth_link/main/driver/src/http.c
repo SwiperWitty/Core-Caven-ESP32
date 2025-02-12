@@ -125,7 +125,7 @@ void http_receive_Callback_Bind (D_Callback_pFun Callback_pFun)
 }
 
 /*
-    收发本体都在其中
+    收发本体都在其中,此函数会阻塞，请使用单独任务调用
 */
 int http_port_data_Fun (char *data)
 {
@@ -177,21 +177,29 @@ int http_port_data_Fun (char *data)
     // 设置请求头
     esp_http_client_set_header(httpclient, "Content-Type", "application/json");
     esp_http_client_set_header(httpclient, "User-Agent", "=ESP32 HTTP Client/1.0");
-    ret = esp_http_client_set_post_field(httpclient, data, strlen(data));
+    temp_num = strlen(data);
+    ret = esp_http_client_set_post_field(httpclient, data, temp_num);
+    ESP_LOGW(TAG,"POST: len[%d]byte --->",temp_num);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to set_post %s", esp_err_to_name(ret));
+        ret = -2;
     }
 
     ret = esp_http_client_perform(httpclient);
     if (ret == ESP_OK)  // 响应完成
     {
         temp_num = strlen(response_data);
-        ESP_LOGI(TAG,"POST: len[%d]byte \n%s\n",temp_num,response_data);
+        ESP_LOGW(TAG,"POST: len[%d]byte <---",temp_num);
         if (http_Callback_Fun != NULL)
         {
             http_Callback_Fun (response_data);
         }
     }
+    else
+    {
+        ret = -1;
+    }
+    
     if (httpclient != NULL)
     {
         esp_http_client_close(httpclient);

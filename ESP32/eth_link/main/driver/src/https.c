@@ -120,7 +120,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
 #endif
     size_t written_bytes = 0;
     /*2.写入http请求*/
-    ESP_LOGI(TAG, "\n%s \n",REQUEST);
+    ESP_LOGW(TAG, "send to [%s],len [%d] --->",WEB_SERVER_URL,strlen(REQUEST));
     do {
         ret = esp_tls_conn_write(tls,
                                  REQUEST + written_bytes,
@@ -168,7 +168,7 @@ static void https_get_request(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, con
         /* Print response directly to stdout as it is read */
         if (len)
         {
-            ESP_LOGI(TAG,"POST: len[%d]byte \n%s\n",len,buf);
+            ESP_LOGW(TAG,"POST: len[%d] byte <---",len);
             if (https_Callback_Fun != NULL)
             {
                 https_Callback_Fun(buf);
@@ -394,6 +394,7 @@ int https_request_add_header (char *type,char *data)
     将data_str融入https_send_buff
     给body加上末尾
     按照type发送
+    此函数会阻塞，请使用单独任务调用
 */
 int https_request_data_Fun (char type,char *data)
 {
