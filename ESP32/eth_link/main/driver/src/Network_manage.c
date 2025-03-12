@@ -26,14 +26,9 @@ static const char *TAG = "Network_manage";
 
 static int esp_netif_init_flag = 0;     // 1:初始化
 static int wifi_flag = 0;               // 1:wifi建立连接
-static int eth_flag = 0;                // 1:rj45建立连接
 // 静态的ip
 static uint8_t SYS_MAC_addr[6] = {0};
-static char eth_mode = 0;       // 0:dhcp   1:static
 static char wifi_mode = 0;      // 0:dhcp   1:static
-static char eth_ip[30];
-static char eth_gw[30];
-static char eth_netmask[30];
 static char wifi_ip[30];
 static char wifi_gw[30];
 static char wifi_netmask[30];
@@ -323,6 +318,27 @@ int wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
     return retval;
 }
 
+/*
+    ip_str = NULL,理解为查询网络状态
+    retval = 1，在线
+    retval = 0，掉线
+*/
+int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str)
+{
+    int retval = 0;
+    if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
+    {
+    }
+    else
+    {
+        memcpy(ip_str,s_WIFI_ip,4);
+        memcpy(gw_str,s_WIFI_gateway,4);
+        memcpy(netmask_str,s_WIFI_netmask,4);
+    }
+    retval = wifi_flag;
+    return retval;
+}
+
 static void wifi_init(int set)
 {
 #if 1
@@ -443,11 +459,21 @@ static void wifi_init(int set)
 #endif
 }
 
+static int eth_flag = 0;                // 1:rj45建立连接
+// 静态的ip
+static char eth_mode = 0;       // 0:dhcp   1:static
+static char eth_ip[30];
+static char eth_gw[30];
+static char eth_netmask[30];
+
 esp_netif_t *eth_netif;
 // 这里是本次设备分配到的ip，很可能是动态的
 static uint8_t s_RJ45_ip[4];
 static uint8_t s_RJ45_netmask[4];
 static uint8_t s_RJ45_gateway[4];
+
+static uint8_t s_eth_DNS1_str[20];
+static uint8_t s_eth_DNS2_str[20];
 
 /*
     mode = 0,dhcp
@@ -489,11 +515,50 @@ int eth_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
     return retval;
 }
 
+int eth_config_DNS (char *DNS1,char *DNS2)
+{
+    int retval = 0;
+    char temp_str[100];
+    if (DNS1 == NULL || DNS2 == NULL)
+    {
+        return retval;
+    }
+    else
+    {
+        memset(s_eth_DNS1_str,0,sizeof(s_eth_DNS1_str));
+        memset(s_eth_DNS2_str,0,sizeof(s_eth_DNS2_str));
+        strcpy(s_eth_DNS1_str,DNS1);
+        strcpy(s_eth_DNS2_str,DNS2);
+    }
+    return retval;
+}
+
+/*
+    ip_str = NULL,理解为查询网络状态
+    retval = 1，在线
+    retval = 0，掉线
+*/
+int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str)
+{
+    int retval = 0;
+    if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
+    {
+    }
+    else
+    {
+        memcpy(ip_str,s_RJ45_ip,4);
+        memcpy(gw_str,s_RJ45_gateway,4);
+        memcpy(netmask_str,s_RJ45_netmask,4);
+    }
+    retval = eth_flag;
+    return retval;
+}
+
 static void eth_Link_UP_handle (void *event_data)
 {
     uint8_t mac_addr[6];
     char ip_temp[4];
-    char ip_DNS[20] = "144.144.144.144";
+    char ip_DNS[20];
     esp_eth_handle_t eth_handle = *(esp_eth_handle_t *)event_data;
     port_8160_using = 0;
     
@@ -512,6 +577,12 @@ static void eth_Link_UP_handle (void *event_data)
             memcpy(eth_gw,"192.168.1.1",strlen("192.168.1.1"));
             memcpy(eth_netmask,"255.255.255.0",strlen("255.255.255.0"));
         }
+        if (strlen(s_eth_DNS1_str) == 0)
+        {
+            strcpy(s_eth_DNS1_str,"114.114.114.114")
+        }
+        memset(ip_DNS,0,sizeof(ip_DNS));
+        strcpy(ip_DNS,s_eth_DNS1_str);
         tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_ETH);
         tcpip_adapter_ip_info_t eth;
         eth.ip.addr = ipaddr_addr(eth_ip);
@@ -690,68 +761,43 @@ void Network_manage_get_mac (uint8_t *mac)
         memcpy(mac,SYS_MAC_addr,6);
     }
 }
-/*
-    ip_str = NULL,理解为查询网络状态
-    retval = 1，在线
-    retval = 0，掉线
-*/
-int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str)
-{
-    int retval = 0;
-    if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
-    {
-    }
-    else
-    {
-        memcpy(ip_str,s_WIFI_ip,4);
-        memcpy(gw_str,s_WIFI_gateway,4);
-        memcpy(netmask_str,s_WIFI_netmask,4);
-    }
-    retval = wifi_flag;
-    return retval;
-}
-/*
-    ip_str = NULL,理解为查询网络状态
-    retval = 1，在线
-    retval = 0，掉线
-*/
-int eth_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_str)
-{
-    int retval = 0;
-    if (ip_str == NULL || gw_str == NULL || netmask_str == NULL)
-    {
-    }
-    else
-    {
-        memcpy(ip_str,s_RJ45_ip,4);
-        memcpy(gw_str,s_RJ45_gateway,4);
-        memcpy(netmask_str,s_RJ45_netmask,4);
-    }
-    retval = eth_flag;
-    return retval;
-}
 
 /*
     retval = 0,无网络
-    retval = 1,wifi连接
-    retval = 2,rj45连接
-    retval = 3,wifi+rj45
-    retval = 4,4g
-    retval = 5,wifi+4g
-    retval = 6,rj45+4g
-    retval = 7,wifi+rj45+4g
+    retval = 2,wifi连接
+    retval = 4,rj45连接
 */
 int Network_manage_get_status (void)
 {
-    int retval = 0;
+    int retval = 0,temp = 0;
     if (wifi_get_local_ip_status(NULL,NULL,NULL))
     {
-        retval = 1;
+        retval |= 0x01 << 1;
+    }
+    else
+    {
+        temp = 0x01 << 1;
+        retval &= ~temp;
     }
     if (eth_get_local_ip_status(NULL,NULL,NULL))
     {
-        retval += 2;
+        retval |= 0x01 << 2;
     }
+    else
+    {
+        temp = 0x01 << 2;
+        retval &= ~temp;
+    }
+    // if (Net_4G_get_local_ip_status (NULL,NULL,NULL))
+    // {
+    //     retval |= 0x01 << 3;
+    // }
+    // else
+    // {
+    //     temp = 0x01 << 3;
+    //     retval &= ~temp;
+    // }
+    // debug_log(LOG_View,TAG,"get status [%d]",retval);
     return retval;
 }
 

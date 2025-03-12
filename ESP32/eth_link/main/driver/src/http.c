@@ -17,9 +17,8 @@ static int http_enable = 0;
 static char response_data[1024*4];  // 自定义缓存空间储存一次响应数据
 static int recived_len = 0;         // 自定义变量储存一次响应中接收到分片数据的累计偏移
 
-static char http_url_str[100];
-static char http_port_str[20];
-static uint32_t http_port_value = 9090;
+static char http_HOST[200];
+static int http_port;
 
 static char http_post_buff[1024*4];
 static int http_post_len = 0;
@@ -59,56 +58,142 @@ static esp_err_t http_client_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
+static int http_tcpclient_create(char *url,int port)
+{
+    struct sockaddr_in server_addr;
+    int socket_fd = -1;
+    int temp_num = 0,temp_val,temp_port = 80;
+    char temp_str[200],temp_array[200],temp_ip[50];
+    char *temp_pointer = NULL,*str_pointer = NULL;
+    temp_val = strlen(url);
+    if (url == NULL && temp_val > 0)
+    {
+        return socket_fd;
+    }
+    if (strstr(url,"http://") == NULL)
+    {
+        return socket_fd;
+    }
+    // debug_log(LOG_Info,TAG, "create url[%s] to ip",url);
+    memset(temp_str,0,sizeof(temp_str));
+    memset(temp_ip,0,sizeof(temp_ip));
+    memset(http_HOST,0,sizeof(http_HOST));
+
+    temp_pointer = url + strlen("http://");
+    if (temp_pointer[0] < '0' || temp_pointer[0] > '9')    // Domain name
+    {
+        str_pointer = strchr(temp_pointer,'/');
+        temp_num = str_pointer - temp_pointer;
+        if (temp_num < sizeof(temp_str) && temp_num > 0)
+        {
+            memcpy(temp_str,temp_pointer,temp_num);
+            // debug_log(LOG_Info,TAG, "source data[%s]",temp_str);
+            str_pointer = strchr(temp_str,':');
+            if (str_pointer != NULL)
+            {
+                temp_port = atoi(str_pointer+1);
+                memset(temp_array,0,sizeof(temp_array));
+                memcpy(temp_array,temp_str,(str_pointer - temp_str));
+                memset(temp_str,0,sizeof(temp_str));
+                strcpy(temp_str,temp_array);
+            }
+            else
+            {
+                temp_port = port;
+            }
+            debug_log(LOG_Info,TAG, "target data[%s]",temp_str);
+            strcpy(http_HOST,temp_str);
+            // struct hostent *hptr;
+            // if((hptr = gethostbyname(temp_str))==NULL){
+            //     debug_log(LOG_Info,TAG,"gethostbyname error");
+            //     return -1;
+            // }
+            // else
+            // {
+            //     if (hptr->h_addrtype == AF_INET)
+            //     {
+            //         str_pointer = inet_ntoa(*(struct in_addr*)hptr->h_addr_list[0]);
+            //         strcpy(temp_ip,str_pointer);
+            //     }
+            //     else
+            //     {
+            //         debug_log(LOG_Info,TAG,"no AF_INET");
+            //         return -1;
+            //     }
+            // }
+            // debug_log(LOG_Info,TAG,"Domain name [%s:%d],ip[%s]",temp_str,temp_port,temp_ip);
+        }
+    }
+    else
+    {
+        temp_pointer = url + strlen("http://");
+        str_pointer = strchr(temp_pointer,'/');
+        temp_num = str_pointer - temp_pointer;
+        if (temp_num < sizeof(temp_str) && temp_num > 0)
+        {
+            memset(temp_str,0,sizeof(temp_str));
+            memcpy(temp_str,temp_pointer,(str_pointer - temp_pointer));
+            // debug_log(LOG_Info,TAG, "source data[%s]",temp_str);
+            str_pointer = strchr(temp_str,':');
+            if (str_pointer != NULL)
+            {
+                temp_port = atoi(str_pointer+1);
+                memset(temp_array,0,sizeof(temp_array));
+                memcpy(temp_array,temp_str,(str_pointer - temp_str));
+                memset(temp_str,0,sizeof(temp_str));
+                strcpy(temp_str,temp_array);
+            }
+            else
+            {
+                temp_port = port;
+            }
+            strcpy(temp_ip,temp_str);
+            strcpy(http_HOST,temp_str);
+            // debug_log(LOG_Info,TAG,"create ip [%s] port [%d]",temp_str,temp_port);
+        }
+    }
+    http_port = temp_port;
+    sprintf(http_HOST,"%s:%d",temp_ip,temp_port);
+    // debug_log(LOG_Info,TAG, "connect to [%s:%d]",temp_ip,temp_port);
+    // http_port = temp_port;
+    // if((socket_fd = socket(AF_INET,SOCK_STREAM,0))==-1){
+    //     return -1;
+    // }
+    // server_addr.sin_family = AF_INET;
+    // server_addr.sin_port = htons(temp_port);
+    // server_addr.sin_addr.s_addr = inet_addr(temp_ip);
+
+    // if(connect(socket_fd, (struct sockaddr *)&server_addr,sizeof(struct sockaddr)) == -1){
+    //     return -1;
+    // }
+    return socket_fd;
+}
+
 int http_client_config_init (char *url_str,char *port_str,int enable)
 {
     int retval = 0;
     int temp_num = 0;
     int temp_run = 0;
-    char temp_str[300];
     http_enable = enable;
 
-    if (url_str == NULL)
+    if (url_str == NULL || port_str == NULL)
     {
         retval = 1;
         return retval;
     }
-    memset(temp_str,0,sizeof(temp_str));
 
     temp_num = strlen(url_str);
     if (temp_num)
     {
-        memset(http_url_str,0,sizeof(http_url_str));
-        memcpy(http_url_str,url_str,temp_num);
-        memcpy(&temp_str[temp_run],http_url_str,temp_num);
-        temp_run += temp_num;
+        temp_num = atoi(port_str);
+        http_tcpclient_create(url_str,port_str);
     }
     else
     {
         retval = 1;
         return retval;
     }
-    if (port_str != NULL)
-    {
-        temp_num = strlen(port_str);
-        if (temp_num && temp_num < sizeof(http_port_str))
-        {
-            memset(http_port_str,0,sizeof(http_port_str));
-            memcpy(http_port_str,port_str,temp_num);
-            ESP_LOGI(TAG, "port:[%s]",port_str);
-        }
-    }
-    else
-    {
-        memset(http_port_str,0,sizeof(http_port_str));
-        strcpy(http_port_str,"9090");
-        temp_num = strlen(http_port_str);
-        ESP_LOGI(TAG, "default port:[%s]",port_str);
-    }
-    http_port_value = atoi(http_port_str);
-    if (retval == 0)
-    {
-        
-    }
+
     return retval;
 }
 
@@ -133,7 +218,7 @@ int http_port_data_Fun (char *data)
     int temp_num = 0;
     static esp_http_client_handle_t httpclient;
 
-    if (http_url_str == NULL || data == NULL)
+    if (http_enable == 0 || data == NULL)
     {
         return (-1);
     }
@@ -149,10 +234,10 @@ int http_port_data_Fun (char *data)
     {
         ESP_LOGW(TAG, "get network ID [%d]",temp_num);
     }
-    ESP_LOGI(TAG, "url:[%s]",http_url_str);
+    ESP_LOGI(TAG, "url:[%s]",http_HOST);
     esp_http_client_config_t cfg = {
-        .url = http_url_str,
-        .port = http_port_value,
+        .url = http_HOST,
+        .port = http_port,
         .event_handler = http_client_event_handler,
         .user_data = response_data,
     };
@@ -173,7 +258,7 @@ int http_port_data_Fun (char *data)
     esp_http_client_set_url(httpclient, "/add/");
 */
     esp_http_client_set_method(httpclient, HTTP_METHOD_POST);
-    esp_http_client_set_url(httpclient, http_url_str);
+    esp_http_client_set_url(httpclient, http_HOST);
     // 设置请求头
     esp_http_client_set_header(httpclient, "Content-Type", "application/json");
     esp_http_client_set_header(httpclient, "User-Agent", "=ESP32 HTTP Client/1.0");
@@ -233,9 +318,13 @@ void http_cache_clean (void)
 
 void http_cache_port_State_machine (void *empty)
 {
+    int retval = 0;
     if (http_post_len && http_enable)
     {
-        http_port_data_Fun (http_post_buff);
-        http_cache_clean();
+        retval = http_port_data_Fun (http_post_buff);
+        if (retval >= 0)
+        {
+            http_cache_clean();
+        }
     }
 }

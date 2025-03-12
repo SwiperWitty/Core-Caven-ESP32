@@ -211,20 +211,16 @@ void tcp_client_link_task(void *empty)
         struct sockaddr_storage dest_addr = { 0 };
         ESP_ERROR_CHECK(get_addr_from_stdin(ip_port, SOCK_STREAM, &ip_protocol, &addr_family, &dest_addr));
 #endif
-        tcp_client_sock = 1;
+        tcp_client_sock = -1;
         ESP_LOGI(TAG, "Socket created,try connecting to %s:%d ...", host_ip, ip_port);
         int sock =  socket(addr_family, SOCK_STREAM, ip_protocol);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-            tcp_client_sock = 0;
+            goto CLEAN_UP;
         }
         int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in6));
         if (err != 0) {
             ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
-            tcp_client_sock = 0;
-        }
-        if (tcp_client_sock == 0)
-        {
             goto CLEAN_UP;
         }
         ESP_LOGI(TAG, "Successfully connected");
