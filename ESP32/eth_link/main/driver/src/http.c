@@ -102,7 +102,8 @@ static int http_tcpclient_create(char *url,int port)
                 temp_port = port;
             }
             // debug_log(LOG_Info,TAG, "target data[%s]",temp_str);
-            strcpy(http_HOST,temp_str);
+            strcpy(temp_ip,temp_str);
+            // strcpy(http_HOST,temp_str);
             // struct hostent *hptr;
             // if((hptr = gethostbyname(temp_str))==NULL){
             //     debug_log(LOG_Info,TAG,"gethostbyname error");
@@ -112,6 +113,7 @@ static int http_tcpclient_create(char *url,int port)
             // {
             //     if (hptr->h_addrtype == AF_INET)
             //     {
+            //          memset(temp_ip,0,sizeof(temp_ip));
             //         str_pointer = inet_ntoa(*(struct in_addr*)hptr->h_addr_list[0]);
             //         strcpy(temp_ip,str_pointer);
             //     }
@@ -148,7 +150,7 @@ static int http_tcpclient_create(char *url,int port)
                 temp_port = port;
             }
             strcpy(temp_ip,temp_str);
-            strcpy(http_HOST,temp_str);
+            // strcpy(http_HOST,temp_str);
             // debug_log(LOG_Info,TAG,"create ip [%s] port [%d]",temp_str,temp_port);
         }
     }
