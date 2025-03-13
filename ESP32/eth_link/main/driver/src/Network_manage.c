@@ -472,8 +472,8 @@ static uint8_t s_RJ45_ip[4];
 static uint8_t s_RJ45_netmask[4];
 static uint8_t s_RJ45_gateway[4];
 
-static uint8_t s_eth_DNS1_str[20];
-static uint8_t s_eth_DNS2_str[20];
+static char s_eth_DNS1_str[30];
+static char s_eth_DNS2_str[30];
 
 /*
     mode = 0,dhcp
@@ -579,7 +579,7 @@ static void eth_Link_UP_handle (void *event_data)
         }
         if (strlen(s_eth_DNS1_str) == 0)
         {
-            strcpy(s_eth_DNS1_str,"114.114.114.114")
+            strcpy(s_eth_DNS1_str,"114.114.114.114");
         }
         memset(ip_DNS,0,sizeof(ip_DNS));
         strcpy(ip_DNS,s_eth_DNS1_str);

@@ -60,7 +60,7 @@ static esp_err_t http_client_event_handler(esp_http_client_event_t *evt)
 
 static int http_tcpclient_create(char *url,int port)
 {
-    struct sockaddr_in server_addr;
+    // struct sockaddr_in server_addr;
     int socket_fd = -1;
     int temp_num = 0,temp_val,temp_port = 80;
     char temp_str[200],temp_array[200],temp_ip[50];
@@ -101,7 +101,7 @@ static int http_tcpclient_create(char *url,int port)
             {
                 temp_port = port;
             }
-            debug_log(LOG_Info,TAG, "target data[%s]",temp_str);
+            // debug_log(LOG_Info,TAG, "target data[%s]",temp_str);
             strcpy(http_HOST,temp_str);
             // struct hostent *hptr;
             // if((hptr = gethostbyname(temp_str))==NULL){
@@ -173,7 +173,6 @@ int http_client_config_init (char *url_str,char *port_str,int enable)
 {
     int retval = 0;
     int temp_num = 0;
-    int temp_run = 0;
     http_enable = enable;
 
     if (url_str == NULL || port_str == NULL)
@@ -186,7 +185,7 @@ int http_client_config_init (char *url_str,char *port_str,int enable)
     if (temp_num)
     {
         temp_num = atoi(port_str);
-        http_tcpclient_create(url_str,port_str);
+        http_tcpclient_create(url_str,temp_num);
     }
     else
     {

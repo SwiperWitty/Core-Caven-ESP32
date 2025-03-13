@@ -92,7 +92,7 @@ void system_app_init(void)
     tcp_client_link_config (g_SYS_Config.Net_Client_ip,g_SYS_Config.Net_Client_port,g_SYS_Config.Client_Switch);
     tcp_server_link_config (g_SYS_Config.Net_Server_port,g_SYS_Config.Server_Switch);
     //
-    http_client_config_init (g_SYS_Config.HTTP_url,"20",g_SYS_Config.HTTP_Switch);
+    http_client_config_init (g_SYS_Config.HTTP_url,"8080",g_SYS_Config.HTTP_Switch);
     //
     https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL,1);
     //
