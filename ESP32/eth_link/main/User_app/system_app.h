@@ -8,10 +8,10 @@
     #include "MODE_RTC8564.h"
 #endif 
 #ifdef Exist_GPIO
-    #include"Custom_gpio.h"
+    #include"MODE_gpio.h"
 #endif 
 #ifdef Exist_UART 
-    #include"Custom_uart.h" 
+    #include"MODE_uart.h" 
 #endif 
 #ifdef Exist_LCD
     #include "MODE_LCD.h"

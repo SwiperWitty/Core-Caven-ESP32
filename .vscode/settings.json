@@ -14,7 +14,9 @@
         "main.h": "c",
         "system_app.h": "c",
         "custom_gpio.h": "c",
-        "caven_at_info_frame.h": "c"
+        "caven_at_info_frame.h": "c",
+        "custom_uart.h": "c",
+        "mode_uart.h": "c"
     },
     "cmake.sourceDirectory": "E:/WORK/COM/Core-Caven-ESP32/ESP32/ble_spp_server"
 }

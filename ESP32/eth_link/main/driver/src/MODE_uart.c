@@ -1,4 +1,4 @@
-#include "Custom_uart.h"
+#include "MODE_uart.h"
 #include "string.h"
 /*
     ESP_LOGE - 错误（最低）0
@@ -8,7 +8,7 @@
     ESP_LOGV - 详细（最高）
 */
 
-static const char *TAG = "Exist_UART";
+static const char *TAG = "MODE_UART";
 QueueHandle_t uart1_event_queue;
 QueueHandle_t uart2_event_queue;
 

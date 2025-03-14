@@ -1,4 +1,4 @@
-#include "Custom_gpio.h"
+#include "MODE_gpio.h"
 #include "string.h"
 /*
     ESP_LOGE - 错误（最低）0
@@ -7,7 +7,7 @@
     ESP_LOGD - 调试
     ESP_LOGV - 详细（最高）
 */
-static const char *TAG = "Custom_gpio";
+static const char *TAG = "MODE_gpio";
 
 /*
 User_GPIO_config 设置GPIO-PIN的工作模式

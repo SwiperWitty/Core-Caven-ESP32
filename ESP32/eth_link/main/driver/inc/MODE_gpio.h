@@ -1,8 +1,8 @@
-#ifndef _CUSTOM_GPIO__H_
-#define _CUSTOM_GPIO__H_
+#ifndef _MODE_GPIO__H_
+#define _MODE_GPIO__H_
 
 /*
-    this is Custom_gpio.h feil    
+    this is MODE_gpio.h file    
     这是个模板文件
 
     2023.9.13   
