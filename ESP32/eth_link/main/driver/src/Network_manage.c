@@ -42,6 +42,7 @@ static uint16_t wifi_ap_num = WIFI_SSID_SCAN_MAX_VALUE;
 static char WIFI_name[30] = {0};
 static char WIFI_pass[30] = {0};
 // 这里是本次设备分配到的ip，很可能是动态的
+static uint8_t wifi_enable = 0;
 static uint8_t s_WIFI_ip[4];
 static uint8_t s_WIFI_netmask[4];
 static uint8_t s_WIFI_gateway[4];
@@ -129,9 +130,11 @@ static void print_cipher_type(int pairwise_cipher, int group_cipher)
     }
 }
 
+static int retry_count = 0;
+static const int max_retry_count = 10;
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
-    if(event_base == WIFI_EVENT)
+    if(event_base == WIFI_EVENT && wifi_enable)
     {
         switch (event_id)
         {
@@ -143,6 +146,11 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
             break;
         case WIFI_EVENT_STA_DISCONNECTED:   // WIFI从路由器断开连接后触发此事件
             esp_wifi_connect();             // 继续重连
+            retry_count ++;
+            if (retry_count > max_retry_count)
+            {
+                esp_restart();
+            }
             ESP_LOGI(TAG,"WIFI connect to the AP fail,retry now[%s]",WIFI_name);
             break;
         default:
@@ -180,6 +188,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
                 ESP_LOGI(TAG, "WIFIGW:" IPSTR, IP2STR(&event->ip_info.gw));
                 ESP_LOGW(TAG, "WIFI Got IP Address \n");
                 wifi_flag = 1;
+                retry_count = 0;
             }
             break;
             default:
@@ -335,6 +344,10 @@ int wifi_get_local_ip_status (uint8_t *ip_str,uint8_t *gw_str,uint8_t *netmask_s
         memcpy(gw_str,s_WIFI_gateway,4);
         memcpy(netmask_str,s_WIFI_netmask,4);
     }
+    if (wifi_enable == 0)
+    {
+        wifi_flag = 0;
+    }
     retval = wifi_flag;
     return retval;
 }
@@ -343,6 +356,7 @@ static void wifi_init(int set)
 {
 #if 1
     uint16_t ap_count = 0;
+    wifi_enable = set;
     if (set == 0)
     {
         ESP_LOGW(TAG, "WIFI exit <-- \n");
@@ -424,8 +438,10 @@ static void wifi_init(int set)
     // 注册事件
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,ESP_EVENT_ANY_ID,&wifi_event_handler,NULL,&instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,IP_EVENT_STA_GOT_IP,&wifi_event_handler,NULL,&instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+        ESP_EVENT_ANY_ID,&wifi_event_handler,NULL,&instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+        IP_EVENT_STA_GOT_IP,&wifi_event_handler,NULL,&instance_got_ip));
     // 静态IP
     if (strlen(wifi_ip) == 0)
     {
