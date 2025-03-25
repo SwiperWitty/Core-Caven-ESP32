@@ -817,6 +817,38 @@ int Network_manage_get_status (void)
     return retval;
 }
 
+void Network_resolve_hostname(const char *hostname,char *ret_data) 
+{
+    // 有个前提是网络要生效才能用
+    if (esp_netif_init_flag == 0)
+    {
+        return ;
+    }
+    if (hostname == NULL || ret_data == NULL)
+    {
+        return;
+    }
+    ESP_LOGI(TAG, "hostname: %s", hostname);
+    // 域名解析
+    // const char *hostname = "www.example.com";
+    struct hostent *host_entry = gethostbyname(hostname);
+
+    if (host_entry == NULL) {
+        ESP_LOGE(TAG, "Failed to resolve hostname: %s", hostname);
+        return;
+    }
+
+    // 获取IP地址
+    if (host_entry->h_addr_list[0] != NULL) {
+        struct in_addr addr;
+        addr.s_addr = *(u32_t *)host_entry->h_addr_list[0];
+        ESP_LOGI(TAG, "Resolved IP address: %s", inet_ntoa(addr));
+        strcpy(ret_data,inet_ntoa(addr));
+    } else {
+        ESP_LOGE(TAG, "No IP address found for hostname: %s", hostname);
+    }
+}
+
 int Network_manage_Init (int mode,int set)
 {
     int retval = 0;
