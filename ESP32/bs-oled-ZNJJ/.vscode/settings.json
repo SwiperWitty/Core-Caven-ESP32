@@ -37,7 +37,7 @@
         "encrypt_crc.h": "c",
         "caven_info_frame.h": "c"
     },
-    "idf.portWin": "COM62",
+    "idf.portWin": "COM17",
     "idf.flashType": "UART",
     "idf.pythonInstallPath": "D:\\Espressif\\tools\\idf-python\\3.11.2\\python.exe",
     "idf.espIdfPathWin": "D:/Espressif/frameworks/esp-idf-v5.4.1/",

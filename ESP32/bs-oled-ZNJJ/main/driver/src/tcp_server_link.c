@@ -163,9 +163,9 @@ void tcp_server_link_task(void *empty)
     struct sockaddr_storage dest_addr;
     int ip_port = 0;
     int temp_num = 0;
-    uint8_t wifi_ip_str[10];
-    uint8_t wifi_gw_str[10];
-    uint8_t wifi_netmask_str[10];
+    char wifi_ip_str[16];
+    char wifi_gw_str[16];
+    char wifi_netmask_str[16];
     temp_num = 0;
     do
     {
