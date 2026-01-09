@@ -72,6 +72,12 @@ static void print_auth_mode(int authmode)
     case WIFI_AUTH_WPA2_WPA3_PSK:
         ESP_LOGI("wifi scan", "Authmode \tWIFI_AUTH_WPA2_WPA3_PSK");
         break;
+    case WIFI_AUTH_WPA3_ENTERPRISE:
+        ESP_LOGI("wifi scan", "Authmode \tWIFI_AUTH_WPA3_ENTERPRISE");
+        break;
+    case WIFI_AUTH_WPA2_WPA3_ENTERPRISE:
+        ESP_LOGI("wifi scan", "Authmode \tWIFI_AUTH_WPA2_WPA3_ENTERPRISE");
+        break;
     default:
         ESP_LOGI("wifi scan", "Authmode \tWIFI_AUTH_UNKNOWN");
         break;
@@ -692,7 +698,7 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,int32_t eve
     }
 }
 
-uint8_t rtl8201_mac[6];
+esp_eth_handle_t rtl8201_eth_handle = NULL;
 static void rtl8201_init(int set)
 {
 #if CONFIG_EXAMPLE_ETH_PHY_RTL8201
@@ -705,15 +711,7 @@ static void rtl8201_init(int set)
     }
     
     ESP_LOGW(TAG, "RJ45 Start --> \n");
-    if (SYS_MAC_addr[0] + SYS_MAC_addr[1] + SYS_MAC_addr[3] + SYS_MAC_addr[4])
-    {
-        memcpy(mac_addr,SYS_MAC_addr,sizeof(mac_addr));
-    }
-    else
-    {
-        ESP_LOGW(TAG, "RJ45 no mac addr");
-        // 随机mac模式
-    }
+
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -756,23 +754,33 @@ static void rtl8201_init(int set)
     ESP_ERROR_CHECK(esp_eth_driver_install(&config, &eth_handle));
     ESP_LOGW(TAG, "rtl8201 init");
     //
+    if (SYS_MAC_addr[0] + SYS_MAC_addr[1] + SYS_MAC_addr[3] + SYS_MAC_addr[4])
+    {
+        memcpy(mac_addr,SYS_MAC_addr,sizeof(mac_addr));
+        esp_eth_ioctl(eth_handle, ETH_CMD_S_MAC_ADDR, SYS_MAC_addr);
+    }
+    else
+    {
+        ESP_LOGW(TAG, "RJ45 no mac addr");
+        // 随机mac模式
+    }
     if (esp_netif_init_flag == 0)
     {
         ESP_ERROR_CHECK(esp_netif_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
         esp_netif_init_flag = 1;
+        ESP_LOGI(TAG, "--esp_netif_init--");
     }
     esp_netif_config_t cfg = ESP_NETIF_DEFAULT_ETH();
     s_eth_netif = esp_netif_new(&cfg);
     eth_netif_glues = esp_eth_new_netif_glue(eth_handle);
     ESP_ERROR_CHECK(esp_netif_attach(s_eth_netif, eth_netif_glues));
 
-    esp_eth_ioctl(eth_handle, ETH_CMD_S_MAC_ADDR, mac_addr);
-    memcpy(rtl8201_mac,mac_addr,sizeof(mac_addr));
+    rtl8201_eth_handle = eth_handle;
+    esp_eth_ioctl(eth_handle, ETH_CMD_G_MAC_ADDR, mac_addr);
+    memcpy(SYS_MAC_addr,mac_addr,sizeof(mac_addr));
     ESP_LOGI(TAG, "IP mac addr : %02X:%02X:%02X:%02X:%02X:%02X", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
-    // Set default handlers to process TCP/IP stuffs
-    // ESP_ERROR_CHECK(esp_eth_set_default_handlers(eth_netif));
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &eth_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &eth_event_handler, NULL));
 
@@ -783,9 +791,11 @@ static void rtl8201_init(int set)
 
 void Network_manage_set_mac (uint8_t *mac)
 {
+    esp_eth_handle_t eth_handle = NULL;
     if (mac != NULL)
     {
         memcpy(SYS_MAC_addr,mac,6);
+        esp_eth_ioctl(eth_handle, ETH_CMD_S_MAC_ADDR, SYS_MAC_addr);
         ESP_LOGI(TAG, "set mac: %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     }
 }
@@ -794,7 +804,7 @@ void Network_manage_get_mac (uint8_t *mac)
 {
     if (mac != NULL)
     {
-        memcpy(mac,rtl8201_mac,6);
+        memcpy(mac,SYS_MAC_addr,6);
     }
 }
 
@@ -808,20 +818,20 @@ int Network_manage_get_status (void)
     int retval = 0,temp = 0;
     if (wifi_get_local_ip_status(NULL,NULL,NULL))
     {
+        retval |= 0x01 << 0;
+    }
+    else
+    {
+        temp = 0x01 << 0;
+        retval &= ~temp;
+    }
+    if (eth_get_local_ip_status(NULL,NULL,NULL))
+    {
         retval |= 0x01 << 1;
     }
     else
     {
         temp = 0x01 << 1;
-        retval &= ~temp;
-    }
-    if (eth_get_local_ip_status(NULL,NULL,NULL))
-    {
-        retval |= 0x01 << 2;
-    }
-    else
-    {
-        temp = 0x01 << 2;
         retval &= ~temp;
     }
     return retval;

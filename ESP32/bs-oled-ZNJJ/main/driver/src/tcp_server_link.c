@@ -8,7 +8,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
-#include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -28,16 +27,21 @@ static const char *TAG = "TCP server";
 
 static int tcp_server_enable = 0;
 static int tcp_server_sock = 0;
+static int tcp_server_break_off = 0;
 static char sock_port_str[10] = {0};
 static char sock_flag = 0;      // 1是wifi的sock
 
 
 /*
+    port_str:"8160"
+    break_off:是否允许新连接取代旧连接（port_str存在时才生效）
     enable 0,会关闭当前sock，没有则不生效
     enable 1,打开server_link,并重置str,若此时str为NULL，理解为询问tcp_server_sock
     server 只能修改端口(改完请重启)，如果需要修改ip请修改[eth_config_ip]/[wifi_config_ip]
+
+    retval:当前是否有sock
 */
-int tcp_server_link_config (char *port_str,int enable)
+int tcp_server_link_config (char *port_str,int break_off,int enable)
 {
     int retval = 0;
     tcp_server_enable = enable;
@@ -61,6 +65,7 @@ int tcp_server_link_config (char *port_str,int enable)
         }
         else
         {
+            tcp_server_break_off = break_off;
             memset(sock_port_str,0,sizeof(sock_port_str));
             strcpy(sock_port_str, port_str);
             ESP_LOGW(TAG, "config link ip[xx.xx.xx.xx:%s]",sock_port_str);
@@ -116,36 +121,49 @@ void tcp_server_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
     tcp_server_Callback_Fun = Callback_pFun;
 }
 
-static void do_retransmit(const int sock)
+TaskHandle_t tcp_server_recv_taskhanlde = NULL;
+static void tcp_server_recv_task(void *empty)
 {
     int len;
-    char rx_buffer[128];
-
-    while (sock > 0) 
+    int sock = 0;
+    char rx_buffer[1024];
+    ESP_LOGW(TAG, "tcp_server_recv_task running ...\n");
+    while (1)
     {
-        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);  //  这里是阻塞的，想退出此函数kill&sock失效
-        // Error occurred during receiving
-        if (len < 0 || len == 0) {
-            ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d]????\n", errno,len);
-            tcp_server_sock = 0;
-            break;
-        }
-        // Data received
-        else {
-            rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-            if (tcp_server_Callback_Fun != NULL)
+        if(tcp_server_sock > 0)
+        {
+            sock = tcp_server_sock;
+            len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);  //  这里是阻塞的，想退出此函数kill&sock失效
+            // Error occurred during receiving
+            if (len < 0 || len == 0) {
+                tcp_server_sock = 0;
+                ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d] ?\n", errno,len);
+            }
+            // Data received
+            else if(len < sizeof(rx_buffer))
             {
-                for (int i = 0; i < len; i++)
+                rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+                // ESP_LOGI(TAG, "tcp_server_recv len[%d]\n",len);
+                if (tcp_server_Callback_Fun != NULL)
                 {
-                    tcp_server_Callback_Fun(rx_buffer + i);
+                    for (int i = 0; i < len; i++)
+                    {
+                        tcp_server_Callback_Fun(rx_buffer + i);
+                    }
                 }
             }
+            if (tcp_server_sock == 0)
+            {
+                close(sock);
+            }
         }
-        if (tcp_server_sock == 0)
+        else
         {
-            break;
+            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
     }
+    tcp_server_recv_taskhanlde = NULL;
+    vTaskDelete(NULL);
 }
 
 /*
@@ -178,13 +196,14 @@ void tcp_server_link_task(void *empty)
     // start
     if (temp_num)
     {
-        ESP_LOGW(TAG, "get network rj45[1]/wifi[2] ID [%d]",temp_num);
+        ESP_LOGW(TAG, "get network wifi[1]/rj45[2] ID [%d]",temp_num);
     }
     if (strlen(sock_port_str) == 0)
     {
         strcpy(sock_port_str,"8160");
     }
     ip_port = atoi(sock_port_str);
+#ifdef CONFIG_EXAMPLE_IPV4
     if (addr_family == AF_INET) {
         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
         dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
@@ -192,6 +211,7 @@ void tcp_server_link_task(void *empty)
         dest_addr_ip4->sin_port = htons(ip_port);
         ip_protocol = IPPROTO_IP;
     }
+#endif
 #ifdef CONFIG_EXAMPLE_IPV6
     else if (addr_family == AF_INET6) {
         struct sockaddr_in6 *dest_addr_ip6 = (struct sockaddr_in6 *)&dest_addr;
@@ -232,6 +252,7 @@ void tcp_server_link_task(void *empty)
         ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
         goto CLEAN_UP;
     }
+    xTaskCreate(tcp_server_recv_task, "task-[server recv]", 1024*4, NULL,TCP_SERVER_RECV_TASK_PRIORITY, &tcp_server_recv_taskhanlde);
 
     while (1)
     {
@@ -251,14 +272,12 @@ void tcp_server_link_task(void *empty)
         }
         struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
         socklen_t addr_len = sizeof(source_addr);
-        ESP_LOGI(TAG,"server wait link ... port[%d]\n",ip_port);
+        ESP_LOGI(TAG,"server wait link port[%d] ... \n",ip_port);
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
             break;
         }
-        tcp_server_sock = sock;
-
         // Set tcp keepalive option
         setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, sizeof(int));
         setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(int));
@@ -273,8 +292,31 @@ void tcp_server_link_task(void *empty)
             inet6_ntoa_r(((struct sockaddr_in6 *)&source_addr)->sin6_addr, addr_str, sizeof(addr_str) - 1);
         }
 #endif
-        ESP_LOGI(TAG, "Socket accepted host ip address: %s", addr_str);
-        ESP_LOGI(TAG, "Socket num: [%d]", sock);
+        ESP_LOGW(TAG, "Socket accepted host ip address: %s", addr_str);
+        ESP_LOGW(TAG, "NEW Socket num [%d]", sock);
+        if(tcp_server_break_off)        // 允许新sock打断旧sock
+        {
+            if(tcp_server_sock > 0)
+            {
+                close(tcp_server_sock);
+                ESP_LOGW(TAG, "NEW Socket break_off old \n");
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+            }
+            tcp_server_sock = sock;
+        }
+        else
+        {
+            if(tcp_server_sock > 0)
+            {
+                close(sock);
+                ESP_LOGW(TAG, "NEW Socket can't break_off old \n");
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+            }
+            else
+            {
+                tcp_server_sock = sock;
+            }
+        }
         if (wifi_get_local_ip_status(wifi_ip_str,wifi_gw_str,wifi_netmask_str) && strlen(addr_str))
         {
             uint8_t ip_temp_a,ip_temp_b,ip_temp_num = 0;
@@ -322,15 +364,6 @@ void tcp_server_link_task(void *empty)
             }
         }
 
-        do_retransmit(sock);        // !!!!
-        if (sock != 0)
-        {
-            shutdown(sock, 0);
-            close(sock);
-            sock = 0;
-            tcp_server_sock = 0;
-        }
-        ESP_LOGW(TAG, "loss sock <--\n");
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
@@ -338,5 +371,9 @@ CLEAN_UP:
     tcp_server_sock = 0;
     close(listen_sock);
     ESP_LOGW(TAG, "Socket kill");
+    if(tcp_server_recv_taskhanlde != NULL)
+    {
+        vTaskDelete(tcp_server_recv_taskhanlde);
+    }
     vTaskDelete(NULL);
 }

@@ -89,6 +89,7 @@ void system_app_init(void)
                     g_SYS_Config.WIFI_static_netmask);
         Network_manage_Init (1,g_SYS_Config.WIFI_enable);
     }
+    tcp_server_link_config (g_SYS_Config.Net_Server_port,1,g_SYS_Config.Server_Switch);
 
     //
     // https_request_config_init ("POST",WEB_SERVER,WEB_URL,NULL,1);

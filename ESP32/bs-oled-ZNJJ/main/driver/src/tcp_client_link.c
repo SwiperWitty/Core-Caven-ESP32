@@ -181,9 +181,10 @@ void tcp_client_link_task(void *empty)
             ESP_LOGW(TAG, "target ip null,wait...");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
+        // start
         if (temp_num)
         {
-            ESP_LOGW(TAG, "get network rj45[1]/wifi[2] ID [%d]",temp_num);
+            ESP_LOGW(TAG, "get network wifi[1]/rj45[2] ID [%d]",temp_num);
         }
         if (strlen(sock_port_str) == 0)
         {

@@ -40,9 +40,9 @@ void app_main(void)
     free(temp_array);
 }
 
-TaskHandle_t led_taskhanlde;
-TaskHandle_t lcd_taskhanlde;
-TaskHandle_t oled_taskhanlde;
+TaskHandle_t led_taskhanlde = NULL;
+TaskHandle_t lcd_taskhanlde = NULL;
+TaskHandle_t tcp_server_taskhanlde = NULL;
 
 TimerHandle_t pr_timerhanlde;
 
@@ -51,14 +51,13 @@ void Build_task(void)
     /*
     xTaskCreate 默认在1核
     */
-    led_taskhanlde = NULL;
-    lcd_taskhanlde = NULL;
     int ram_size = esp_get_free_heap_size();
     ESP_LOGI("RAM log 1","free_heap_size = %d \r\n",ram_size);
     //
     custom_uart_task_Fun();
 
     xTaskCreate(test_led_task, "task-[LED]", 1024*2, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde);
+    xTaskCreate(tcp_server_link_task, "task-[server]", 1024*8, NULL, TCP_SERVER_TASK_PRIORITY, &tcp_server_taskhanlde);
     // xTaskCreatePinnedToCore(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL,CORE_ZERO);
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
 
