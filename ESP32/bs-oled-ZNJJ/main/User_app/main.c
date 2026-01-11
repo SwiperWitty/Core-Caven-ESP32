@@ -41,9 +41,6 @@ void app_main(void)
 }
 
 TaskHandle_t led_taskhanlde = NULL;
-TaskHandle_t lcd_taskhanlde = NULL;
-TaskHandle_t tcp_server_taskhanlde = NULL;
-
 TimerHandle_t pr_timerhanlde;
 
 void Build_task(void)
@@ -57,7 +54,7 @@ void Build_task(void)
     custom_uart_task_Fun();
 
     xTaskCreate(test_led_task, "task-[LED]", 1024*2, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde);
-    xTaskCreate(tcp_server_link_task, "task-[server]", 1024*8, NULL, TCP_SERVER_TASK_PRIORITY, &tcp_server_taskhanlde);
+    
     // xTaskCreatePinnedToCore(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL,CORE_ZERO);
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);
 

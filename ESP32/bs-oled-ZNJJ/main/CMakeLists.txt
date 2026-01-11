@@ -11,7 +11,7 @@ set(srcs
     "driver/src/information.c"
     "driver/src/info_frame_handle.c"
     "driver/src/MODE_uart.c"
-    "driver/src/MODE_gpio.c"
+    "driver/src/MODE_Gpio.c"
     # "driver/src/Custom_bluetooth.c"
     "driver/src/Network_manage.c"
     "driver/src/tcp_server_link.c"

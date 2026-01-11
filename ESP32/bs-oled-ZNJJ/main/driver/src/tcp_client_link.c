@@ -90,7 +90,7 @@ int tcp_client_send_data(uint8_t *data, int size)
 {
     int retval = 0;
     int len = size;
-    if (data == NULL || size == 0)
+    if (data == NULL || size == 0 || tcp_client_enable == 0)
     {
         retval = 1;
         return retval;
@@ -126,14 +126,17 @@ void tcp_client_receive_State_Machine_Bind (D_Callback_pFun Callback_pFun)
 static void do_retransmit(const int sock)
 {
     int len;
-    char rx_buffer[128];
+    char rx_buffer[1024];
 
     while (sock > 0) 
-    {
+    {   while(tcp_client_enable == 0)
+        {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
         len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
         // Error occurred during receiving
         if (len < 0 || len == 0) {
-            ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d]????\n", errno,len);
+            ESP_LOGE(TAG, "recv failed: errno [%d] retval:[%d] ?\n", errno,len);
             tcp_client_sock = 0;
             break;
         }

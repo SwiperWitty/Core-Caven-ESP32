@@ -88,7 +88,7 @@ int tcp_server_send_data(uint8_t *data, int size)
 {
     int retval = 0;
     int len = size;
-    if (data == NULL || size == 0)
+    if (data == NULL || size == 0 || tcp_server_enable == 0)
     {
         retval = 1;
         return retval;
@@ -130,7 +130,7 @@ static void tcp_server_recv_task(void *empty)
     ESP_LOGW(TAG, "tcp_server_recv_task running ...\n");
     while (1)
     {
-        if(tcp_server_sock > 0)
+        if(tcp_server_sock > 0 && tcp_server_enable)
         {
             sock = tcp_server_sock;
             len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);  //  这里是阻塞的，想退出此函数kill&sock失效
@@ -299,7 +299,7 @@ void tcp_server_link_task(void *empty)
             if(tcp_server_sock > 0)
             {
                 close(tcp_server_sock);
-                ESP_LOGW(TAG, "NEW Socket break_off old \n");
+                ESP_LOGW(TAG, "NEW Socket break_off old");
                 vTaskDelay(100 / portTICK_PERIOD_MS);
             }
             tcp_server_sock = sock;
@@ -309,7 +309,7 @@ void tcp_server_link_task(void *empty)
             if(tcp_server_sock > 0)
             {
                 close(sock);
-                ESP_LOGW(TAG, "NEW Socket can't break_off old \n");
+                ESP_LOGW(TAG, "NEW Socket can't break_off old");
                 vTaskDelay(100 / portTICK_PERIOD_MS);
             }
             else
@@ -321,6 +321,8 @@ void tcp_server_link_task(void *empty)
         {
             uint8_t ip_temp_a,ip_temp_b,ip_temp_num = 0;
             uint8_t ip_temp_array[6];
+            uint8_t ip_temp_buff[6];
+            uint8_t ip_temp_net[6];
             struct in_addr s;
             uint32_t ip4_addr_32;
             inet_pton(AF_INET, addr_str, (void *) &s);
@@ -329,21 +331,23 @@ void tcp_server_link_task(void *empty)
             ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (1 * 8)) & 0xff;
             ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (2 * 8)) & 0xff;
             ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (3 * 8)) & 0xff;
-            ESP_LOGI(TAG,"wifi gateway ip %d.%d.%d.%d", wifi_gw_str[0],wifi_gw_str[1],wifi_gw_str[2],wifi_gw_str[3]);
+            Network_ipstr_to_ip_address(wifi_gw_str, ip_temp_buff);
+            Network_ipstr_to_ip_address(wifi_netmask_str, ip_temp_net);
+            ESP_LOGI(TAG,"wifi gateway ip %d.%d.%d.%d", ip_temp_buff[0],ip_temp_buff[1],ip_temp_buff[2],ip_temp_buff[3]);
             sock_flag = 0;
             ip_temp_num = 0;
-            ip_temp_a = wifi_gw_str[ip_temp_num] & wifi_netmask_str[ip_temp_num];
-            ip_temp_b = ip_temp_array[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+            ip_temp_a = ip_temp_buff[ip_temp_num] & ip_temp_net[ip_temp_num];
+            ip_temp_b = ip_temp_array[ip_temp_num] & ip_temp_net[ip_temp_num];
             if (ip_temp_a == ip_temp_b && ip_temp_a != 0)
             {
                 ip_temp_num ++;
-                ip_temp_a = wifi_gw_str[ip_temp_num] & wifi_netmask_str[ip_temp_num];
-                ip_temp_b = ip_temp_array[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+                ip_temp_a = ip_temp_buff[ip_temp_num] & ip_temp_net[ip_temp_num];
+                ip_temp_b = ip_temp_array[ip_temp_num] & ip_temp_net[ip_temp_num];
                 if (ip_temp_a == ip_temp_b)
                 {
                     ip_temp_num ++;
-                    ip_temp_a = wifi_gw_str[ip_temp_num] & wifi_netmask_str[ip_temp_num];
-                    ip_temp_b = ip_temp_array[ip_temp_num] & wifi_netmask_str[ip_temp_num];
+                    ip_temp_a = ip_temp_buff[ip_temp_num] & ip_temp_net[ip_temp_num];
+                    ip_temp_b = ip_temp_array[ip_temp_num] & ip_temp_net[ip_temp_num];
                     if (ip_temp_a == ip_temp_b)
                     {
                         sock_flag = 1;    // wifi

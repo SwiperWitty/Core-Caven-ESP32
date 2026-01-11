@@ -156,7 +156,7 @@ static int http_tcpclient_create(char *url,int port)
     }
     http_port = temp_port;
     sprintf(http_HOST,"%s:%d",temp_ip,temp_port);
-    // debug_log(LOG_Info,TAG, "connect to [%s:%d]",temp_ip,temp_port);
+    ESP_LOGI(TAG, "connect to [%s]",http_HOST);
     // http_port = temp_port;
     // if((socket_fd = socket(AF_INET,SOCK_STREAM,0))==-1){
     //     return -1;
@@ -187,7 +187,8 @@ int http_client_config_init (char *url_str,char *port_str,int enable)
     if (temp_num)
     {
         temp_num = atoi(port_str);
-        http_tcpclient_create(url_str,temp_num);
+        sprintf(http_HOST,"%s",url_str);
+        // http_tcpclient_create(url_str,temp_num);
     }
     else
     {
@@ -275,7 +276,7 @@ int http_port_data_Fun (char *data)
     if (ret == ESP_OK)  // 响应完成
     {
         temp_num = strlen(response_data);
-        ESP_LOGW(TAG,"POST: len[%d]byte <---",temp_num);
+        ESP_LOGW(TAG,"POST: get len[%d]byte <---",temp_num);
         if (http_Callback_Fun != NULL)
         {
             http_Callback_Fun (response_data);
@@ -326,6 +327,30 @@ void http_cache_port_State_machine (void *empty)
         if (retval >= 0)
         {
             http_cache_clean();
+        }
+        else
+        {
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        }
+    }
+    else if(http_post_len == 0)
+    {
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void http_cache_port_task (void *empty)
+{
+    int retval = 0;
+    while(1)
+    {
+        if (http_enable)
+        {
+            http_cache_port_State_machine(NULL);
+        }
+        else
+        {
+            vTaskDelay(pdMS_TO_TICKS(200));
         }
     }
 }

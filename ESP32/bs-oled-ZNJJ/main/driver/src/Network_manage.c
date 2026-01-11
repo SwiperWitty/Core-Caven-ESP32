@@ -252,7 +252,7 @@ static void get_ip_address_info(uint32_t ipadd, uint8_t *ip_buffer)
     ip_buffer[3] = ipadd >> 24;
 }
 
-void ipstr_to_ip_address(char *str, uint8_t *ip)
+void Network_ipstr_to_ip_address(char *str, uint8_t *ip)
 {
     uint32_t ip_add = 0;
     if (0 == ipstr_to_numeric(str, &ip_add))
@@ -327,21 +327,17 @@ int wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
         esp_netif_dhcpc_stop(s_WIFI_netif);
         // 第二步设置IP地址相关参数
         memset(ip_temp,0,4);
-        ipstr_to_ip_address(wifi_net.ip,ip_temp);
-        // IP4_ADDR(&wifi_ip_info.ip,192,168,137,200);
+        Network_ipstr_to_ip_address(wifi_net.ip,ip_temp);
         IP4_ADDR(&wifi_ip_info.ip,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi ip address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
         memset(ip_temp,0,4);
-        ipstr_to_ip_address(wifi_net.gateway,ip_temp);
-        // IP4_ADDR(&wifi_ip_info.gw,192,168,0,1);
+        Network_ipstr_to_ip_address(wifi_net.gateway,ip_temp);
         IP4_ADDR(&wifi_ip_info.gw,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi gateway address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
         memset(ip_temp,0,4);
-        ipstr_to_ip_address(wifi_net.netmask,ip_temp);
-        // IP4_ADDR(&wifi_ip_info.netmask,255,255,255,0);
-
+        Network_ipstr_to_ip_address(wifi_net.netmask,ip_temp);
         IP4_ADDR(&wifi_ip_info.netmask,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi netmask address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
@@ -371,9 +367,10 @@ int wifi_get_local_ip_status (char *ip_str,char *gw_str,char *netmask_str)
     }
     else
     {
-        strcpy(ip_str,wifi_net.ip);
-        strcpy(gw_str,wifi_net.gateway);
-        strcpy(netmask_str,wifi_net.netmask);
+        memcpy(ip_str,wifi_net.ip,16);
+        memcpy(gw_str,wifi_net.gateway,16);
+        memcpy(netmask_str,wifi_net.netmask,16);
+        ESP_LOGI(TAG, "get -> IP %s,gw %s,netmask %s",ip_str,gw_str,netmask_str);
     }
     if (wifi_enable == 0)
     {
@@ -520,9 +517,9 @@ int eth_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
     {
         memset(&eth_net,0,sizeof(eth_net));
         
-        memcpy(eth_net.ip,ip_str,strlen(ip_str));
-        memcpy(eth_net.gateway,gw_str,strlen(gw_str));
-        memcpy(eth_net.netmask,netmask_str,strlen(netmask_str));
+        memcpy(eth_net.ip,ip_str,16);
+        memcpy(eth_net.gateway,gw_str,16);
+        memcpy(eth_net.netmask,netmask_str,16);
         ESP_LOGI(TAG, "eth ip change :%s",eth_net.ip);
     }
     if (mode == 0)

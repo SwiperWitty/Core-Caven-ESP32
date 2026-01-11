@@ -8,7 +8,7 @@
     #include "MODE_RTC8564.h"
 #endif 
 #ifdef Exist_GPIO
-    #include"MODE_gpio.h"
+    #include"MODE_Gpio.h"
 #endif 
 #ifdef Exist_UART 
     #include"MODE_uart.h" 
@@ -96,6 +96,7 @@ typedef struct
     char WIFI_static_netmask[30];
     char MAC_addr[20];
 
+    int Server_break_off;
     char Net_Server_port[10];
     char Net_Client_ip[30];
     char Net_Client_port[10];
