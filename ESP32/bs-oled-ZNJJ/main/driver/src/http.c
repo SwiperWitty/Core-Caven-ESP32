@@ -298,6 +298,7 @@ int http_port_data_Fun (char *data)
 
 /*
     一般使用这个，配合[http_cache_port_State_machine]使用
+    函数是往缓存里面写入
 */
 void http_cache_port_data_Fun (char *data)
 {

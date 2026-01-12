@@ -142,13 +142,12 @@ static void tcp_server_recv_task(void *empty)
             // Data received
             else if(len < sizeof(rx_buffer))
             {
-                rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
                 // ESP_LOGI(TAG, "tcp_server_recv len[%d]\n",len);
                 if (tcp_server_Callback_Fun != NULL)
                 {
                     for (int i = 0; i < len; i++)
                     {
-                        tcp_server_Callback_Fun(rx_buffer + i);
+                        tcp_server_Callback_Fun(&rx_buffer[i]);
                     }
                 }
             }
@@ -273,6 +272,7 @@ void tcp_server_link_task(void *empty)
         struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
         socklen_t addr_len = sizeof(source_addr);
         ESP_LOGI(TAG,"server wait link port[%d] ... \n",ip_port);
+        
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
@@ -331,8 +331,8 @@ void tcp_server_link_task(void *empty)
             ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (1 * 8)) & 0xff;
             ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (2 * 8)) & 0xff;
             ip_temp_array[ip_temp_num++] = (ip4_addr_32 >> (3 * 8)) & 0xff;
-            Network_ipstr_to_ip_address(wifi_gw_str, ip_temp_buff);
-            Network_ipstr_to_ip_address(wifi_netmask_str, ip_temp_net);
+            Caven_Str_To_ip(wifi_gw_str, ip_temp_buff,4);
+            Caven_Str_To_ip(wifi_netmask_str, ip_temp_net,4);
             ESP_LOGI(TAG,"wifi gateway ip %d.%d.%d.%d", ip_temp_buff[0],ip_temp_buff[1],ip_temp_buff[2],ip_temp_buff[3]);
             sock_flag = 0;
             ip_temp_num = 0;

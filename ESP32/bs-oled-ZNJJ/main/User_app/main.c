@@ -6,7 +6,7 @@ void time_prt_Callback_fun (TimerHandle_t xtime)
 {
     static int over_num = 0;
     over_num ++;
-    g_SYS_Config.time.SYS_Sec ++;
+    g_SYS_Config.Work_sec ++;
 }
 
 void Main_Init(void);
@@ -16,16 +16,16 @@ void app_main(void)
 {
     Main_Init();
     Build_task();
-    printf("app_main run to Core %d \n \n", xPortGetCoreID());
+    ESP_LOGI("main","app_main run to Core %d \n", xPortGetCoreID());
     char *temp_array;
 
     int ram_size = esp_get_free_heap_size();
-    ESP_LOGI("RAM log 2","free_heap_size = %d \r\n",ram_size);
+    ESP_LOGI("RAM log 2","free_heap_size = %d \n",ram_size);
     temp_array = malloc(300);
     while (1)
     {
-        g_SYS_Config.time.SYS_Sec = (xTaskGetTickCount() % 1000)*1000;
-        g_SYS_Config.SYS_online = 1;        // 恒为1
+        g_SYS_Config.Now_time.SYS_Us = (xTaskGetTickCount() % 1000)*1000;
+        g_SYS_Config.Now_time.SYS_Sec += (xTaskGetTickCount() / 1000);
         //
 
         ram_size = esp_get_free_heap_size();
@@ -36,11 +36,14 @@ void app_main(void)
         }
 
         vTaskDelay(pdMS_TO_TICKS(3000));
+        Network_url_resolve_client("http://www.baidu.com/123:220",temp_array);
+        Network_url_resolve_client("http://localhost:8080",temp_array);
     }
     free(temp_array);
 }
 
-TaskHandle_t led_taskhanlde = NULL;
+TaskHandle_t sys_app_taskhanlde = NULL;
+TaskHandle_t Message_info_task_taskhanlde = NULL;
 TimerHandle_t pr_timerhanlde;
 
 void Build_task(void)
@@ -53,7 +56,8 @@ void Build_task(void)
     //
     custom_uart_task_Fun();
 
-    xTaskCreate(test_led_task, "task-[LED]", 1024*2, NULL, GPIO_TASK_PRIORITY, &led_taskhanlde);
+    xTaskCreate(sys_app_task, "task-[sys_app]", 1024*4, NULL, SYS_TASK_PRIORITY, &sys_app_taskhanlde);
+    xTaskCreate(Message_info_task, "task-[Message_info]", 1024*6, NULL, MESSAGE_INFO_TASK_PRIORITY, &Message_info_task_taskhanlde);
     
     // xTaskCreatePinnedToCore(show_app_task, "task-[show app]", 1024 * 10, NULL, SHOW_TASK_PRIORITY, NULL,CORE_ZERO);
     pr_timerhanlde = xTimerCreate("timer-[print]",1000,pdTRUE,TEST_TIMERID,time_prt_Callback_fun);

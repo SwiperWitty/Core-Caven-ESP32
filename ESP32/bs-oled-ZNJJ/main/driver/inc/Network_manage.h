@@ -1,9 +1,7 @@
 #ifndef _NETWORK_MANAGE_H_
 #define _NETWORK_MANAGE_H_
 
-#include "stdint.h"
-#include "stdlib.h"
-
+#include "API.h"
 #include "Items.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
@@ -37,7 +35,6 @@ typedef void (*D_Callback_pFun) (void *data);   // 数据回调类型
 int Network_manage_Init (int mode,int set);
 void Network_manage_set_mac (uint8_t *mac);
 void Network_manage_get_mac (uint8_t *mac);
-void Network_ipstr_to_ip_address(char *str, uint8_t *ip);
 
 int wifi_config_user (char *ssid,char *pass);
 int wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str);
@@ -46,7 +43,8 @@ int eth_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str);
 int wifi_get_local_ip_status (char *ip_str,char *gw_str,char *netmask_str);
 int eth_get_local_ip_status (char *ip_str,char *gw_str,char *netmask_str);
 
-void Network_resolve_hostname(const char *hostname,char *ret_data);
+void Network_url_resolve_client(const char *url,char *ret_data);
+int Network_manage_IPprot (char *url,char *ip,char *port);
 int Network_manage_get_status (void);
 
 #endif

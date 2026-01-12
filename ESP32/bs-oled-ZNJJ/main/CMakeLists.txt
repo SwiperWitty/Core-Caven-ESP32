@@ -26,6 +26,9 @@ set(srcs
     "driver/src/draw.c"
 
     "API/Encrypt_crc.c"
+    "API/Data_Handle.c"
+    "API/Time_Handle.c"
+    "API/Caven_event_frame.c"
     "API/Caven_info_frame.c"
     "API/caven_at_info_frame.c"
 
@@ -33,7 +36,7 @@ set(srcs
     "User_app/show_app.c"
     "User_app/system_app.c"
     "User_app/Message_info_app.c"
-    
+    "User_app/caven_app.c"
 )
 
 file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")

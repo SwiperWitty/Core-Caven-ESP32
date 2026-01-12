@@ -187,7 +187,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
                 s_WIFI_gateway[1] = esp_ip4_addr2_16(&event->ip_info.gw);
                 s_WIFI_gateway[2] = esp_ip4_addr3_16(&event->ip_info.gw);
                 s_WIFI_gateway[3] = esp_ip4_addr4_16(&event->ip_info.gw);
-                
+
                 sprintf(wifi_net.ip,"%d.%d.%d.%d",s_WIFI_ip[0],s_WIFI_ip[1],s_WIFI_ip[2],s_WIFI_ip[3]);
                 sprintf(wifi_net.gateway,"%d.%d.%d.%d",s_WIFI_gateway[0],s_WIFI_gateway[1],s_WIFI_gateway[2],s_WIFI_gateway[3]);
                 sprintf(wifi_net.netmask,"%d.%d.%d.%d",s_WIFI_netmask[0],s_WIFI_netmask[1],s_WIFI_netmask[2],s_WIFI_netmask[3]);
@@ -204,60 +204,6 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,int32_t ev
             default:
                 break;
         }
-    }
-}
-
-static int ipstr_to_numeric(const char *_str, uint32_t *_addr)
-{
-    const char *index;
-    unsigned char *addr = (unsigned char *)_addr;
-    int isnumeric = 1;
-    int i = 3;
-    *_addr = 0;
-    index = _str;
-    while ((*index) && (isnumeric))
-    {
-        if (isdigit((unsigned char)*index))
-        {
-            addr[i] = addr[i] * 10 + (*index - '0'); // big-endian
-        }
-        else if (*index == '.')
-        {
-            i--;
-            if (i == -1)
-                isnumeric = 0;
-        }
-        else
-        {
-            isnumeric = 0;
-        }
-        index++;
-    }
-    if (isnumeric && i)
-        return -1; // error
-    if (isnumeric)
-        return 0; // successful
-    else
-        return -1;
-}
-
-static void get_ip_address_info(uint32_t ipadd, uint8_t *ip_buffer)
-{
-    ip_buffer[0] = ipadd >> 24;
-    ipadd = ipadd << 8;
-    ip_buffer[1] = ipadd >> 24;
-    ipadd = ipadd << 8;
-    ip_buffer[2] = ipadd >> 24;
-    ipadd = ipadd << 8;
-    ip_buffer[3] = ipadd >> 24;
-}
-
-void Network_ipstr_to_ip_address(char *str, uint8_t *ip)
-{
-    uint32_t ip_add = 0;
-    if (0 == ipstr_to_numeric(str, &ip_add))
-    {
-        get_ip_address_info(ip_add, ip);
     }
 }
 
@@ -327,17 +273,17 @@ int wifi_config_ip (char mode,char *ip_str,char *gw_str,char *netmask_str)
         esp_netif_dhcpc_stop(s_WIFI_netif);
         // 第二步设置IP地址相关参数
         memset(ip_temp,0,4);
-        Network_ipstr_to_ip_address(wifi_net.ip,ip_temp);
+        Caven_Str_To_ip(wifi_net.ip,ip_temp,4);
         IP4_ADDR(&wifi_ip_info.ip,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi ip address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
         memset(ip_temp,0,4);
-        Network_ipstr_to_ip_address(wifi_net.gateway,ip_temp);
+        Caven_Str_To_ip(wifi_net.gateway,ip_temp,4);
         IP4_ADDR(&wifi_ip_info.gw,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi gateway address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
         memset(ip_temp,0,4);
-        Network_ipstr_to_ip_address(wifi_net.netmask,ip_temp);
+        Caven_Str_To_ip(wifi_net.netmask,ip_temp,4);
         IP4_ADDR(&wifi_ip_info.netmask,ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
         ESP_LOGI(TAG,"set device wifi netmask address:%d.%d.%d.%d",ip_temp[0],ip_temp[1],ip_temp[2],ip_temp[3]);
 
@@ -835,45 +781,143 @@ int Network_manage_get_status (void)
 }
 
 /*
-    hostname:"www.example.com"
-    ret_data:IP
+    url:"http://192.168.1.128:8080/post"
+    ret_data:"192.168.1.128:8080"
 */
-void Network_resolve_hostname(const char *hostname,char *ret_data) 
+void Network_url_resolve_client(const char *url,char *ret_data) 
 {
     struct addrinfo hints = {0};
     struct addrinfo *result = NULL;
+    char *str_pointer = NULL;
+    char temp_hostname[100];
+    char temp_port[20];
     // 有个前提是网络要生效才能用
     if (esp_netif_init_flag == 0)
     {
         return ;
     }
-    if (hostname == NULL || ret_data == NULL)
+    if (url == NULL || ret_data == NULL)
     {
         return;
     }
-    ESP_LOGI(TAG, "hostname: %s", hostname);
-    // 域名解析
-    // const char *hostname = "www.example.com";
-    hints.ai_family = AF_INET; // 指定 IPv4
-    hints.ai_socktype = SOCK_STREAM; // TCP
-    int ret = getaddrinfo(hostname, NULL, &hints, &result);
-    if (ret != 0) {
-        ESP_LOGE(TAG, "getaddrinfo failed: %d", ret);
-        return;
-    }
+    str_pointer = strstr(url, "://");
+    if(str_pointer != NULL)
+    {
+        str_pointer += strlen("://");
+        strcpy(temp_hostname,str_pointer);
+        //
+        if(temp_hostname[0] > '9')
+        {
+            str_pointer = strstr(temp_hostname, ":");
+            if(str_pointer != NULL)
+            {
+                temp_hostname[(str_pointer-temp_hostname)] = 0;
+                str_pointer += strlen(":");
+                strcpy(temp_port,str_pointer);
+            }
+            else
+            {
+                strcpy(temp_port,"80");
+            }
+            str_pointer = strstr(temp_hostname, "/");
+            if(str_pointer != NULL)
+            {
+                temp_hostname[(str_pointer-temp_hostname)] = 0;
+            }
+            // const char *hostname = "www.example.com";
+            hints.ai_family = AF_INET; // 指定 IPv4
+            hints.ai_socktype = SOCK_STREAM; // TCP
+            int ret = getaddrinfo(temp_hostname, NULL, &hints, &result);
+            ESP_LOGI(TAG, "getaddr: %s", temp_hostname);
+            if (ret != 0) {
+                ESP_LOGE(TAG, "getaddrinfo failed: %d", ret);
+                freeaddrinfo(result);
+                return;
+            }
 
-    // 遍历结果（通常第一个就是可用的）
-    for (struct addrinfo *p = result; p != NULL; p = p->ai_next) {
-        if (p->ai_family == AF_INET) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
- 
-            inet_ntop(AF_INET, &(ipv4->sin_addr), ret_data, 16);
-            ESP_LOGI(TAG, "Resolved to: %s", ret_data);
-            break; // 取第一个 IPv4 地址
+            // 遍历结果（通常第一个就是可用的）
+            for (struct addrinfo *p = result; p != NULL; p = p->ai_next) {
+                if (p->ai_family == AF_INET) {
+                    struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+                    memset(temp_hostname,0,sizeof(temp_hostname));
+                    inet_ntop(AF_INET, &(ipv4->sin_addr), temp_hostname, 16);
+                    ESP_LOGI(TAG, "Resolved to: %s", temp_hostname);
+                    break; // 取第一个 IPv4 地址
+                }
+            }
+            freeaddrinfo(result); // 必须释放内存
+        }
+        else
+        {
+            str_pointer = strstr(temp_hostname, ":");
+            if(str_pointer != NULL)
+            {
+                temp_hostname[(str_pointer-temp_hostname)] = 0;
+                str_pointer += strlen(":");
+                strcpy(temp_port,str_pointer);
+            }
+            else
+            {
+                strcpy(temp_port,"80");
+            }
+            str_pointer = strstr(temp_hostname, "/");
+            if(str_pointer != NULL)
+            {
+                temp_hostname[(str_pointer-temp_hostname)] = 0;
+            }
+        }
+        sprintf(ret_data,"%s:%s",temp_hostname,temp_port);
+        ESP_LOGI(TAG, "-> url: %s", ret_data);
+    }
+    else
+    {
+        ESP_LOGW(TAG, "no url !");
+    }
+}
+/*
+    url:192.168.1.168:8160
+    ip:192.168.1.168
+    port:8160
+    retval:1
+
+    url:192.168.1.168
+    ip:192.168.1.168
+    port:NULL
+    retval:0
+*/
+int Network_manage_IPprot (char *url,char *ip,char *port)
+{
+    int retval = -1;
+    int temp_num = 0;
+    char *str_pointer = NULL;
+    if (url == NULL || ip == NULL || port == NULL)
+    {
+        return retval;
+    }
+    if(url[0] >= '0' && url[0] <= '9')
+    {
+        retval = 0;
+        temp_num = strlen(url);
+        str_pointer = memstr(url,":",temp_num);
+        if(str_pointer != NULL)
+        {
+            temp_num = str_pointer-url;
+            memcpy(ip,url,temp_num);
+   
+            strcpy(port,&url[temp_num+1]);
+            retval = 1;
+            ESP_LOGI(TAG, "IPprot ip: [%s] port: [%s]", ip,port);
+        }
+        else
+        {
+            strcpy(ip,url);
         }
     }
-    
-    freeaddrinfo(result); // 必须释放内存
+    else
+    {
+        return retval;
+    }
+    return retval;
 }
 
 int Network_manage_Init (int mode,int set)

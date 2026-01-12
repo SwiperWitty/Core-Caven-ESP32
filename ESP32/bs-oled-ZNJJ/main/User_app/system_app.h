@@ -2,7 +2,7 @@
 #define _SYSTEM_APP__H_
 
 #include"Items.h"
-#include"API.h"
+#include"API/API.h"
 
 #ifdef Exist_RTC_Clock
     #include "MODE_RTC8564.h"
@@ -30,12 +30,6 @@
 */
 
 typedef enum {
-    m_Protocol_CV = 0,
-    m_Protocol_AT,
-    m_Protocol_2,
-} Protocol_mType;
-
-typedef enum {
     m_Connect_SYS = 0,
     m_Connect_Server,
     m_Connect_Client,
@@ -47,98 +41,124 @@ typedef enum {
     m_Connect_USB,
 } Connect_mType;
 
-/*  [产品列表]    */
-#define ESP32_CAVEND        314
+#define SYS_Link        0
+#define RS232_Link      1
+#define RS485_Link      2
+#define CAN_Link        3		// CAN转译为Caven_packet
+#define NET4G_Link      4		// 本质是TCP_Client,也可以以HTTP/MQTT方式出现（HTTP可以做在线升级）
+#define TCP_Server_Link 5
+#define TCP_Client_Link 6
+#define TCP_HTTP_Link   7		// JSON转译为Caven_packet
+#define TCP_MQTT_Link   8		// JSON转译为Caven_packet
+#define TCP_UDP_Link    9
+#define BLE_Link        10
+#define USB_Link        11
 
+//
+#define DEMO_VER          1L
+#define DEMO_VER_sub      0L
+#define DEMO_VER_sub_bit  1L
+//
+#define DEMO_Build_UTC 1752226212
+//
+#define DEMO_Serial 0x0101011900123456
+//
+#define DEMO_Name_str		"E1205_Linux_4G"
+//
+#define NETWORK     1
+//
 
-#define BOARD_NAME      ESP32_CAVEND 
-#define PROTOCOL_FRAME  m_Protocol_CV 
-/*-----------------------------------*/
-
-/*  [产品对应名称版本]    */
-#if (BOARD_NAME == ESP32_CAVEND)
-    #define SOFT_VERSIONS       "EC.0.0.01"
-
-#endif // soft_versions
 /*-----------------------------------*/
 
 
 /*  [SYS_config]     */
 typedef struct
 {
-    int ESP32_board_ID;     // 0(default)
-    int RS232_Baud;
-    int RS485_Baud;
-    int SYS_Baud;
-    int AT4G_Baud;
-    int RS485_Addr;         //
+	uint16_t Bt_mode;
+	uint16_t Addr;
+    int Board_ID;     // 0(default)
+    uint16_t debug;
+    uint8_t Version[10];		// 固件版本
+    uint64_t Serial;			// 设备序号
+    char Hostname[30];			// 设备名称
+    uint32_t Bdtime;			// 固件日期
+    uint8_t MAC[6];
+#if NETWORK
+    int eth_mode;           // 1:dhcp   0:static
+    int eth_En;
+    char eth_ip_str[30];
+    char eth_gw_str[30];
+    char eth_netmask_str[30];
+    char eth_DNS1_str[30];
+    char eth_DNS2_str[30];
+    int wifi_mode;           // 1:dhcp   0:static
+    int wifi_En;
+    char wifi_ip_str[30];
+    char wifi_gw_str[30];
+    char wifi_netmask_str[30];
+    char wifi_DNS1_str[30];
+    char wifi_DNS2_str[30];
+    int NetCardCfg;
+    int NetCard_ICCID;
+    char NetCard_ip_str[30];
+    char NetCard_gw_str[30];
+    char NetCard_netmask_str[30];
+    char NetCard_DNS1_str[30];
+    char NetCard_DNS2_str[30];
 
-    char RFID_Mode;          // 0透传\外挂模式
-    char RS232_Mode;         // 0透传\外挂模式
-    char RS485_Mode;         // 0透传\外挂模式
+    int tcp_server_enable;
+    int tcp_client_enable;
+    int tcp_http_enable;
+    int tcp_mqtt_enable;
+    int tcp_udp_enable;
 
-    char RJ45_enable;
-    char WIFI_enable;
-    char AT4G_enable;
-    char Server_Switch;
-    char Client_Switch;
-    char HTTP_Switch;
-    char HTTPS_Switch;
-    char MQTT_Switch;
-
-    char RJ45_work_Mode;
-    char WIFI_work_Mode;    // dhcp = 0
-    char RJ45_static_ip[30];
-    char RJ45_static_gw[30];
-    char RJ45_static_netmask[30];
-    char WIFI_static_ip[30];
-    char WIFI_static_gw[30];
-    char WIFI_static_netmask[30];
-    char MAC_addr[20];
-
-    int Server_break_off;
-    char Net_Server_port[10];
-    char Net_Client_ip[30];
-    char Net_Client_port[10];
-    char AT4G_Client_ip[30];
-    char AT4G_Client_port[10];
-
-    char HTTP_url[100];
-    char HTTPS_url[100];
-    char HTTPS_way[50];
-    char HTTPS_Host[50];
-    char MQTT_url[100];
-    
-    char Device_version[50];
-    char SYS_version[50];
-    char Device_version_len;
-    char SYS_version_len;
-
-    // 设备动态管理
-    char SYS_Rst;
-    Caven_BaseTIME_Type time;
-
-    char RJ45_online;
-    char WIFI_online;
-    char AT4G_online;
-    char SYS_online;
-
-    int Connect_passage;    // 当前连接
-    int SYS_Run_Mode;
-    int SYS_Run_Status;
+    int Heartbeat_nun;
     int Heartbeat_Run;
     int Heartbeat_MAX;
+
+    int TCPHBT_En;
+    int Server_break_off;
+    char TCPServer_port[100];
+    char TCPClient_url[100];
     
+    int HTTPHBT_En;
+    int HTTP_cycle;     // ms
+    char HTTP_url[160];
+
+    char MQTTCfg[160];
+
+    char UDPCfg[160];
+    char tcp_udp_multicast_str[160];
+#endif
+    char Reset_falg;
+    char Work_falg;
+    char Net_falg;
+    //
+    int init_finish_state;
+    int Connect_passage;    // 连接管理,从SYS来的回答消息不会变更此数据
+    uint32_t Work_sec;
+    Caven_BaseTIME_Type Now_time;
+    //
+    int SYS_UART_Cfg;
+    int RS232_UART_Cfg;
+    int RS485_UART_Cfg;
+    int CANCfg;
+    int BLECfg;
+
 }SYS_cfg_Type;
+
 extern SYS_cfg_Type g_SYS_Config;
-
+extern Caven_event_Type g_Events_buff;
+extern Caven_event_Type g_SYS_events;
 /*-----------------------------------*/
-
 
 void system_app_init(void);
 void system_rst(void);
 
+void System_app_Restore (void);
+int System_app_SYS_Config_Save (void);
+int System_app_SYS_Config_Gain (void);
 
-void test_led_task (void *pvParam);
+void sys_app_task (void *pvParam);
 
 #endif

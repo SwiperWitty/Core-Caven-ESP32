@@ -17,23 +17,21 @@ int information_init (void)
     uint32_t flash_size;
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
-    printf("-> \n");
-    ESP_LOGI(" ", "\n <------------------RUN------------------> \n ");
-    printf("This is %s chip with %d CPU core(s), WiFi%s%s, ",
-            CONFIG_IDF_TARGET,
-            chip_info.cores,
-            (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-            (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
 
-    unsigned major_rev = chip_info.model;
-    unsigned minor_rev = chip_info.revision;
-    printf("silicon revision v%d.%d, ", major_rev, minor_rev);
+    ESP_LOGI(" ","\n <------------------RUN------------------> \n ");
+    ESP_LOGI(" ","This is %s chip with %d CPU core(s), WiFi",
+            CONFIG_IDF_TARGET,
+            chip_info.cores);
+
+    int major_rev = chip_info.model;
+    int minor_rev = chip_info.revision;
+    ESP_LOGI(" ","silicon revision v%d.%d,", major_rev, minor_rev);
     esp_flash_get_size(NULL, &flash_size);
-    printf("%d MB %s flash\n", (int)flash_size / (1024 * 1024),
+    ESP_LOGI(" ","%d MB %s flash", (int)flash_size / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
-    printf("Minimum free heap size: %d bytes\n", (int)esp_get_minimum_free_heap_size());
-    printf("FreeRTOS HZ is %d \n \n", CONFIG_FREERTOS_HZ);
+    ESP_LOGI(" ","Minimum free heap size: %d bytes", (int)esp_get_minimum_free_heap_size());
+    ESP_LOGI(" ","FreeRTOS HZ is %d \n", CONFIG_FREERTOS_HZ);
     return retval;
 }
 

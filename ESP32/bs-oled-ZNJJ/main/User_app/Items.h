@@ -59,7 +59,7 @@
 
 /*  [priority]    */
 #define OTA_TASK_PRIORITY   1
-#define GPIO_TASK_PRIORITY  2 
+#define SYS_TASK_PRIORITY   2 
 #define SHOW_TASK_PRIORITY  3 
 
 #define UART1_TASK_PRIORITY 5 

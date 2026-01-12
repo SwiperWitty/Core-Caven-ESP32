@@ -43,7 +43,7 @@ static char sock_flag = 0;      // 1是wifi的sock
 */
 int tcp_client_link_config (char *ip_str,char *port_str,int enable)
 {
-    int retval = 0;
+    int retval = 0,temp_num;
     tcp_client_enable = enable;
     if (enable == 0)
     {
@@ -57,7 +57,7 @@ int tcp_client_link_config (char *ip_str,char *port_str,int enable)
     }
     else
     {
-        if (ip_str == NULL || port_str == NULL)
+        if (ip_str == NULL)
         {
             retval = tcp_client_sock;
             ESP_LOGE(TAG, "where are you IP ?");
@@ -67,8 +67,19 @@ int tcp_client_link_config (char *ip_str,char *port_str,int enable)
         {
             memset(sock_ip_str,0,sizeof(sock_ip_str));
             memset(sock_port_str,0,sizeof(sock_port_str));
-            strcpy(sock_ip_str, ip_str);
-            strcpy(sock_port_str, port_str);
+            temp_num = Network_manage_IPprot (ip_str,sock_ip_str,sock_port_str);
+            if (temp_num == 0)
+            {
+                strcpy(sock_port_str, port_str);
+            }
+            if(strstr(ip_str, "://") != NULL)
+            {
+                char array_url[100];
+                memset(array_url,0,sizeof(array_url));
+                Network_url_resolve_client(ip_str,array_url);
+                Network_manage_IPprot (ip_str,sock_ip_str,sock_port_str);
+            }
+            
             ESP_LOGW(TAG, "config link ip[%s:%s]",sock_ip_str,sock_port_str);
             if (tcp_client_sock > 0)
             {
