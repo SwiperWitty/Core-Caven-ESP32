@@ -30,7 +30,7 @@ set(srcs
     "API/Time_Handle.c"
     "API/Caven_event_frame.c"
     "API/Caven_info_frame.c"
-    "API/caven_at_info_frame.c"
+    "API/Caven_at_info_frame.c"
 
     "User_app/main.c"           # [app_main] 程序入口所在
     "User_app/show_app.c"

@@ -24,10 +24,7 @@ void app_main(void)
     temp_array = malloc(300);
     while (1)
     {
-        g_SYS_Config.Now_time.SYS_Us = (xTaskGetTickCount() % 1000)*1000;
-        g_SYS_Config.Now_time.SYS_Sec += (xTaskGetTickCount() / 1000);
         //
-
         ram_size = esp_get_free_heap_size();
         if (ram_size < 4096*10)
         {
@@ -36,8 +33,6 @@ void app_main(void)
         }
 
         vTaskDelay(pdMS_TO_TICKS(3000));
-        Network_url_resolve_client("http://www.baidu.com/123:220",temp_array);
-        Network_url_resolve_client("http://localhost:8080",temp_array);
     }
     free(temp_array);
 }

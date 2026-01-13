@@ -783,6 +783,9 @@ int Network_manage_get_status (void)
 /*
     url:"http://192.168.1.128:8080/post"
     ret_data:"192.168.1.128:8080"
+
+    url:"http://localhost"
+    ret_data:"172.0.0.1:80"
 */
 void Network_url_resolve_client(const char *url,char *ret_data) 
 {
@@ -808,6 +811,11 @@ void Network_url_resolve_client(const char *url,char *ret_data)
         //
         if(temp_hostname[0] > '9')
         {
+            str_pointer = strstr(temp_hostname, "/");
+            if(str_pointer != NULL)
+            {
+                temp_hostname[(str_pointer-temp_hostname)] = 0;
+            }
             str_pointer = strstr(temp_hostname, ":");
             if(str_pointer != NULL)
             {
@@ -819,16 +827,12 @@ void Network_url_resolve_client(const char *url,char *ret_data)
             {
                 strcpy(temp_port,"80");
             }
-            str_pointer = strstr(temp_hostname, "/");
-            if(str_pointer != NULL)
-            {
-                temp_hostname[(str_pointer-temp_hostname)] = 0;
-            }
+
             // const char *hostname = "www.example.com";
             hints.ai_family = AF_INET; // 指定 IPv4
             hints.ai_socktype = SOCK_STREAM; // TCP
             int ret = getaddrinfo(temp_hostname, NULL, &hints, &result);
-            ESP_LOGI(TAG, "getaddr: %s", temp_hostname);
+            ESP_LOGI(TAG, "hostname getaddr: %s", temp_hostname);
             if (ret != 0) {
                 ESP_LOGE(TAG, "getaddrinfo failed: %d", ret);
                 freeaddrinfo(result);
@@ -841,7 +845,7 @@ void Network_url_resolve_client(const char *url,char *ret_data)
                     struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
                     memset(temp_hostname,0,sizeof(temp_hostname));
                     inet_ntop(AF_INET, &(ipv4->sin_addr), temp_hostname, 16);
-                    ESP_LOGI(TAG, "Resolved to: %s", temp_hostname);
+                    ESP_LOGI(TAG, "%s Resolved to: %s", url,temp_hostname);
                     break; // 取第一个 IPv4 地址
                 }
             }
@@ -849,6 +853,11 @@ void Network_url_resolve_client(const char *url,char *ret_data)
         }
         else
         {
+            str_pointer = strstr(temp_hostname, "/");
+            if(str_pointer != NULL)
+            {
+                temp_hostname[(str_pointer-temp_hostname)] = 0;
+            }
             str_pointer = strstr(temp_hostname, ":");
             if(str_pointer != NULL)
             {
@@ -860,14 +869,9 @@ void Network_url_resolve_client(const char *url,char *ret_data)
             {
                 strcpy(temp_port,"80");
             }
-            str_pointer = strstr(temp_hostname, "/");
-            if(str_pointer != NULL)
-            {
-                temp_hostname[(str_pointer-temp_hostname)] = 0;
-            }
         }
         sprintf(ret_data,"%s:%s",temp_hostname,temp_port);
-        ESP_LOGI(TAG, "-> url: %s", ret_data);
+        ESP_LOGI(TAG, "url: %s to %s \n",url,ret_data);
     }
     else
     {
