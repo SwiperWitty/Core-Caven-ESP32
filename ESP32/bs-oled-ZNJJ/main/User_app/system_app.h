@@ -59,6 +59,10 @@ typedef enum {
 #define DEMO_VER_sub      0L
 #define DEMO_VER_sub_bit  1L
 //
+#define Device_VER          1
+//
+#define Device_TYPE         1
+//
 #define DEMO_Build_UTC 1752226212
 //
 #define DEMO_Serial 0x0101011900123456
@@ -112,7 +116,7 @@ typedef struct
     int tcp_mqtt_enable;
     int tcp_udp_enable;
 
-    int Heartbeat_nun;
+    int Heartbeat_num;
     int Heartbeat_Run;
     int Heartbeat_MAX;
 
@@ -148,7 +152,6 @@ typedef struct
 }SYS_cfg_Type;
 
 extern SYS_cfg_Type g_SYS_Config;
-extern Caven_event_Type g_Events_buff;
 extern Caven_event_Type g_SYS_events;
 /*-----------------------------------*/
 

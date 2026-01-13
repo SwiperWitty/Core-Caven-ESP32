@@ -17,8 +17,8 @@ static Caven_info_packet_Type Caven_packet_udp;
 static Caven_info_packet_Type Caven_packet_Other;
 static Caven_info_packet_Type Caven_standard = {
 	.Head = 0xFA55,
-    .Versions = 0x01,		// 版本
-	.Type = 1,
+    .Versions = Device_VER, // 版本
+	.Type = Device_TYPE,
     .dSize = BUFF_MAX,		// 最大长度
 };
 
@@ -502,6 +502,29 @@ int Caven_app_cmd1_handle (Caven_info_packet_Type pack)
             retval = 1;
         }
         break;
+    case m_CAVEN_CMD1_TCPUpHtdata_Order:
+        {
+            rw_info = pack.p_Data[temp_num++];
+            if(rw_info == 0)
+            {
+                g_SYS_Config.Heartbeat_num = 0;
+            }
+            else
+            {
+                temp_num = 3;
+                temp_val = 0;
+                temp_val = pack.p_Data[temp_num++];
+                temp_val <<= 8;
+                temp_val |= pack.p_Data[temp_num++];
+                temp_val <<= 8;
+                temp_val |= pack.p_Data[temp_num++];
+                temp_val <<= 8;
+                temp_val |= pack.p_Data[temp_num++];
+                g_SYS_Config.Heartbeat_num = 0;
+            }
+            Result = 0;
+        }
+        break;
 #endif
     default:
 		{
@@ -872,6 +895,43 @@ int Caven_app_cmd3_handle (Caven_info_packet_Type pack)
     return retval;
 }
 #endif
+
+int Caven_app_send_heart_packet(int num,int way)
+{
+    int retval = 0;
+    int temp_num = 0,temp_run = 0;
+    uint8_t array_buff[100];
+    uint8_t temp_array[100];
+    array_buff[temp_run++] = (g_SYS_Config.Now_time.SYS_Sec >> (8 * 3)) & 0xff;
+    array_buff[temp_run++] = (g_SYS_Config.Now_time.SYS_Sec >> (8 * 2)) & 0xff;
+    array_buff[temp_run++] = (g_SYS_Config.Now_time.SYS_Sec >> (8 * 1)) & 0xff;
+    array_buff[temp_run++] = (g_SYS_Config.Now_time.SYS_Sec >> (8 * 0)) & 0xff;
+
+    array_buff[temp_run++] = (num >> (8 * 3)) & 0xff;
+    array_buff[temp_run++] = (num >> (8 * 2)) & 0xff;
+    array_buff[temp_run++] = (num >> (8 * 1)) & 0xff;
+    array_buff[temp_run++] = (num >> (8 * 0)) & 0xff;
+    temp_num = Caven_info_return_Fun (Device_VER,Device_TYPE,g_SYS_Config.Addr,
+        1,m_CAVEN_CMD1_TCPUpHtdata_Order,temp_run,array_buff,0,temp_array);
+    switch (way)
+    {
+    case TCP_Server_Link:
+        tcp_server_send_data(temp_array,temp_num);
+        break;
+    case TCP_Client_Link:
+        tcp_client_send_data(temp_array,temp_num);
+        break;
+    case TCP_HTTP_Link:
+        /* code */
+        break;
+    case NET4G_Link:
+        /* code */
+        break;
+    default:
+        break;
+    }
+    return retval;
+}
 
 int Caven_app_send_packet(Caven_info_packet_Type pack)
 {

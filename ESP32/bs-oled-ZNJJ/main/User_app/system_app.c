@@ -41,9 +41,9 @@ SYS_cfg_Type g_SYS_Config = {
     //
     .Connect_passage = 0,
     //
-    .Heartbeat_nun = 0,
+    .Heartbeat_num = 0,
     .Heartbeat_Run = 0,
-    .Heartbeat_MAX = 10,
+    .Heartbeat_MAX = 5,
 };
 Caven_event_Type g_SYS_events;
 

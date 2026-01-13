@@ -36,10 +36,11 @@ void Message_info_task (void * empty)
 		if (tcp_heart_task.Trigger_Flag && 
 			(g_SYS_Config.Connect_passage == TCP_Server_Link || g_SYS_Config.Connect_passage == TCP_Client_Link))
 		{
-			ESP_LOGI(TAG, "send tcp heart [%d]",g_SYS_Config.Heartbeat_Run);
-			g_SYS_Config.Heartbeat_nun ++;
+			ESP_LOGI(TAG, "send tcp heart [%d]-[%d]",g_SYS_Config.Heartbeat_Run,g_SYS_Config.Heartbeat_num);
+			Caven_app_send_heart_packet(g_SYS_Config.Heartbeat_Run,g_SYS_Config.Connect_passage);
+			g_SYS_Config.Heartbeat_num ++;
 			g_SYS_Config.Heartbeat_Run ++;
-			if(g_SYS_Config.Heartbeat_nun >= g_SYS_Config.Heartbeat_MAX)
+			if(g_SYS_Config.Heartbeat_num >= g_SYS_Config.Heartbeat_MAX)
 			{
 				ESP_LOGE(TAG, "send tcp heart over time !!! ,rst tcp !!!");
 				if (g_SYS_Config.Connect_passage == TCP_Server_Link)
@@ -52,6 +53,8 @@ void Message_info_task (void * empty)
 					tcp_client_link_config (g_SYS_Config.TCPClient_url,NULL,0);
 					tcp_client_link_config (g_SYS_Config.TCPClient_url,NULL,1);
 				}
+				g_SYS_Config.Connect_passage = SYS_Link;
+				g_SYS_Config.Heartbeat_num = 0;
 			}
 		}
 		if (http_heart_task.Trigger_Flag)		// 这个就不在意返回
