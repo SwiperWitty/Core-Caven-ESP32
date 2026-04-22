@@ -38,5 +38,6 @@
         "caven_info_frame.h": "c"
     },
     "idf.portWin": "COM62",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "idf.pythonInstallPath": "D:\\Espressif\\tools\\idf-python\\3.11.2\\python.exe"
 }

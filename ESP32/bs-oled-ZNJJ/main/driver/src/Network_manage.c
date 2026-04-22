@@ -753,8 +753,8 @@ void Network_manage_get_mac (uint8_t *mac)
 
 /*
     retval = 0,无网络
-    retval = 2,wifi连接
-    retval = 4,rj45连接
+    retval = 1,wifi连接
+    retval = 2,rj45连接
 */
 int Network_manage_get_status (void)
 {

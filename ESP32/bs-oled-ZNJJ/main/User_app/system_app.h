@@ -85,7 +85,7 @@ typedef struct
     uint8_t Version[10];		// 固件版本
     uint64_t Serial;			// 设备序号
     char Hostname[30];			// 设备名称
-    uint32_t Bdtime;			// 固件日期
+    char* Bddate;			    // 固件日期
     uint8_t MAC[6];
 #if NETWORK
     int eth_mode;           // 1:dhcp   0:static
