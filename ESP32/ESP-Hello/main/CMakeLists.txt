@@ -8,19 +8,28 @@
 
 # 所有参与编译的 [*.c]文件
 set(srcs
+    "API/API.c"
+    "API/Time_Handle.c"
+    "API/Data_Handle.c"
+    "API/Caven_info_frame.c"
+    "API/Caven_at_info_frame.c"
+    "API/Encrypt_crc.c"
+
     "esp_driver/src/Base_Sys_Time.c"
     "esp_driver/src/Base_UART.c"
     "esp_driver/src/Base_GPIO.c"
+    "esp_driver/src/Base_SPI.c"
 
     "Mode/Mode.c"
     "Mode/MODE_Time.c"
     "Mode/MODE_UART.c"
 
     "User_app/main.c"           # [main] 程序入口所在
+    "User_app/show_app.c"
 )
 
 # file(GLOB_RECURSE SOURCE_FILE2 "GUI/*.c")
-list(APPEND srcs ${SOURCE_FILE2})
+list(APPEND srcsa ${SOURCE_FILE2})
 
 # [*.c]文件合集 + [*.h]头文件
 idf_component_register(SRCS  

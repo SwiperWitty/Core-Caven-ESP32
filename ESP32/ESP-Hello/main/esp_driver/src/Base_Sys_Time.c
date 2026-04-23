@@ -10,7 +10,7 @@
 
 #ifdef Exist_SYS_TIME
 SYS_BaseTIME_Type Sys_BaseTIME;
-
+TickType_t base_tick = 0;
 #endif
 
 void SYS_Time_Init(int Set)
@@ -27,8 +27,18 @@ void SYS_Time_Set(SYS_BaseTIME_Type *time)
 #ifdef Exist_SYS_TIME
     Sys_BaseTIME = *time;
     TickType_t tick_time;
+    int temp_val;
     tick_time = xTaskGetTickCount();
-
+    temp_val = tick_time / 1000;
+    temp_val = time->SYS_Sec - temp_val;
+    if (temp_val > 0)
+    {
+        base_tick = temp_val;
+    }
+    else
+    {
+        base_tick = 0;
+    }
 #endif
 }
 
@@ -37,8 +47,8 @@ void SYS_Time_Get(SYS_BaseTIME_Type *time)
 #ifdef Exist_SYS_TIME
     TickType_t tick_time;
     tick_time = xTaskGetTickCount();
-    time->SYS_Sec = tick_time / 1000;
-    time->SYS_Us = tick_time % 1000;
+    time->SYS_Sec = (tick_time / 1000) + base_tick;
+    time->SYS_Us = (tick_time % 1000)*1000;
 #endif
 }
 

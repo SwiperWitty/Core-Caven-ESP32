@@ -82,7 +82,7 @@
 
 #define Exist_UART      OPEN_0110
 #define Exist_IIC       OPEN_NULL
-#define Exist_SPI       OPEN_NULL
+#define Exist_SPI       OPEN_0010
 #define Exist_USB       OPEN_NULL
 #define Exist_CAN       OPEN_NULL
 #define Exist_ETH       OPEN_NULL
@@ -130,7 +130,7 @@
 #if Exist_LCD
     #if Exist_SPI == OPEN_NULL
         #undef Exist_SPI
-        #define Exist_SPI	OPEN_0100
+        #define Exist_SPI	OPEN_0010
     #endif
 #endif
 
@@ -183,6 +183,24 @@
 #ifndef SYS_RESET
 	#define SYS_RESET() esp_restart()
 #endif
+
+// 优先级
+#define OTA_TASK_PRIORITY   1
+#define SYS_TASK_PRIORITY   2 
+#define SHOW_TASK_PRIORITY  3 
+#define UART0_TASK_PRIORITY 4 
+#define UART1_TASK_PRIORITY 5 
+#define UART2_TASK_PRIORITY 6 
+
+#define TCP_SERVER_TASK_PRIORITY        7 
+#define TCP_SERVER_RECV_TASK_PRIORITY   8
+#define TCP_CLIENT_TASK_PRIORITY        9 
+#define UDP_TASK_PRIORITY               10
+#define BLUE_TOOCH_TASK_PRIORITY    11
+#define HTTP_TASK_PRIORITY          11
+#define MQTT_TASK_PRIORITY          11
+
+
 
 // boot
 #define NVIC_VECTOR_SET(x)  (void)x

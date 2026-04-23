@@ -208,7 +208,7 @@ void Debug_OutStr(char *data)
     #else
     if(data != NULL)
     {
-        ESP_LOGI("DB_Log", "%s", data);
+        ESP_LOGI("DBG_Log", "%s", data);
     }
     #endif
 #endif
