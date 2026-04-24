@@ -19,6 +19,7 @@ set(srcs
     "esp_driver/src/Base_UART.c"
     "esp_driver/src/Base_GPIO.c"
     "esp_driver/src/Base_SPI.c"
+    "esp_driver/src/Base_IIC.c"
 
     "Mode/Mode.c"
     "Mode/MODE_Time.c"

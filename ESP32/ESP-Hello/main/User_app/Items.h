@@ -81,7 +81,7 @@
 #define Exist_DAC       OPEN_NULL
 
 #define Exist_UART      OPEN_0110
-#define Exist_IIC       OPEN_NULL
+#define Exist_IIC       OPEN_0001
 #define Exist_SPI       OPEN_0010
 #define Exist_USB       OPEN_NULL
 #define Exist_CAN       OPEN_NULL

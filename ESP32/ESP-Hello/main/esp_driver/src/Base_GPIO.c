@@ -19,7 +19,8 @@ void User_GPIO_config(int gpiox,int pin,int set)
         }
         else
         {
-            gpio_set_direction(pin, GPIO_MODE_INPUT);
+            gpio_pullup_en(pin);
+            gpio_set_direction(pin, GPIO_MODE_DEF_INPUT);
         }
     }
 }
