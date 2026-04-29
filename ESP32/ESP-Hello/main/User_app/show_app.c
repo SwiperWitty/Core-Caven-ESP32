@@ -19,23 +19,25 @@ void delay (int n)
 //SPI write byte
 void SPI_Write(unsigned char value)
 {				   			 
-   Base_SPI_Send_Data(1,value);
+    Base_SPI_Send_Data(1,value);
 }
 
 //SPI write command
 void EPD_W21_WriteCMD(unsigned char command)
 {
-	// EPD_W21_CS_0;
-	User_GPIO_set(0,25,0);  // D/C#   0:command  1:data  
+    User_GPIO_set(0,33,0);  // CS
+	User_GPIO_set(0,27,0);  // D/C#   0:command  1:data  
 	SPI_Write(command);
-    // User_GPIO_set(0,25,1);
-	// EPD_W21_CS_1;
+    User_GPIO_set(0,27,1);
+	User_GPIO_set(0,33,1);  // CS
 }
 //SPI write data
 void EPD_W21_WriteDATA(unsigned char datas)
 {
-    User_GPIO_set(0,25,1);
+    User_GPIO_set(0,33,0);  // CS
+    // User_GPIO_set(0,27,1);
 	SPI_Write(datas);
+    User_GPIO_set(0,33,1);  // CS
 }
 
 //
@@ -47,7 +49,7 @@ void lcd_chkstatus(void)
         Mode_Use.TIME.Delay_Ms(1);
     }
 }
-  
+
 void EPD_sleep(void)
 {   
   EPD_W21_WriteCMD(0X02);   //power off
@@ -241,10 +243,11 @@ void EPD_init(void)
   EPD_W21_WriteDATA(0x08);  
   
   EPD_W21_WriteCMD(0x04);
-  lcd_chkstatus();   
+  lcd_chkstatus();
 }
 
 #include "Ap_29demo.h"
+#include "E_1.h"
 
 void Show_app_Task (void * empty)
 {
@@ -252,7 +255,7 @@ void Show_app_Task (void * empty)
     Debug_printf("Show_app_Task init ");
     EPD_init(); //Full screen refresh initialization.
     Debug_printf("Show_app_Task EPD_init ");
-    PIC_display(gImage_1);//To Display one image using full screen refresh.
+    PIC_display(gImage_E_1);//To Display one image using full screen refresh.
     Debug_printf("Show_app_Task Image ");
     while (1)
     {
@@ -262,15 +265,17 @@ void Show_app_Task (void * empty)
 
 void Show_app_Init (void)
 {
-    User_GPIO_config(0,25,WRITE_Config);
-    User_GPIO_config(0,26,WRITE_Config);
+    User_GPIO_config(0,26,WRITE_Config);    // RES
+    User_GPIO_config(0,27,WRITE_Config);    // D/C
+    User_GPIO_config(0,33,WRITE_Config);    // cs
     User_GPIO_config(0,32,READ_Config);
     Base_SPI_Init(1,8,ENABLE);
     Base_SPI_Send_Data(1,0X5A);
 
     Mode_Use.TIME.Delay_Ms(50);
-    User_GPIO_set(0,25,1);      // DC
-    User_GPIO_set(0,26,0);      // RES
+    User_GPIO_set(0,26,1);      // RES
+    User_GPIO_set(0,27,0);      // DC
+    User_GPIO_set(0,33,0);      // cs
     Mode_Use.TIME.Delay_Ms(40);
     User_GPIO_set(0,26,1);
     Mode_Use.TIME.Delay_Ms(50);

@@ -138,7 +138,7 @@ int app_main(void)
 	led_task.Set_time.SYS_Us = 500000;
 
 	memset(iic_array,0,sizeof(iic_array));
-	qmi8658_init();
+	// qmi8658_init();
 	while(1)
     {
 		now_time = Mode_Use.TIME.Get_BaseTIME_pFun();
@@ -148,8 +148,8 @@ int app_main(void)
 		if (led_task.Trigger_flag)
 		{
 			led ++;
-			Base_IIC_Send_DATA(0x5a,iic_buf,1,1,10,1);
-			Base_IIC_Receive_DATA(0x5a,iic_array,1,1,10);
+			// Base_IIC_Send_DATA(0x5a,iic_buf,1,1,10,1);
+			// Base_IIC_Receive_DATA(0x5a,iic_array,1,1,10);
 			// User_GPIO_set(0,22,led % 2);
 			// Debug_printf("Begin_time %d:%d us,code:%d",led_task.Begin_time.SYS_Sec,led_task.Begin_time.SYS_Us,led_task.error_code);
 			// Debug_printf("SET time %d:%d us",led_task.Set_time.SYS_Sec,led_task.Set_time.SYS_Us);
