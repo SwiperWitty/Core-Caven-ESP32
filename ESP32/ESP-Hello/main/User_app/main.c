@@ -138,7 +138,7 @@ int app_main(void)
 	led_task.Set_time.SYS_Us = 500000;
 
 	memset(iic_array,0,sizeof(iic_array));
-	// qmi8658_init();
+        qmi8658_init();
 	while(1)
     {
 		now_time = Mode_Use.TIME.Get_BaseTIME_pFun();

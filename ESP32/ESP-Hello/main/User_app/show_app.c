@@ -246,7 +246,7 @@ void EPD_init(void)
   lcd_chkstatus();
 }
 
-#include "Ap_29demo.h"
+// #include "Ap_29demo.h"
 #include "E_1.h"
 
 void Show_app_Task (void * empty)
